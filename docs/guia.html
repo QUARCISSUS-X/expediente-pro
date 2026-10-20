@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Expediente Pro – Guía de uso</title>
+<style>
+  @page { size: A4; margin: 18mm 17mm 18mm 17mm; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #20262a; font-size: 10.5pt; line-height: 1.5; }
+  h1 { font-size: 22pt; margin: 0 0 4px; color: #20262a; font-weight: 700; letter-spacing: -0.01em; }
+  .sub { color: #5d6a70; margin: 0 0 22px; font-size: 11pt; }
+  h2 { font-size: 13.5pt; color: #1e6b5e; margin: 22px 0 6px; border-bottom: 1px solid #d3d8d1; padding-bottom: 3px; }
+  h3 { font-size: 11pt; margin: 14px 0 4px; }
+  p { margin: 0 0 7px; }
+  ol, ul { margin: 0 0 8px; padding-left: 20px; }
+  li { margin: 2px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 9.5pt; }
+  th { background: #20262a; color: #fff; text-align: left; padding: 4px 6px; font-weight: 600; }
+  td { border-bottom: 1px solid #e4e8e2; padding: 4px 6px; vertical-align: top; }
+  code, .cmd { font-family: Consolas, 'Courier New', monospace; font-size: 9.5pt; background: #f4f6f2; padding: 1px 4px; border-radius: 3px; }
+  .cmd { display: block; padding: 7px 9px; margin: 4px 0 8px; white-space: pre-wrap; }
+  .nota { border-left: 3px solid #a9731a; background: #f6ebd6; padding: 7px 10px; margin: 8px 0; }
+  .ok { border-left: 3px solid #1e6b5e; background: #e1eeea; padding: 7px 10px; margin: 8px 0; }
+  .salto { page-break-before: always; }
+</style>
+</head>
+<body>
+<h1>Expediente Pro</h1>
+<p class="sub">Guía de uso · versión 2.0 · octubre de 2026</p>
+
+<p>Expediente Pro es un programa de costos, presupuestos y programación de obra, del tipo de S10 o PowerCost, que genera todos los entregables de una cotización privada o de un expediente técnico de obra pública a partir de una sola base de datos. No usa inteligencia artificial ni internet: corre completo en su navegador y sus datos no salen de su computadora.</p>
+
+<h2>1. Cómo abrirlo</h2>
+<ol>
+  <li>Descomprima la carpeta <b>ExpedientePro</b> donde prefiera (por ejemplo, en Documentos).</li>
+  <li>Haga doble clic en <b>ExpedientePro.html</b>. Se abre en su navegador; se recomienda Google Chrome o Microsoft Edge actualizados.</li>
+  <li>La primera vez se carga un <b>proyecto de ejemplo</b> completo (cierre de bocaminas y rehabilitación de un depósito de desmonte) para que vea todo funcionando.</li>
+</ol>
+<div class="ok">Cada proyecto se guarda solo, por separado, en el <b>panel de proyectos</b> del navegador. Para llevarlo a otra computadora use <b>Guardar</b> (Ctrl+S), que crea un archivo <code>.expediente.json</code>, o descargue un <b>Respaldo</b> de todos los proyectos desde el panel.</div>
+
+<h2>1.1 Barra de herramientas</h2>
+<p>Arriba está la barra de herramientas, agrupada como en S10, PowerCost o Delphin Express:</p>
+<table>
+  <tr><th style="width:18%">Grupo</th><th>Herramientas</th></tr>
+  <tr><td>Archivo</td><td>Proyectos (panel), Nuevo, Importar (expediente de S10/Excel, cronograma de MS Project en XML, EETT en Word, proyecto .json o plantilla de carga), Guardar copia .json y Datos (configuración general).</td></tr>
+  <tr><td>Edición</td><td>Deshacer, Rehacer y Buscar partidas o insumos (Ctrl+F).</td></tr>
+  <tr><td>Partidas</td><td>Título, Subtítulo, Partida, Biblioteca, Duplicar, Eliminar, Subir, Bajar, Nivel + (entrar al título anterior), Nivel − (salir del título) y Renumerar.</td></tr>
+  <tr><td>Herramientas</td><td>Validar, calculadora del costo de hora-hombre y calculadora de rendimiento, cuadrilla y duración.</td></tr>
+  <tr><td>Reportes</td><td>Excel con fórmulas, documentos Word (EETT, memoria, carta, matriz, reporte, informe de revisión), PDF consolidado, MS Project y Todo en ZIP.</td></tr>
+</table>
+
+<h2>1.2 Panel de proyectos</h2>
+<p>En <b>Panel de proyectos</b> se crean proyectos nuevos (en blanco, desde el ejemplo o importando archivos), se abren, se duplican, se archivan y restauran, se exportan como .json y se eliminan (con confirmación). Cada proyecto conserva sus propios datos generales, análisis de costos, metrados, presupuestos, cronogramas y documentos. <b>Respaldo</b> descarga todos los proyectos en un archivo y <b>Restaurar respaldo</b> los vuelve a cargar.</p>
+
+<h2>1.3 Configuración general</h2>
+<p>Antes de exportar, complete <b>Configuración general</b>: proyecto (nombre, código, descripción, ubicación y fecha), proyectista, cliente y propietario (con sus <b>logos</b> en PNG, JPG o SVG), responsables de elaboración, revisión y aprobación, control del documento (código, revisión, estado, tipo, autores, aviso de uso e imagen de carátula), moneda y nombre de la moneda para el monto en letras, sistema de unidades, IGV incluido o no, y los demás parámetros. A la derecha se ve cómo quedarán la carátula y el encabezado. Estos datos se copian solos a las carátulas, el control del documento, los encabezados y pies de página de Word y PDF y el membrete de cada hoja de Excel.</p>
+
+<h2>2. Flujo de trabajo</h2>
+<p>Los módulos están en la columna izquierda, en el orden en que conviene trabajar. Un punto rojo u ocre junto a un módulo indica que tiene observaciones de consistencia.</p>
+<table>
+  <tr><th style="width:24%">Módulo</th><th>Qué se hace</th></tr>
+  <tr><td>Panel de proyectos</td><td>Todos los proyectos guardados (ver 1.2).</td></tr>
+  <tr><td>Configuración general</td><td>Datos que van a carátulas, encabezados y pies (ver 1.3), calendario de obra y textos de la memoria y de las especificaciones generales.</td></tr>
+  <tr><td>Términos de referencia</td><td>Lista de entregables que pide el TdR y el documento del expediente que cubre cada uno. Genera la matriz de cumplimiento.</td></tr>
+  <tr><td>Presupuesto</td><td>Árbol de títulos y partidas. Al seleccionar una partida se edita su análisis de precio unitario (rendimiento, cuadrillas, cantidades), sus metrados con sustento, su programación y su especificación técnica. La biblioteca trae partidas con APU de referencia.</td></tr>
+  <tr><td>Insumos</td><td>Catálogo único de precios sin IGV con índice unificado, peso (para flete) y días de anticipación de compra. Aquí se importan los precios de la Revista Costos o de sus cotizaciones.</td></tr>
+  <tr><td>Gastos generales</td><td>Desagregado de gastos fijos y variables. Los variables marcados “Todo el plazo” toman el plazo del programa automáticamente.</td></tr>
+  <tr><td>Fórmula polinómica</td><td>Se calcula sola con los índices unificados INEI (base diciembre 2025) y las reglas del D.S. 011-79-VC.</td></tr>
+  <tr><td>Programación</td><td>Duración por partida, predecesoras (FC, CC, FF con desfase), ruta crítica, Gantt y plazo. Exporta a MS Project.</td></tr>
+  <tr><td>Cronogramas</td><td>Valorizado y curva S, adquisición de materiales, equipos, histograma de personal y desembolsos. Se calculan solos.</td></tr>
+  <tr><td>Documentos</td><td>Especificaciones técnicas por plantilla, memoria descriptiva y carta. Las plantillas de EETT se pueden editar.</td></tr>
+  <tr><td>Validación</td><td>Las 15 reglas de consistencia (ver sección 6).</td></tr>
+  <tr><td>Exportar</td><td>Descarga de cada entregable o de todos juntos en un ZIP.</td></tr>
+</table>
+
+<h3>Atajos útiles</h3>
+<ul>
+  <li><b>Enter</b> o flechas ↑ ↓ en una tabla: confirma y pasa a la fila siguiente o anterior. <b>Esc</b>: descarta lo escrito.</li>
+  <li><b>Ctrl+Z / Ctrl+Y</b>: deshacer y rehacer (fuera de una celda). <b>Ctrl+S</b>: guardar archivo. <b>Ctrl+F</b>: buscar.</li>
+  <li>En el presupuesto: <b>Insert</b> agrega partida, <b>Supr</b> elimina, <b>↑ ↓</b> recorren las filas, <b>Alt+↑ ↓</b> suben o bajan y <b>Alt+→ ←</b> cambian de nivel.</li>
+  <li>Los números aceptan <code>1,234.56</code> o <code>1234,56</code>.</li>
+</ul>
+
+<h2>3. Cómo se calcula</h2>
+<ul>
+  <li><b>Metrado</b> = producto de las casillas llenas de la planilla: N.º veces × cantidad × factor × largo × ancho × alto × área × volumen (las vacías no cuentan). El total de cada partida se redondea a dos decimales.</li>
+  <li><b>Mano de obra y equipos</b>: cantidad por unidad = cuadrilla × jornada ÷ rendimiento, al cuarto decimal. Cada APU puede tener su propia jornada (por ejemplo, 10 h en mina). Herramientas manuales: % de la mano de obra del APU.</li>
+  <li><b>Precio unitario</b> = suma de parciales del APU, redondeados a 2 decimales; <b>parcial de partida</b> = metrado × precio unitario.</li>
+  <li><b>Pie</b>: costo directo + gastos generales (desagregado) + utilidad = subtotal; + IGV = total o valor referencial.</li>
+  <li><b>Duración</b> = metrado ÷ (rendimiento × cuadrillas), en días laborables, o la duración fija que usted indique. El plazo en días calendario sale de la ruta crítica y el calendario (días laborables y feriados).</li>
+  <li><b>Cronogramas</b>: cada partida se reparte en partes iguales en sus días de trabajo; las compras de materiales se adelantan según su anticipación.</li>
+</ul>
+
+<h2 class="salto">4. Importar un expediente existente (S10, Excel, Word, MS Project)</h2>
+<p>Con <b>Importar</b> (o <b>Nuevo → Importar un expediente existente</b>) elija juntos los archivos del expediente:</p>
+<ul>
+  <li>Libro de presupuesto de S10 o Excel con las hojas de presupuesto (Item, Descripción, Unid., Cant., Precio, Total), precios unitarios por bloques (Partida, Rendimiento, Costo unitario, Código, Descripción, Unidad, Cuadrilla, Cantidad, Precio, Parcial), lista de insumos y gastos generales variables, fijos y financieros.</li>
+  <li>Planilla de metrados (.xlsx) con N.º veces, cantidad, factor, largo, ancho, alto, área y volumen.</li>
+  <li>Cronograma de MS Project guardado como <b>XML</b> (en MS Project: Archivo → Guardar como → Formato XML). El .mpp no se puede leer directamente.</li>
+  <li>Especificaciones técnicas en Word (.docx): se conserva la redacción de cada partida y de las especificaciones generales.</li>
+</ul>
+<p>El programa recalcula todo, compara el costo directo, los gastos generales, la utilidad, el subtotal y el plazo con los del original, y anota cada inconsistencia de formato y de cálculo (unidades o descripciones distintas entre documentos, jornadas mezcladas, códigos con dos precios, vínculos a otros libros, hojas ocultas, referencias rotas, espesores distintos entre EETT y presupuesto, partidas sin actividad en el cronograma, etc.). Las observaciones se revisan en <b>Validación</b> y se descargan como <b>Informe de revisión del expediente</b> (Word).</p>
+
+<h2>4.1 Cargar un expediente desde la plantilla de carga</h2>
+<p>La plantilla es la forma más rápida de cargar un TdR completo. Use <b>Plantilla_de_carga_en_blanco.xlsx</b> (o expórtela desde Exportar → Plantilla de carga) y luego <b>Abrir</b> → elija el .xlsx.</p>
+<table>
+  <tr><th style="width:18%">Hoja</th><th>Contenido</th></tr>
+  <tr><td>PROYECTO</td><td>Datos generales y textos de la memoria (no edite la columna “clave”).</td></tr>
+  <tr><td>TDR</td><td>Entregable exigido, documento (presupuesto_resumen, apu, eett, memoria, externo…), obligatorio Sí/No, observación.</td></tr>
+  <tr><td>INSUMOS</td><td>Código, descripción, unidad, tipo (MO, MAT, EQ, SC), precio sin IGV, IU (2 dígitos), peso kg, días de compra, fuente.</td></tr>
+  <tr><td>PARTIDAS</td><td>Código jerárquico (01, 01.01…), descripción, unidad, Título Sí/No, plantilla EETT (opcional), rendimiento, cuadrillas, duración fija, predecesoras como <code>01.02FC; 03.01CC+2</code>.</td></tr>
+  <tr><td>APU</td><td>Un renglón por insumo: código de partida, código de insumo, cuadrilla (MO y EQ) o cantidad (materiales) o porcentaje (%MO).</td></tr>
+  <tr><td>METRADOS</td><td>Código de partida, descripción, referencia (plano), N.º veces, cantidad, factor, largo, ancho, alto, área CAD y volumen CAD.</td></tr>
+  <tr><td>GG</td><td>Grupo variable, fijo o financiero, rubro, descripción, unidad (mes, glb, und o %CD), cantidad, duración, precio, % de participación, ligado al plazo Sí/No.</td></tr>
+</table>
+
+<h2>4.2 Formato compacto (archivo de texto)</h2>
+<p>Alternativa liviana a la plantilla Excel: todo el proyecto en un archivo <code>.exp.txt</code> que se escribe con cualquier editor (Bloc de notas, VS Code). Cada partida ocupa una línea con su unidad, rendimiento, recursos del APU, metrado y predecesoras; los detalles de metrado van debajo con un guion. Parte del catálogo base de insumos y de la plantilla de GG, así que solo se escribe lo que cambia, y puede tomar APU de la biblioteca (<code>apu=@trazo</code>) o copiar el de otra partida (<code>apu=02.01</code>).</p>
+<span class="cmd">01.02 Trazo, nivelación y replanteo | m2 | apu=@trazo | m=1250
+02.01 Excavación manual de zanja | m3 | r=3.5 | MO01 0.1, MO04 1, EQ01 3%
+  - Canal tramo A | l=320 a=0.6 h=0.5 | ref=Plano H-01</span>
+<p>Se abre con <b>Importar</b> como proyecto nuevo, y cualquier proyecto se guarda en este formato con <b>Exportar › Formato compacto</b>. La referencia completa está en <code>Plantillas/Formato_compacto.txt</code> y hay un ejemplo en <code>Plantillas/Ejemplo_compacto.exp.txt</code>.</p>
+
+<h2>5. Actualizar precios (Revista Costos, cotizaciones)</h2>
+<p>En <b>Insumos → Importar precios</b> elija un Excel o CSV con una fila de encabezados que contenga al menos <b>Código</b> y <b>Precio</b> (opcionales: Descripción, Unidad, Tipo, IU). Los códigos existentes actualizan su precio y su fuente; los nuevos se agregan al catálogo.</p>
+<div class="nota">Los precios del catálogo base y del ejemplo son <b>referenciales de demostración</b>. Los jornales de mano de obra usan los básicos 2026 del convenio de construcción civil (operario S/ 89.30, oficial S/ 69.75, peón S/ 62.80); BUC, leyes sociales y movilidad son parámetros que debe contrastar con la Revista Costos o la tabla CAPECO vigente antes de ofertar.</div>
+
+<h2>6. Las 15 reglas de consistencia</h2>
+<table>
+  <tr><th style="width:5%">N°</th><th style="width:30%">Control</th><th>Qué verifica</th></tr>
+  <tr><td>1</td><td>Detallado vs resumen</td><td>Suma de partidas = costo directo; jerarquía de códigos correcta.</td></tr>
+  <tr><td>2</td><td>APU vs precio unitario</td><td>Cada precio unitario es la suma exacta de su APU.</td></tr>
+  <tr><td>3</td><td>Completitud</td><td>Cada partida tiene metrado con sustento, APU, EETT y actividad en el programa.</td></tr>
+  <tr><td>4</td><td>Catálogo único</td><td>Sin insumos duplicados, inexistentes o sin precio.</td></tr>
+  <tr><td>5</td><td>Insumos vs costo directo</td><td>La relación de insumos suma el costo directo (salvo redondeo).</td></tr>
+  <tr><td>6</td><td>Valorizado</td><td>Suma el costo directo y llega al 100 %.</td></tr>
+  <tr><td>7</td><td>Plazo único</td><td>Los gastos variables usan el plazo del programa.</td></tr>
+  <tr><td>8</td><td>Adquisiciones</td><td>Las compras cuadran con la relación de insumos y ocurren antes del uso.</td></tr>
+  <tr><td>9</td><td>Personal</td><td>Horas-hombre del histograma = horas-hombre de los APU; pico vs máximo indicado.</td></tr>
+  <tr><td>10</td><td>Fórmula polinómica</td><td>Máximo 8 monomios, cada uno ≥ 0.050, hasta 3 índices, suma 1.000.</td></tr>
+  <tr><td>11</td><td>Pie de presupuesto</td><td>Cuadra y usa el desagregado de gastos generales; fecha de precios definida.</td></tr>
+  <tr><td>12</td><td>Unidades</td><td>Cada partida tiene unidad válida, la misma del metrado y de la EETT.</td></tr>
+  <tr><td>13</td><td>Memoria</td><td>No hay cifras escritas a mano que contradigan el monto o el plazo.</td></tr>
+  <tr><td>14</td><td>Precedencias</td><td>Sin ciclos; actividades encadenadas.</td></tr>
+  <tr><td>15</td><td>Cumplimiento del TdR</td><td>Cada entregable exigido está cubierto por un documento.</td></tr>
+</table>
+
+<h2 class="salto">7. Entregables que genera</h2>
+<table>
+  <tr><th style="width:40%">Archivo</th><th>Contenido</th></tr>
+  <tr><td>…_Presupuesto_y_cronogramas.xlsx</td><td><b>Libro con fórmulas vinculadas</b>: Datos (parámetros con nombre: JORNADA, UTILIDAD, IGV, PLAZO_MESES…), resumen y resumen de costos por tipo de insumo, presupuesto, APU en formato estándar, relación y cotización de insumos, planilla y resumen de metrados, gastos generales variables, fijos y financieros, fórmula polinómica, flete, cronograma con Gantt, valorizado, calendarios de adquisiciones, equipos y personal, desembolsos, distribución por periodos y controles. Al cambiar un metrado, un rendimiento, una cuadrilla, un precio, un porcentaje, la fecha de inicio, los días no laborables o los feriados se recalcula todo, incluido el cronograma: duraciones, fechas de inicio y fin por predecesoras (FC, CC, FF con desfase), ruta crítica, plazo, gastos generales ligados al plazo, distribución por periodos, valorizado, calendarios y desembolsos; texto azul = dato editable, negro = fórmula, verde = vínculo a otra hoja.</td></tr>
+  <tr><td>…_Especificaciones_tecnicas.docx</td><td>Carátula, control del documento, aviso, tabla de contenido con páginas, especificaciones generales y una EETT por partida (descripción, mano de obra, materiales, equipo y herramientas, procedimiento constructivo, aceptación, medición y pago), numerada con el ítem del presupuesto.</td></tr>
+  <tr><td>…_Memoria_descriptiva.docx</td><td>Generalidades, ubicación, alcance, componentes, metas, presupuesto con monto en letras, plazo y fórmula.</td></tr>
+  <tr><td>…_Carta_de_presentacion.docx</td><td>Solo en cotización privada: monto, plazo, validez y condiciones.</td></tr>
+  <tr><td>…_Matriz_cumplimiento_TdR.docx</td><td>Entregable exigido → documento → estado.</td></tr>
+  <tr><td>…_Reporte_de_consistencia.docx</td><td>Resultado de las 15 reglas.</td></tr>
+  <tr><td>…_Programa_MSProject.xml</td><td>Se abre en MS Project (Archivo → Abrir → XML).</td></tr>
+  <tr><td>…_Informe_de_revision_del_expediente.docx</td><td>Solo en proyectos importados: comparación de cifras y observaciones por documento.</td></tr>
+  <tr><td>…_Expediente_consolidado.pdf</td><td>Carátula, control del documento, índice, encabezado con logos y cuadro de datos del proyecto en cada reporte, secciones elegidas, tablas anchas en horizontal y foliación ascendente o descendente.</td></tr>
+  <tr><td>….expediente.json</td><td>El proyecto, para volver a abrirlo.</td></tr>
+</table>
+
+<h2>8. Línea de comandos (opcional)</h2>
+<p>Con Node.js 18 o superior instalado, la carpeta <b>Linea_de_comandos</b> permite generar todo sin abrir el navegador:</p>
+<span class="cmd">node expediente.cjs generar mi_proyecto.expediente.json --salida entregables --zip
+node expediente.cjs generar Plantilla_llena.xlsx --salida entregables
+node expediente.cjs validar mi_proyecto.expediente.json
+node expediente.cjs plantilla --salida Plantilla.xlsx
+node expediente.cjs importar Ppto.xlsx Metrados.xlsx cronograma.xml EETT.docx --config datos.json --salida proyecto.json --generar entregables
+node expediente.cjs cargar proyecto.exp.txt --generar entregables --zip
+node expediente.cjs compacto proyecto.expediente.json
+node expediente.cjs catalogo</span>
+<p>El archivo <code>--config</code> es un .json opcional con los datos de la configuración general (meta, entidades con logos como ruta de imagen, responsables y documento); vea el de la carpeta del expediente Tincocancha.</p>
+
+<h2>9. Paso final: de un TdR a los entregables</h2>
+<ol>
+  <li>Comparta el TdR (y, si los tiene, planos, metrados y cotizaciones).</li>
+  <li>Se escribe el proyecto en formato compacto (partidas, metrados, APU, insumos, gastos generales, programa y entregables del TdR); es la vía más corta y la que menos recursos consume.</li>
+  <li>Se ejecuta el programa: valida las 15 reglas y genera el ZIP de entregables.</li>
+  <li>Usted abre el archivo <code>.expediente.json</code> o la plantilla en Expediente Pro, revisa y ajusta precios, rendimientos y metrados, y vuelve a exportar.</li>
+</ol>
+
+<h2>10. Límites conocidos</h2>
+<ul>
+  <li>Una fórmula polinómica por obra (el reglamento permite hasta cuatro); para más, divida la obra en proyectos.</li>
+  <li>No lee archivos nativos de S10 (.S2K) ni de PowerCost (.prs) ni el .mpp de MS Project: exporte el presupuesto a Excel y el cronograma a XML, e impórtelos.</li>
+  <li>En el Excel, las predecesoras y la cantidad de periodos se fijan al exportar. Si al editar el libro el plazo crece, lo que excede el último periodo se acumula en él y el Gantt tiene un margen de 25 %; para agregar periodos o cambiar predecesoras, hágalo en el programa y vuelva a exportar.</li>
+  <li>El expediente lo firma un ingeniero colegiado; el programa no reemplaza la revisión profesional de metrados, precios y especificaciones.</li>
+  <li>Los datos guardados en el navegador se pierden si se borran los datos del sitio: guarde siempre su archivo .json.</li>
+</ul>
+</body>
+</html>

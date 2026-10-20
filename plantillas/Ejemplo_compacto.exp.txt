@@ -1,0 +1,65 @@
+; Expediente Pro – formato compacto (ejemplo). Líneas con ";" son comentarios.
+; Decimales con punto. Recursos separados por coma: CÓDIGO cuadrilla (hh/hm), CÓDIGO cantidad, CÓDIGO =cantidad fija, CÓDIGO n%.
+; Códigos disponibles:  node expediente.cjs catalogo
+
+# proyecto
+nombre: Construcción de canal de coronación y cuneta de drenaje – Depósito D-2
+codigo: P-0207
+modo: privado
+ubicacion: Unidad Minera Ejemplo, Yauli, Junín
+departamento: Junín
+provincia: Yauli
+fechaBase: 2026-10-01
+inicio: 2026-11-09
+jornada: 8
+utilidad: 10
+igv: 18
+incluirIgv: si
+encadenar: si
+proyectista: Consultora Ejemplo S.A.C.
+cliente: Compañía Minera Ejemplo S.A.A.
+entidades.cliente.ruc: 20000000002
+elaboro: Ing. Ana Quispe
+documento.codigo: 26107
+; entidades.proyectista.logo: logos/proyectista.png
+
+# insumos
+; código | descripción | unidad | precio | tipo | IU | kg/und | fuente
+MA05 | | | 34.50
+MA40 | Tubería PVC-SAP 4" x 6 m | und | 68.00 | | | 9.2 | Cotización Ferretería Andina 2026-10-05
+
+# partidas
+01 OBRAS PROVISIONALES
+01.01 Movilización y desmovilización | glb | apu=@movilizacion
+01.02 Trazo, nivelación y replanteo | m2 | apu=@trazo | m=1250
+02 MOVIMIENTO DE TIERRAS
+02.01 Excavación manual de zanja en material suelto | m3 | r=3.5 | MO01 0.1, MO04 1, EQ01 3%
+  - Canal de coronación tramo A | l=320 a=0.6 h=0.5 | ref=Plano H-01
+  - Canal de coronación tramo B | l=180 a=0.6 h=0.5 | ref=Plano H-02
+02.02 Eliminación de material excedente | m3 | apu=@eliminacion
+  - Esponjamiento de 02.01 | c=150 f=1.25
+03 OBRAS DE CONCRETO
+03.01 Concreto f'c=175 kg/cm2 en canal | m3 | apu=@concreto175 | pred=02.01 CC+3
+  - Losa y muros | l=500 c=0.18
+03.02 Tubería de descarga PVC 4" | m | r=40 | MO02 1, MO04 1, MA40 =0.1667, EQ01 3% | m=36
+03.03 Encofrado y desencofrado | m2 | apu=@encofrado | m=420
+
+# gg
+; grupo | rubro | descripción | unidad | cantidad | duración (n o plazo) | precio | participación %
+; "plazo" liga la duración al plazo de obra en meses. "# gg+" agrega a la plantilla estándar en vez de reemplazarla.
+variable | Personal técnico | Residente de obra | mes | 1 | plazo | 11000 | 50
+variable | Personal técnico | Prevencionista SSOMA | mes | 1 | plazo | 6500 | 50
+variable | Equipos y servicios | Camioneta 4x4 con conductor | mes | 1 | plazo | 6500 | 30
+fijo | Propuesta y contrato | Gastos de elaboración de propuesta | glb | 1 | 1 | 1500
+financiero | Garantías | Costo financiero de carta fianza | %CD | 0.02917 | 1 | 0
+fijo | Calidad | Ensayos de resistencia de concreto | und | 12 | 1 | 45
+
+# tdr
+titulo: Expediente de canal de coronación D-2
+- Presupuesto resumen | presupuesto_resumen
+- Análisis de precios unitarios | apu
+- Cronograma valorizado | valorizado
+- Memoria descriptiva | memoria | opcional
+
+# memoria.objetivo
+Captar la escorrentía superficial aguas arriba del depósito D-2 y conducirla a la quebrada natural.

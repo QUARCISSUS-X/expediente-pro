@@ -1,0 +1,256 @@
+// Almacén local de proyectos (IndexedDB del navegador, con respaldo en localStorage).
+// Cada proyecto se guarda por separado con su información general, costos, metrados, cronogramas y documentos.
+import type { Proyecto, Resultados } from '../engine/types';
+import { migrarProyecto } from '../io/migrar';
+
+export interface ResumenProyecto {
+  nombre: string;
+  codigo: string;
+  cliente: string;
+  proyectista: string;
+  modo: 'privado' | 'publico';
+  moneda: string;
+  total: number;
+  costoDirecto: number;
+  plazoDias: number;
+  partidas: number;
+  errores: number;
+  advertencias: number;
+}
+
+export interface RegistroProyecto {
+  id: string;
+  creado: string; // ISO
+  actualizado: string; // ISO
+  archivado: boolean;
+  resumen: ResumenProyecto;
+  proyecto: Proyecto;
+}
+
+export interface Respaldo {
+  formato: 'expediente-pro-respaldo';
+  version: 1;
+  fecha: string;
+  proyectos: RegistroProyecto[];
+}
+
+const DB = 'expediente-pro';
+const STORE = 'proyectos';
+const CLAVE_ULTIMO = 'expediente-pro:ultimo';
+const CLAVE_V1 = 'expediente-pro:proyecto';
+const PREFIJO_LS = 'expediente-pro:p:';
+
+export const nuevoId = () => `prj-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+
+export function resumir(p: Proyecto, r?: Resultados): ResumenProyecto {
+  return {
+    nombre: p.meta.nombre || 'Proyecto sin nombre',
+    codigo: p.meta.codigo || '',
+    cliente: p.entidades?.cliente?.nombre || '',
+    proyectista: p.entidades?.proyectista?.nombre || '',
+    modo: p.meta.modo,
+    moneda: p.meta.moneda,
+    total: r?.pie.total ?? 0,
+    costoDirecto: r?.pie.costoDirecto ?? 0,
+    plazoDias: r?.programa.plazoDias ?? 0,
+    partidas: p.partidas.filter((x) => !x.titulo).length,
+    errores: r?.resumenValidacion.errores ?? 0,
+    advertencias: r?.resumenValidacion.advertencias ?? 0,
+  };
+}
+
+// ------------------------------------------------------------ IndexedDB
+
+let dbPromesa: Promise<IDBDatabase | null> | null = null;
+
+function abrirDb(): Promise<IDBDatabase | null> {
+  if (dbPromesa) return dbPromesa;
+  dbPromesa = new Promise((resolve) => {
+    try {
+      if (typeof indexedDB === 'undefined') return resolve(null);
+      const req = indexedDB.open(DB, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+      req.onblocked = () => resolve(null);
+    } catch {
+      resolve(null);
+    }
+  });
+  return dbPromesa;
+}
+
+function tx<T>(db: IDBDatabase, modo: IDBTransactionMode, f: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = db.transaction(STORE, modo);
+    const req = f(t.objectStore(STORE));
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ------------------------------------------------------------ respaldo en localStorage
+
+function lsListar(): RegistroProyecto[] {
+  const out: RegistroProyecto[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k?.startsWith(PREFIJO_LS)) continue;
+      const t = localStorage.getItem(k);
+      if (t) out.push(JSON.parse(t));
+    }
+  } catch {
+    /* sin almacenamiento */
+  }
+  return out;
+}
+
+// ------------------------------------------------------------ API
+
+export async function modoAlmacen(): Promise<'indexeddb' | 'localstorage'> {
+  return (await abrirDb()) ? 'indexeddb' : 'localstorage';
+}
+
+export async function listarProyectos(): Promise<RegistroProyecto[]> {
+  const db = await abrirDb();
+  const lista = db ? await tx<RegistroProyecto[]>(db, 'readonly', (s) => s.getAll() as IDBRequest<RegistroProyecto[]>) : lsListar();
+  return lista.sort((a, b) => b.actualizado.localeCompare(a.actualizado));
+}
+
+export async function leerProyecto(id: string): Promise<RegistroProyecto | null> {
+  const db = await abrirDb();
+  if (db) {
+    const r = await tx<RegistroProyecto | undefined>(db, 'readonly', (s) => s.get(id) as IDBRequest<RegistroProyecto | undefined>);
+    return r ? { ...r, proyecto: migrarProyecto(r.proyecto) } : null;
+  }
+  try {
+    const t = localStorage.getItem(PREFIJO_LS + id);
+    if (!t) return null;
+    const r = JSON.parse(t) as RegistroProyecto;
+    return { ...r, proyecto: migrarProyecto(r.proyecto) };
+  } catch {
+    return null;
+  }
+}
+
+export async function guardarRegistro(reg: RegistroProyecto): Promise<void> {
+  const db = await abrirDb();
+  if (db) {
+    await tx(db, 'readwrite', (s) => s.put(reg));
+    return;
+  }
+  localStorage.setItem(PREFIJO_LS + reg.id, JSON.stringify(reg));
+}
+
+export async function guardarProyecto(id: string, p: Proyecto, r?: Resultados, extra: Partial<RegistroProyecto> = {}): Promise<RegistroProyecto> {
+  const previo = await leerSinMigrar(id);
+  const ahora = new Date().toISOString();
+  const reg: RegistroProyecto = {
+    id,
+    creado: previo?.creado ?? ahora,
+    actualizado: ahora,
+    archivado: previo?.archivado ?? false,
+    resumen: resumir(p, r),
+    proyecto: p,
+    ...extra,
+  };
+  await guardarRegistro(reg);
+  return reg;
+}
+
+async function leerSinMigrar(id: string): Promise<RegistroProyecto | null> {
+  const db = await abrirDb();
+  if (db) return (await tx<RegistroProyecto | undefined>(db, 'readonly', (s) => s.get(id) as IDBRequest<RegistroProyecto | undefined>)) ?? null;
+  try {
+    const t = localStorage.getItem(PREFIJO_LS + id);
+    return t ? JSON.parse(t) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function crearProyecto(p: Proyecto, r?: Resultados): Promise<RegistroProyecto> {
+  return guardarProyecto(nuevoId(), p, r);
+}
+
+export async function duplicarProyecto(id: string): Promise<RegistroProyecto | null> {
+  const r = await leerProyecto(id);
+  if (!r) return null;
+  const copia: Proyecto = JSON.parse(JSON.stringify(r.proyecto));
+  copia.meta.nombre = `${copia.meta.nombre} (copia)`;
+  const ahora = new Date().toISOString();
+  const reg: RegistroProyecto = { id: nuevoId(), creado: ahora, actualizado: ahora, archivado: false, resumen: { ...r.resumen, nombre: copia.meta.nombre }, proyecto: copia };
+  await guardarRegistro(reg);
+  return reg;
+}
+
+export async function archivarProyecto(id: string, archivado: boolean): Promise<void> {
+  const r = await leerSinMigrar(id);
+  if (!r) return;
+  await guardarRegistro({ ...r, archivado });
+}
+
+export async function eliminarProyecto(id: string): Promise<void> {
+  const db = await abrirDb();
+  if (db) await tx(db, 'readwrite', (s) => s.delete(id));
+  else localStorage.removeItem(PREFIJO_LS + id);
+  if (ultimoAbierto() === id) recordarUltimo(null);
+}
+
+export function ultimoAbierto(): string | null {
+  try {
+    return localStorage.getItem(CLAVE_ULTIMO);
+  } catch {
+    return null;
+  }
+}
+
+export function recordarUltimo(id: string | null) {
+  try {
+    if (id) localStorage.setItem(CLAVE_ULTIMO, id);
+    else localStorage.removeItem(CLAVE_ULTIMO);
+  } catch {
+    /* sin almacenamiento */
+  }
+}
+
+/** Proyecto guardado por la versión 1 (un solo proyecto en localStorage). */
+export function proyectoV1(): Proyecto | null {
+  try {
+    const t = localStorage.getItem(CLAVE_V1);
+    return t ? migrarProyecto(JSON.parse(t)) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function olvidarV1() {
+  try {
+    localStorage.removeItem(CLAVE_V1);
+  } catch {
+    /* sin almacenamiento */
+  }
+}
+
+export async function respaldoCompleto(): Promise<Respaldo> {
+  const db = await abrirDb();
+  const lista = db ? await tx<RegistroProyecto[]>(db, 'readonly', (s) => s.getAll() as IDBRequest<RegistroProyecto[]>) : lsListar();
+  return { formato: 'expediente-pro-respaldo', version: 1, fecha: new Date().toISOString(), proyectos: lista };
+}
+
+/** Restaura un respaldo: los proyectos con un id ya existente se agregan como copia. */
+export async function restaurarRespaldo(r: Respaldo): Promise<number> {
+  if (r?.formato !== 'expediente-pro-respaldo' || !Array.isArray(r.proyectos)) throw new Error('El archivo no es un respaldo de Expediente Pro.');
+  const existentes = new Set((await listarProyectos()).map((x) => x.id));
+  let n = 0;
+  for (const reg of r.proyectos) {
+    const id = existentes.has(reg.id) ? nuevoId() : reg.id;
+    await guardarRegistro({ ...reg, id, proyecto: migrarProyecto(reg.proyecto) });
+    n++;
+  }
+  return n;
+}

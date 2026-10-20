@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-cli/
+*.log
+.DS_Store
+# Proyectos de clientes y entregables generados: fuera del repositorio
+*.expediente.json
+!src/**/*.expediente.json
+salida/
+entregables/

@@ -1,0 +1,62 @@
+EXPEDIENTE PRO – FORMATO COMPACTO (.exp.txt)
+============================================
+Un archivo de texto con todo el proyecto. Se abre con "Importar" en el programa o con
+  node expediente.cjs cargar proyecto.exp.txt --generar entregables --zip
+y se obtiene de cualquier proyecto con "Exportar > Formato compacto" o
+  node expediente.cjs compacto proyecto.expediente.json
+
+Reglas generales
+  - Secciones con "#". Comentarios con ";" o "//". Líneas en blanco se ignoran.
+  - Decimales con punto (12.5). Campos separados por "|". Recursos separados por ",".
+  - Se parte del catálogo base de insumos y de la plantilla estándar de GG:
+    no hace falta definir lo que ya existe. Lista de códigos:  node expediente.cjs catalogo
+
+# proyecto        clave: valor
+  nombre, codigo, descripcion, modo (privado/publico), ubicacion, departamento, provincia, distrito,
+  fechaBase, inicio, jornada, utilidad, igv, incluirIgv (si/no), moneda, monedaNombre, areaGeografica,
+  dias (1,2,3,4,5,6), feriados, flete, distancia, adelantoDirectoPct, validezOfertaDias, formaPago …
+  proyectista / cliente / propietario / elaboro / reviso / aprobo   (nombre)
+  entidades.cliente.ruc, responsables.reviso.colegiatura, documento.codigo, documento.revision …
+  entidades.proyectista.logo: ruta/logo.png      documento.imagenPortada: ruta/foto.jpg   (solo CLI)
+  encadenar: si    → cada partida sin pred= empieza al terminar la anterior (FC)
+
+# insumos         CÓDIGO | descripción | unidad | precio | tipo | IU | kg/und | fuente
+  Vacío = conservar el valor del catálogo.  "MA05 | | | 34.50" solo cambia el precio.
+  Tipo e IU se deducen si se omiten (hh → MO, hm o %MO → EQ, resto → MAT).
+
+# partidas
+  01 TÍTULO                                     (sin "|" = título)
+  01.01 Descripción | unidad | r=rend | recursos | m=metrado | pred=… | j=10 | cuad=2 | dur=5 | eett=clave
+  Recursos:  MO02 1      cuadrilla (insumos en hh o hm)
+             MA05 0.25   cantidad por unidad (materiales, subcontratos)
+             MO04 =0.08  cantidad fija aunque sea hh/hm
+             EQ01 3%     porcentaje de la mano de obra
+  apu=02.01       copia el APU de otra partida (se pueden agregar recursos y cambiar r=)
+  apu=@trazo      APU de la biblioteca de partidas tipo (descripción y unidad opcionales)
+  pred=02.01 FC+2; 01.03 CC     predecesoras (FC, CC, FF y desfase en días laborables)
+  m=25 o m=3*2.5*0.6            metrado simple; glb sin metrado = 1
+    - Detalle de metrado | n=2 c= f= l=3.5 a=0.4 h=0.6 ar= v= | ref=Plano E-01
+      (n veces · c cantidad · f factor · l largo · a ancho · h alto · ar área CAD · v volumen CAD;
+       parcial = producto de los campos llenos)
+
+# metrados        01.01 | descripción | n= l= a= h= … | ref=…     (alternativa a las líneas "-")
+
+# gg              grupo | rubro | descripción | unidad | cantidad | duración | precio | participación %
+  grupo: variable, fijo o financiero. duración "plazo" = plazo de obra en meses. unidad %CD para porcentajes.
+  "# gg" reemplaza la plantilla estándar; "# gg+" agrega a ella.
+
+# tdr
+  titulo: …
+  resumen: …
+  - Descripción del entregable | documento | opcional
+  documentos: presupuesto_resumen, presupuesto_detallado, apu, insumos, gg, metrados, polinomica, flete,
+  programa, valorizado, adquisiciones, equipos, personal, desembolsos, eett, memoria, carta, msproject,
+  consistencia, cumplimiento, externo
+
+Textos libres (todo hasta la siguiente "#")
+  # memoria.antecedentes / objetivo / alcance / descripcionTecnica / consideraciones
+  # textosEett.objetivo / alcance / normativa / definiciones / consideraciones
+  # tdr.resumen
+  # eett 02.01 metodo      (descripcion, manoObra, materiales, equipos, metodo, calidad, medicion, pago)
+
+Ejemplo completo: Ejemplo_compacto.exp.txt
