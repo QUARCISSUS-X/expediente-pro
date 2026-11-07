@@ -6,6 +6,7 @@ import {
   archivarProyecto, duplicarProyecto, eliminarProyecto, leerProyecto, listarProyectos, modoAlmacen, respaldoCompleto, restaurarRespaldo, type RegistroProyecto,
 } from '../almacen';
 import { Insignia, Modal, Pestanas } from '../componentes';
+import { escritorio } from '../escritorio';
 import { descargar, elegirArchivo, type Contexto } from '../estado';
 import { Icono } from '../iconos';
 
@@ -128,6 +129,7 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
                     <td>
                       <div className="fila-flex" style={{ gap: 4, flexWrap: 'nowrap' }}>
                         <button className="boton chico" disabled={actual} onClick={() => void ctx.abrirProyectoId(x.id)}>Abrir</button>
+                        {escritorio && !actual && <button className="boton chico" title="Abrir en una pestaña nueva" onClick={() => escritorio?.abrirEnPestanaNueva(x.id)}>Pestaña nueva</button>}
                         <button className="boton chico" title="Duplicar" onClick={async () => { const d = await duplicarProyecto(x.id); if (d) { ctx.avisar(`Copia creada: ${d.resumen.nombre}`); refrescar(); } }}><Icono n="duplicar" t={14} /></button>
                         <button className="boton chico" title={x.archivado ? 'Restaurar' : 'Archivar'} onClick={async () => { await archivarProyecto(x.id, !x.archivado); ctx.avisar(x.archivado ? 'Proyecto restaurado.' : 'Proyecto archivado.'); refrescar(); }}><Icono n={x.archivado ? 'restaurar' : 'archivar'} t={14} /></button>
                         <button className="boton chico" title="Exportar .json" onClick={() => void exportarUno(x.id)}><Icono n="exportar" t={14} /></button>
@@ -142,7 +144,7 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
         </div>
       )}
       <p className="pequeno" style={{ marginTop: 10 }}>
-        {lista?.length ?? 0} proyecto(s) · Almacenamiento: {modo === 'indexeddb' ? 'base de datos del navegador (IndexedDB)' : modo === 'localstorage' ? 'almacenamiento local limitado (localStorage); descargue respaldos con frecuencia' : '…'}. Borrar los datos del navegador borra los proyectos: guarde respaldos.
+        {lista?.length ?? 0} proyecto(s) · Almacenamiento: {modo === 'indexeddb' ? 'base de datos del navegador (IndexedDB)' : modo === 'localstorage' ? 'almacenamiento local limitado (localStorage); descargue respaldos con frecuencia' : '…'}. {escritorio ? 'Los proyectos de la app de escritorio son independientes de los del navegador: para pasarlos de uno a otro use Respaldo y Restaurar respaldo.' : 'Borrar los datos del navegador borra los proyectos: guarde respaldos.'}
       </p>
 
       {borrar && (
@@ -159,6 +161,7 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
                   await eliminarProyecto(id);
                   setBorrar(null);
                   ctx.avisar(`Proyecto eliminado: ${borrar.resumen.nombre}`);
+                  escritorio?.proyectoEliminado(id);
                   if (id === ctx.id) await ctx.trasEliminar(id);
                   refrescar();
                 }}

@@ -5,6 +5,7 @@ import { PARAMETROS_MO_2026, tarifasMO, type ParametrosMO } from '../data/manoOb
 import { fmt, redondear } from '../engine/util';
 import { agregarPartida } from './arbol';
 import { Campo, EntradaNumero, Modal } from './componentes';
+import { escritorio } from './escritorio';
 import type { Contexto } from './estado';
 
 export function Dialogos({ ctx, alNuevo }: { ctx: Contexto; alNuevo: (tipo: 'blanco' | 'ejemplo' | 'importar') => void }) {
@@ -289,6 +290,14 @@ function Atajos({ alCerrar }: { alCerrar: () => void }) {
     ['Enter / ↓ en una tabla', 'Pasar a la celda de abajo'],
     ['Esc', 'Cancelar la edición de una celda o cerrar una ventana'],
   ];
+  if (escritorio) filas.push(
+    ['Ctrl + T', 'App de escritorio: pestaña nueva (proyecto en blanco, ejemplo o guardado)'],
+    ['Ctrl + W', 'Cerrar la pestaña (el proyecto queda guardado)'],
+    ['Ctrl + Tab / Ctrl + Shift + Tab', 'Pestaña siguiente / anterior'],
+    ['Ctrl + 1 … Ctrl + 9', 'Ir a un módulo: panel, configuración, TdR, presupuesto, insumos, GG, polinómica, cronograma, valorizado'],
+    ['Ctrl + D / F7 / Ctrl + E', 'Documentos / Validación / Exportar'],
+    ['Ctrl + O', 'Importar archivos'],
+  );
   return (
     <Modal titulo="Atajos de teclado" alCerrar={alCerrar}>
       <div className="tabla-marco">

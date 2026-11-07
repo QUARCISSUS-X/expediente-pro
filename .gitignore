@@ -8,3 +8,4 @@ dist-cli/
 !src/**/*.expediente.json
 salida/
 entregables/
+release/
