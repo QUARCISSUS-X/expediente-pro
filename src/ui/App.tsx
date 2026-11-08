@@ -38,6 +38,10 @@ import { ModProyecto } from './modulos/Proyecto';
 import { ModProyectos } from './modulos/Proyectos';
 import { ModTdr } from './modulos/Tdr';
 import { ModValidacion } from './modulos/Validacion';
+import { ModControl } from './modulos/Control';
+import { ModLps } from './modulos/Lps';
+import { ModEjecucion } from './modulos/Ejecucion';
+import { ModSigma } from './modulos/Sigma';
 
 const NAV: { grupo: string; items: { id: ModuloId; texto: string; reglas: number[] }[] }[] = [
   {
@@ -62,6 +66,15 @@ const NAV: { grupo: string; items: { id: ModuloId; texto: string; reglas: number
     items: [
       { id: 'programa', texto: 'Cronograma de ejecución', reglas: [14] },
       { id: 'cronogramas', texto: 'Valorizado y calendarios', reglas: [6, 8, 9] },
+    ],
+  },
+  {
+    grupo: 'Control de obra',
+    items: [
+      { id: 'control', texto: 'Control y valor ganado', reglas: [] },
+      { id: 'lps', texto: 'Last Planner', reglas: [] },
+      { id: 'ejecucion', texto: 'Ejecución lean', reglas: [] },
+      { id: 'sigma', texto: 'Calidad Six Sigma', reglas: [] },
     ],
   },
   {
@@ -352,6 +365,10 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
     documentos: ModDocumentos,
     validacion: ModValidacion,
     exportar: ModExportar,
+    control: ModControl,
+    lps: ModLps,
+    ejecucion: ModEjecucion,
+    sigma: ModSigma,
   }[modulo];
 
   return (

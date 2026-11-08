@@ -24,6 +24,15 @@ entregables de una cotización o de un expediente técnico. Sin IA y sin conexi�
     npm run escritorio   # compila la web y abre la app de escritorio
     npm run app:win      # instalador y portable de Windows en release/ (en Linux requiere wine)
 
+## Versión 2.4 – control de obra
+Nuevo grupo «Control de obra» (web y escritorio; Alt+1…Alt+4 en la app). Todo se guarda dentro del proyecto y se exporta en un «Informe de control» en Excel de 18 hojas. Para conocerlo: Control y valor ganado → «Cargar datos de demostración».
+- **Control y valor ganado (PMBOK):** tablero de indicadores; línea base congelada; cortes de avance con metrado ejecutado y costo real; valor ganado (PV, EV, AC, SV, CV, SPI, CPI, EAC, ETC, VAC, TCPI, fin estimado) con curva S; valorizaciones mensuales con reajuste por fórmula polinómica (K con índices unificados), amortización de adelantos e IGV, limitadas al metrado contractual; adicionales, deductivos y ampliaciones con presupuesto y plazo vigentes; matriz de riesgos 5×5 con contingencia (se puede llevar a gastos generales); histograma semanal de horas-hombre y horas-máquina plan vs. real; cuaderno de obra, consultas (RFI), actas y ocurrencias con plazos.
+- **Last Planner System:** plan maestro e hitos (generados desde el cronograma), planificación por fases hacia atrás (pull), lookahead de 3 a 8 semanas con metrado semanal y estado de restricciones, análisis de restricciones, plan semanal con compromisos sugeridos, PPC y Pareto de causas de no cumplimiento.
+- **Ejecución lean:** frentes de trabajo, control de rendimientos (HH reales vs. APU, índice de productividad, rendimiento equivalente y desviación de mano de obra), carta balance y nivel general de actividad (TP/TC/TNC), registro de las 8 pérdidas con Pareto, inspecciones 5S y liberación de frentes.
+- **Calidad Six Sigma:** cartas de control I-MR (puntos fuera, rachas y tendencias) sobre rendimientos o ensayos, capacidad de proceso (Cp, Cpk, % fuera, DPMO, nivel sigma, histograma), Pareto de 7 fuentes, Ishikawa 6M y proyectos DMAIC con acciones y mejora.
+- Motor en `src/engine/control.ts` (probado en `tests/control.test.ts`), informe en `src/export/control.ts`, pantallas en `src/ui/modulos/{Control,Lps,Ejecucion,Sigma}.tsx`.
+- Próxima etapa: VDC / BIM (visor IFC, 5D y 4D).
+
 ## Versión 2.3 – app de escritorio
 - Programa de Windows (instalador `Expediente-Pro-Setup-2.3.0.exe` o `Expediente-Pro-Portable-2.3.0.exe`, sin instalar) con la misma interfaz de la web.
 - Pestañas de proyectos arriba, como un navegador: varios proyectos abiertos a la vez, botón + (proyecto en blanco, desde el ejemplo o guardado), cerrar con ×, clic central o Ctrl+W, reordenar arrastrando, Ctrl+Tab para cambiar y Ctrl+Shift+T para reabrir la última cerrada. Al volver a abrir el programa se restauran las pestañas.
