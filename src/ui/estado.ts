@@ -51,6 +51,20 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
 
   // autoguardado en el almacén del navegador
   const temporizador = useRef<number | undefined>(undefined);
+  const pendiente = useRef<{ id: string; actual: Proyecto; resultados: Resultados } | null>(null);
+  const escribir = useCallback(async () => {
+    const p = pendiente.current;
+    if (!p) return;
+    pendiente.current = null;
+    window.clearTimeout(temporizador.current);
+    try {
+      await guardarProyecto(p.id, p.actual, p.resultados);
+      setGuardadoLocal('guardado');
+      setVersion((v) => v + 1);
+    } catch {
+      setGuardadoLocal('error');
+    }
+  }, []);
   useEffect(() => {
     if (omitir.current) {
       omitir.current = false;
@@ -59,18 +73,15 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
     }
     setGuardadoLocal('pendiente');
     window.clearTimeout(temporizador.current);
-    const { id, actual } = h;
-    temporizador.current = window.setTimeout(() => {
-      guardarProyecto(id, actual, resultados)
-        .then(() => {
-          setGuardadoLocal('guardado');
-          setVersion((v) => v + 1);
-        })
-        .catch(() => setGuardadoLocal('error'));
-    }, 600);
-    return () => window.clearTimeout(temporizador.current);
+    pendiente.current = { id: h.id, actual: h.actual, resultados };
+    temporizador.current = window.setTimeout(() => void escribir(), 600);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [h.actual, h.id]);
+  // al desmontar (o cerrar la pestaña de escritorio) no se pierde el último cambio
+  useEffect(() => () => void escribir(), [escribir]);
+
+  /** Guarda de inmediato el cambio pendiente (sin esperar el autoguardado). */
+  const guardarAhora = escribir;
 
   // atajos Ctrl+Z / Ctrl+Y
   useEffect(() => {
@@ -96,6 +107,7 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
     puedeDeshacer: h.pasado.length > 0,
     puedeRehacer: h.futuro.length > 0,
     guardadoLocal,
+    guardarAhora,
     version,
   };
 }

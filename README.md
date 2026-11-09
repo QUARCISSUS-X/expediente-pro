@@ -10,6 +10,7 @@ entregables de una cotización o de un expediente técnico. Sin IA y sin conexi�
 - `src/data/` catálogo base, índices unificados INEI (base dic-2025), biblioteca de partidas, plantillas de EETT, proyecto de ejemplo.
 - `src/ui/` interfaz React (un solo archivo HTML al compilar): panel de proyectos (IndexedDB), configuración general con logos, barra de herramientas tipo S10.
 - `cli/` línea de comandos. `tests/` pruebas del motor (Vitest).
+- `electron/` app de escritorio para Windows: ventana con pestañas de proyectos, menú de módulos con atajos, ícono e instalador. La interfaz es la misma de la web (`dist/index.html`); `src/ui/escritorio.ts` la conecta con la ventana y en el navegador no hace nada.
 
 ## Comandos
     npm install
@@ -20,6 +21,16 @@ entregables de una cotización o de un expediente técnico. Sin IA y sin conexi�
     npm run cli:build    # genera dist-cli/expediente.cjs (CLI en un archivo)
     npm run cli -- cargar plantillas/Ejemplo_compacto.exp.txt --generar carpeta --zip
     npm run cli -- importar Ppto.xlsx Metrados.xlsx cronograma.xml EETT.docx --config datos.json --generar carpeta
+    npm run escritorio   # compila la web y abre la app de escritorio
+    npm run app:win      # instalador y portable de Windows en release/ (en Linux requiere wine)
+
+## Versión 2.3 – app de escritorio
+- Programa de Windows (instalador `Expediente-Pro-Setup-2.3.0.exe` o `Expediente-Pro-Portable-2.3.0.exe`, sin instalar) con la misma interfaz de la web.
+- Pestañas de proyectos arriba, como un navegador: varios proyectos abiertos a la vez, botón + (proyecto en blanco, desde el ejemplo o guardado), cerrar con ×, clic central o Ctrl+W, reordenar arrastrando, Ctrl+Tab para cambiar y Ctrl+Shift+T para reabrir la última cerrada. Al volver a abrir el programa se restauran las pestañas.
+- Un proyecto no se abre en dos pestañas a la vez; en el panel de proyectos aparece «Pestaña nueva» junto a «Abrir».
+- Menú de Windows: Archivo, Editar, Módulos (Ctrl+1…9, Ctrl+D Documentos, F7 Validación, Ctrl+E Exportar), Pestañas, Ver (zoom, pantalla completa) y Ayuda (atajos, guía de uso con F1).
+- Cada cambio se guarda en la propia app (también al cerrar una pestaña o el programa). Los proyectos de la app son independientes de los del navegador: se pasan con Respaldo / Restaurar respaldo.
+- Los archivos generados (Excel, Word, PDF, ZIP, MS Project) se guardan con el diálogo «Guardar como», en Descargas por defecto.
 
 ## Versión 2.2
 - Excel: el cronograma también es de fórmulas. Duración, inicio y fin por predecesoras (FC/CC/FF con desfase), holgura y ruta crítica, PLAZO_DIAS, distribución por periodos, valorizado, calendarios de compras/equipos/personal y desembolsos se recalculan al editar metrados, rendimientos, cuadrillas, precios, FECHA_INICIO, DIAS_NO_LAB o FERIADOS.

@@ -9,6 +9,7 @@ import { migrarProyecto } from '../io/migrar';
 import { accionesPartida, generarArchivo, NOMBRE_EXPORT, type TipoExport } from './acciones';
 import { crearProyecto, leerProyecto, listarProyectos, olvidarV1, proyectoV1, ultimoAbierto } from './almacen';
 import { Cinta } from './Cinta';
+import { escritorio, parametrosInicio, publicarApiPagina } from './escritorio';
 import { Marca } from './componentes';
 
 async function esPlantillaDeCarga(f: File): Promise<boolean> {
@@ -77,10 +78,22 @@ type ManejadorArchivo = { name: string; createWritable: () => Promise<{ write: (
 
 /** Carga el último proyecto abierto (o migra el de la versión 1, o crea el ejemplo) antes de mostrar la aplicación. */
 export function App() {
-  const [inicial, setInicial] = useState<{ id: string; proyecto: Proyecto } | null>(null);
+  const [inicial, setInicial] = useState<{ id: string; proyecto: Proyecto; modulo?: ModuloId } | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
+      // pestaña de la app de escritorio: proyecto indicado o proyecto nuevo
+      const ini = parametrosInicio();
+      if (ini.proyecto) {
+        const r = await leerProyecto(ini.proyecto);
+        if (r) return setInicial({ id: r.id, proyecto: r.proyecto });
+      }
+      if (ini.nuevo) {
+        const p = ini.nuevo === 'ejemplo' ? proyectoEjemplo() : proyectoEnBlanco();
+        const reg = await crearProyecto(p, calcularTodo(p));
+        if (history.replaceState) history.replaceState(null, '', `?proyecto=${encodeURIComponent(reg.id)}`);
+        return setInicial({ id: reg.id, proyecto: p, modulo: ini.nuevo === 'ejemplo' ? 'presupuesto' : 'proyecto' });
+      }
       const ult = ultimoAbierto();
       if (ult) {
         const r = await leerProyecto(ult);
@@ -107,10 +120,10 @@ export function App() {
   return <Aplicacion inicial={inicial} />;
 }
 
-function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto } }) {
+function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; modulo?: ModuloId } }) {
   const st = useProyecto(inicial);
   const { proyecto, resultados: r } = st;
-  const [modulo, setModulo] = useState<ModuloId>('presupuesto');
+  const [modulo, setModulo] = useState<ModuloId>(inicial.modulo ?? 'presupuesto');
   const [partidaSel, setPartidaSel] = useState<string | null>(null);
   const [toast, setToast] = useState<{ texto: string; error?: boolean } | null>(null);
   const [dialogo, abrirDialogo] = useState<Dialogo>(null);
@@ -137,6 +150,8 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto } }
   }, [st, avisar]);
 
   const abrirProyectoId = useCallback(async (id: string) => {
+    // en la app de escritorio, un proyecto abierto en otra pestaña no se abre dos veces
+    if (escritorio && (await escritorio.enfocarSiAbierto(id))) return;
     const reg = await leerProyecto(id);
     if (!reg) return avisar('No se encontró el proyecto.', true);
     abrirProyecto(reg.id, reg.proyecto, `Proyecto abierto: ${reg.resumen.nombre}`);
@@ -254,6 +269,33 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto } }
   const ctxRef = useRef(ctx);
   ctxRef.current = ctx;
 
+  // ---------------------------------------------------------- app de escritorio
+  const m0 = proyecto.meta;
+  useEffect(() => {
+    document.title = `${m0.codigo ? `${m0.codigo} · ` : ''}${m0.nombre || 'Proyecto'} — Expediente Pro`;
+    escritorio?.proyectoAbierto({ id: st.id, nombre: m0.nombre || 'Proyecto sin nombre', codigo: m0.codigo || '', guardando: st.guardadoLocal === 'pendiente' });
+    if (history.replaceState && new URLSearchParams(location.search).has('proyecto')) history.replaceState(null, '', `?proyecto=${encodeURIComponent(st.id)}`);
+  }, [st.id, m0.nombre, m0.codigo, st.guardadoLocal]);
+  useEffect(() => {
+    publicarApiPagina({
+      listar: async () => (await listarProyectos()).map((x) => ({ id: x.id, nombre: x.resumen.nombre, codigo: x.resumen.codigo, archivado: x.archivado, actualizado: x.actualizado })),
+      guardarYa: () => ctxRef.current.guardarAhora(),
+      comando: (c) => {
+      const x = ctxRef.current;
+      switch (c.tipo) {
+        case 'ir': return x.ir(c.modulo);
+        case 'guardar': return x.guardarArchivo();
+        case 'importar': return x.abrirArchivo();
+        case 'nuevo': return x.abrirDialogo('nuevo');
+        case 'buscar': return x.abrirDialogo('buscar');
+        case 'deshacer': return x.deshacer();
+        case 'rehacer': return x.rehacer();
+        case 'atajos': return x.abrirDialogo('atajos');
+      }
+      },
+    });
+  }, []);
+
   // ---------------------------------------------------------- atajos de teclado
   useEffect(() => {
     const f = (e: KeyboardEvent) => {
@@ -328,7 +370,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto } }
           ))}
         </select>
         <div className="acciones">
-          <span className="estado-guardado solo-escritorio" title="Los cambios se guardan solos en este navegador">
+          <span className="estado-guardado solo-escritorio" title={escritorio ? 'Los cambios se guardan solos en esta app' : 'Los cambios se guardan solos en este navegador'}>
             {st.guardadoLocal === 'guardado' ? 'Guardado' : st.guardadoLocal === 'pendiente' ? 'Guardando…' : 'Sin guardar'}
           </span>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('atajos')} title="Atajos de teclado" aria-label="Atajos de teclado">⌨</button>
@@ -355,7 +397,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto } }
           </div>
         ))}
         <div className="pequeno" style={{ padding: '18px 16px 0', lineHeight: 1.5 }}>
-          {st.guardadoLocal === 'error' ? 'No se pudo guardar en el navegador; use Guardar para descargar una copia.' : 'Cada cambio se guarda solo en el panel de proyectos de este navegador.'}
+          {st.guardadoLocal === 'error' ? 'No se pudo guardar en el navegador; use Guardar para descargar una copia.' : escritorio ? 'Cada cambio se guarda solo en el panel de proyectos de la app.' : 'Cada cambio se guarda solo en el panel de proyectos de este navegador.'}
         </div>
       </nav>
 

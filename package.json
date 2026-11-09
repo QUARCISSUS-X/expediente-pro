@@ -1,17 +1,20 @@
 {
   "name": "expediente-pro",
-  "version": "2.2.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.3.0",
+  "description": "Costos, presupuestos, cronogramas y documentos de expedientes y cotizaciones de obra (web y app de escritorio).",
+  "main": "electron/main.cjs",
   "scripts": {
     "test": "vitest run",
     "dev": "vite",
     "build": "vite build",
     "cli": "tsx cli/expediente.ts",
-    "cli:build": "esbuild cli/expediente.ts --bundle --platform=node --format=cjs --target=node18 --outfile=dist-cli/expediente.cjs"
+    "cli:build": "esbuild cli/expediente.ts --bundle --platform=node --format=cjs --target=node18 --outfile=dist-cli/expediente.cjs",
+    "escritorio": "vite build && electron .",
+    "escritorio:dev": "node -e \"process.env.EXPEDIENTE_URL='http://localhost:5173/';require('child_process').spawn(require('electron'),['.'],{stdio:'inherit',env:process.env})\"",
+    "app:win": "vite build && electron-builder --win nsis portable --x64"
   },
   "keywords": [],
-  "author": "",
+  "author": "Expediente Pro",
   "license": "ISC",
   "type": "module",
   "dependencies": {
@@ -30,11 +33,54 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
     "vite-plugin-singlefile": "^2.3.4",
     "vitest": "^5.0.5"
+  },
+  "build": {
+    "appId": "pe.expedientepro.app",
+    "productName": "Expediente Pro",
+    "copyright": "Expediente Pro",
+    "directories": {
+      "output": "release",
+      "buildResources": "electron"
+    },
+    "files": [
+      "electron/**",
+      "dist/index.html",
+      "docs/guia.html",
+      "package.json",
+      "!node_modules/**"
+    ],
+    "asar": true,
+    "win": {
+      "icon": "electron/icono.png",
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "${productName}-${version}-${arch}-${target}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Expediente Pro",
+      "installerLanguages": [
+        "es_ES"
+      ],
+      "language": "3082",
+      "artifactName": "Expediente-Pro-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Expediente-Pro-Portable-${version}.${ext}"
+    }
   }
 }

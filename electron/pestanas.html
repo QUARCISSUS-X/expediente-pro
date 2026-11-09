@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Expediente Pro</title>
+<style>
+  :root {
+    --fondo: #161b1e;
+    --pestana: #1d2326;
+    --pestana-hover: #262e32;
+    --activa: #20262a;
+    --texto: #9eaaa7;
+    --texto-activa: #eef1ed;
+    --acento: #7fb3a8;
+    --guardando: #d9a441;
+    --alto: 38px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--fondo); overflow: hidden; }
+  body { font: 12.5px/1 'Segoe UI', system-ui, sans-serif; color: var(--texto); user-select: none; }
+  .tira { display: flex; align-items: flex-end; height: var(--alto); padding: 0 6px; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+  .tira::-webkit-scrollbar { display: none; }
+  .pestana {
+    position: relative; display: flex; align-items: center; gap: 7px;
+    flex: 0 1 230px; min-width: 84px; height: 32px; padding: 0 6px 0 11px;
+    background: var(--pestana); border-radius: 6px 6px 0 0; cursor: default; white-space: nowrap;
+    border-top: 2px solid transparent;
+  }
+  .pestana:hover { background: var(--pestana-hover); }
+  .pestana.activa { background: var(--activa); color: var(--texto-activa); border-top-color: var(--acento); height: 34px; }
+  .pestana.arrastrando { opacity: .45; }
+  .pestana.destino { box-shadow: inset 2px 0 0 var(--acento); }
+  .texto { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .codigo { color: var(--acento); font-weight: 600; margin-right: 5px; letter-spacing: .02em; }
+  .pestana:not(.activa) .codigo { opacity: .8; }
+  .punto { width: 7px; height: 7px; border-radius: 50%; background: var(--guardando); flex: none; }
+  .cerrar {
+    flex: none; width: 20px; height: 20px; border: 0; border-radius: 4px; padding: 0;
+    background: transparent; color: inherit; font: 15px/20px 'Segoe UI', sans-serif; opacity: .55; cursor: pointer;
+  }
+  .cerrar:hover { background: rgba(255,255,255,.12); opacity: 1; }
+  .nueva {
+    flex: none; align-self: center; width: 28px; height: 26px; margin-left: 4px; border: 0; border-radius: 5px;
+    background: transparent; color: var(--texto); font: 20px/26px 'Segoe UI', sans-serif; cursor: pointer;
+  }
+  .nueva:hover { background: var(--pestana-hover); color: var(--texto-activa); }
+  .resto { flex: 1 0 24px; align-self: stretch; }
+  button:focus-visible { outline: 2px solid var(--acento); outline-offset: -2px; }
+</style>
+</head>
+<body>
+<div class="tira" id="tira" role="tablist" aria-label="Proyectos abiertos"></div>
+<script>
+  const tira = document.getElementById('tira');
+  let estado = { activa: 0, pestanas: [] };
+  let arrastrada = null;
+
+  function pintar() {
+    tira.textContent = '';
+    estado.pestanas.forEach((p, i) => {
+      const el = document.createElement('div');
+      el.className = 'pestana' + (p.id === estado.activa ? ' activa' : '');
+      el.setAttribute('role', 'tab');
+      el.setAttribute('aria-selected', String(p.id === estado.activa));
+      el.title = (p.codigo ? p.codigo + ' · ' : '') + p.nombre + (p.guardando ? ' (guardando…)' : '');
+      el.draggable = true;
+
+      if (p.guardando) {
+        const d = document.createElement('span');
+        d.className = 'punto';
+        d.setAttribute('aria-label', 'Guardando');
+        el.appendChild(d);
+      }
+      const t = document.createElement('span');
+      t.className = 'texto';
+      if (p.codigo) {
+        const c = document.createElement('span');
+        c.className = 'codigo';
+        c.textContent = p.codigo;
+        t.appendChild(c);
+      }
+      t.appendChild(document.createTextNode(p.nombre));
+      el.appendChild(t);
+
+      const x = document.createElement('button');
+      x.className = 'cerrar';
+      x.textContent = '×';
+      x.title = 'Cerrar pestaña (Ctrl+W)';
+      x.setAttribute('aria-label', 'Cerrar ' + p.nombre);
+      x.addEventListener('click', (e) => { e.stopPropagation(); window.barra.cerrar(p.id); });
+      el.appendChild(x);
+
+      el.addEventListener('click', () => window.barra.seleccionar(p.id));
+      el.addEventListener('auxclick', (e) => { if (e.button === 1) { e.preventDefault(); window.barra.cerrar(p.id); } });
+      el.addEventListener('dragstart', (e) => { arrastrada = p.id; el.classList.add('arrastrando'); e.dataTransfer.effectAllowed = 'move'; });
+      el.addEventListener('dragend', () => { arrastrada = null; pintar(); });
+      el.addEventListener('dragover', (e) => { if (arrastrada === null) return; e.preventDefault(); el.classList.add('destino'); });
+      el.addEventListener('dragleave', () => el.classList.remove('destino'));
+      el.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (arrastrada !== null && arrastrada !== p.id) window.barra.mover(arrastrada, i);
+        arrastrada = null;
+      });
+      tira.appendChild(el);
+      if (p.id === estado.activa) requestAnimationFrame(() => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+    });
+
+    const mas = document.createElement('button');
+    mas.className = 'nueva';
+    mas.textContent = '+';
+    mas.title = 'Pestaña nueva (Ctrl+T)';
+    mas.setAttribute('aria-label', 'Pestaña nueva');
+    mas.addEventListener('click', () => {
+      const r = mas.getBoundingClientRect();
+      window.barra.nueva({ x: r.left, y: r.bottom });
+    });
+    tira.appendChild(mas);
+
+    const resto = document.createElement('div');
+    resto.className = 'resto';
+    resto.addEventListener('dblclick', () => {
+      const r = mas.getBoundingClientRect();
+      window.barra.nueva({ x: r.left, y: r.bottom });
+    });
+    resto.addEventListener('dragover', (e) => { if (arrastrada !== null) e.preventDefault(); });
+    resto.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (arrastrada !== null) window.barra.mover(arrastrada, estado.pestanas.length);
+      arrastrada = null;
+    });
+    tira.appendChild(resto);
+  }
+
+  tira.addEventListener('wheel', (e) => { tira.scrollLeft += e.deltaY || e.deltaX; }, { passive: true });
+  window.barra.alEstado((e) => { estado = e; pintar(); });
+  window.barra.pedirEstado();
+  pintar();
+</script>
+</body>
+</html>
