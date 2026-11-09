@@ -30,7 +30,7 @@ const nombrePartida = (r: Resultados, id: string) => {
 };
 
 export function tablaTablero(r: Resultados, c: Control): Tabla {
-  const t = calcularTablero(r, c, fechaAnalisis(c, hoyIso()), entradaSimulacion(r, c.riesgo, c.lineaBase).huella);
+  const t = calcularTablero(r, c, hoyIso(), entradaSimulacion(r, c.riesgo, c.lineaBase).huella);
   const s = t.cambios;
   const rg = r.programa.actividades.length ? riesgoActual(r, c) : null;
   const m = r.proyecto.meta.moneda;

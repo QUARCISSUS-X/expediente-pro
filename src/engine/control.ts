@@ -1300,7 +1300,7 @@ export function calcularTablero(r: Resultados, c: Control, hoy = hoyIso(), huell
   const evm = calcularEvm(r, c);
   const fiebre = c.lineaBase && c.cortes.length ? puntosFiebre(r, ccpmDePrograma(r, c.ccpm), c.lineaBase, c.cortes) : [];
   const ultF = fiebre[fiebre.length - 1];
-  const kb = resumenKanban(c, hoy);
+  const kb = resumenKanban(c, c.cortes.reduce((m, k) => (k.fecha > m ? k.fecha : m), '') || hoy); // logística al último corte
   const cal = resumenCalidad(c);
   const hayMetas = c.valor.costoPermitido !== null || c.valor.reduccionPct > 0 || Object.keys(c.valor.metas).length > 0;
   const metas = hayMetas ? calcularMetas(r, c.valor) : null;
@@ -1565,7 +1565,7 @@ export function controlDemostracion(r: Resultados): Control {
   for (const b of lb.partidas) {
     const ej = ejecutado[b.id] ?? 0;
     const ppi = ppiDe(b.id);
-    if (!ppi || ej <= 0) continue;
+    if (!ppi || ej <= 0 || b.unidad === 'glb') continue;
     const n = b.metrado > 0 && ej / b.metrado > 0.5 ? 2 : 1;
     for (let i = 0; i < n; i++) {
       np++;
@@ -1587,7 +1587,13 @@ export function controlDemostracion(r: Resultados): Control {
       });
     }
   }
-  const protNc = c.calidad.protocolos.find((x) => x.resultado === 'observado') ?? c.calidad.protocolos[0];
+  const descDe = (pid: string) => r.hojas.find((h) => h.partida.id === pid)?.partida.descripcion ?? '';
+  const protNc = c.calidad.protocolos.find((x) => /cobertura|relleno|suelo/i.test(descDe(x.partidaId))) ?? c.calidad.protocolos.find((x) => x.resultado === 'observado') ?? c.calidad.protocolos[0];
+  if (protNc) {
+    protNc.resultado = 'observado';
+    protNc.firmas = firmasPorDefecto();
+    protNc.observaciones = 'Se observa espesor menor al especificado en un sector; se repite la medición.';
+  }
   if (protNc) {
     c.calidad.pnc.push({
       id: uid('pnc'),
@@ -1611,7 +1617,7 @@ export function controlDemostracion(r: Resultados): Control {
       estado: 'tratamiento',
       dmaicId: '',
     });
-    const otro = c.calidad.protocolos.find((x) => x.id !== protNc.id && x.partidaId !== protNc.partidaId);
+    const otro = c.calidad.protocolos.find((x) => x.partidaId !== protNc.partidaId && /geotextil|geomembrana/i.test(descDe(x.partidaId))) ?? c.calidad.protocolos.find((x) => x.partidaId !== protNc.partidaId);
     if (otro)
       c.calidad.pnc.push({
         id: uid('pnc'),

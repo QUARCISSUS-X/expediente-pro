@@ -87,7 +87,7 @@ export function tarjetasDesdeCronograma(r: Resultados): TarjetaKanban[] {
         fechaNecesaria: a.inicio,
         fechaPedido: sumarDias(a.inicio, -anticipacion(r, it.insumo.codigo)),
         estado: 'por_pedir',
-        proveedor: it.insumo.fuente ?? '',
+        proveedor: '',
         ordenCompra: '',
         nota: '',
         restriccionId: '',
