@@ -126,6 +126,19 @@ function Capacidad({ ctx }: { ctx: Contexto }) {
               <Campo etiqueta="Límite inferior (LEI)"><EntradaNumero valor={sel.lei} decimales={3} alCambiar={(v) => editar((x) => { x.lei = v; })} /></Campo>
               <Campo etiqueta="Límite superior (LES)"><EntradaNumero valor={sel.les} decimales={3} alCambiar={(v) => editar((x) => { x.les = v; })} /></Campo>
               <Campo etiqueta="Valor objetivo"><EntradaNumero valor={sel.objetivo} decimales={3} alCambiar={(v) => editar((x) => { x.objetivo = v; })} /></Campo>
+              <Campo etiqueta="Punto de inspección (ISO 9001)" className="ancho-2">
+                <select
+                  value={c.calidad.puntos.find((p) => p.serieId === sel.id)?.id ?? ''}
+                  onChange={(e) => mut((d) => {
+                    for (const p of d.calidad.puntos) if (p.serieId === sel.id) p.serieId = '';
+                    const p = d.calidad.puntos.find((q) => q.id === e.target.value);
+                    if (p) p.serieId = sel.id;
+                  })}
+                >
+                  <option value="">— Sin enlazar —</option>
+                  {c.calidad.puntos.map((p) => <option key={p.id} value={p.id}>{r.hojas.find((h) => h.partida.id === p.partidaId)?.partida.codigo ?? ''} {p.control}</option>)}
+                </select>
+              </Campo>
             </div>
             <Campo etiqueta={`Resultados (${sel.valores.length}) — uno por línea o separados por espacios`}>
               <AreaTexto filas={9} valor={sel.valores.join('\n')} alCambiar={(v) => editar((x) => { x.valores = leerValores(v); })} />

@@ -589,3 +589,20 @@ export function definicionPdf(r: Resultados, op: OpcionesPdf = {}): TDocumentDef
     },
   };
 }
+
+/** PDF con portada y una sección por tabla (por ejemplo, el dossier de calidad). Usa el mismo marco del expediente. */
+export function definicionPdfTablas(r: Resultados, titulo: string, tablas: Tabla[]): TDocumentDefinitions {
+  const d = definicionPdf(r, { secciones: [] });
+  const c = datosCabecera(r.proyecto);
+  const contenido: Content[] = [...caratula(r, c, titulo)];
+  for (const t of tablas) {
+    const h = !!t.horizontal || t.cabecera.length > 7;
+    contenido.push({ text: t.titulo.toUpperCase(), style: 'seccion', pageBreak: 'before', pageOrientation: h ? 'landscape' : 'portrait' } as Content);
+    contenido.push(cajetin(c, h ? W_H : W_V, t.subtitulo));
+    contenido.push(...(h ? tablaAncha(t) : [tablaPdf(t, false)]));
+  }
+  d.content = contenido;
+  d.images = Object.fromEntries([...IMAGENES.entries()].map(([url, k]) => [k, url]));
+  d.info = { ...d.info, subject: titulo };
+  return d;
+}

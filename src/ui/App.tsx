@@ -42,6 +42,11 @@ import { ModControl } from './modulos/Control';
 import { ModLps } from './modulos/Lps';
 import { ModEjecucion } from './modulos/Ejecucion';
 import { ModSigma } from './modulos/Sigma';
+import { ModRiesgo } from './modulos/Riesgo';
+import { ModCcpm } from './modulos/Ccpm';
+import { ModLogistica } from './modulos/Logistica';
+import { ModCalidad } from './modulos/Calidad';
+import { ModValor } from './modulos/Valor';
 
 const NAV: { grupo: string; items: { id: ModuloId; texto: string; reglas: number[] }[] }[] = [
   {
@@ -59,6 +64,7 @@ const NAV: { grupo: string; items: { id: ModuloId; texto: string; reglas: number
       { id: 'insumos', texto: 'Relación de insumos', reglas: [4, 5] },
       { id: 'gg', texto: 'Gastos generales', reglas: [7, 11] },
       { id: 'polinomica', texto: 'Fórmula polinómica', reglas: [10] },
+      { id: 'valor', texto: 'Ingeniería de valor y costo meta', reglas: [] },
     ],
   },
   {
@@ -75,6 +81,10 @@ const NAV: { grupo: string; items: { id: ModuloId; texto: string; reglas: number
       { id: 'lps', texto: 'Last Planner', reglas: [] },
       { id: 'ejecucion', texto: 'Ejecución lean', reglas: [] },
       { id: 'sigma', texto: 'Calidad Six Sigma', reglas: [] },
+      { id: 'riesgo', texto: 'Riesgo de plazo y costo', reglas: [] },
+      { id: 'ccpm', texto: 'Cadena crítica', reglas: [] },
+      { id: 'logistica', texto: 'Kanban de materiales', reglas: [] },
+      { id: 'calidad', texto: 'Plan de calidad ISO 9001', reglas: [] },
     ],
   },
   {
@@ -369,6 +379,11 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
     lps: ModLps,
     ejecucion: ModEjecucion,
     sigma: ModSigma,
+    riesgo: ModRiesgo,
+    ccpm: ModCcpm,
+    logistica: ModLogistica,
+    calidad: ModCalidad,
+    valor: ModValor,
   }[modulo];
 
   return (

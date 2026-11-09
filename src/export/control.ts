@@ -4,8 +4,10 @@ import { datosCabecera } from '../engine/cabecera';
 import {
   calcularEvm, calcularPpc, calcularTablero, calcularValorizaciones, capacidadProceso, CATEGORIAS_CARTA, causasNoCumplimiento, claseRiesgo,
   type Control, mejoraDmaic, nivelRiesgo, pareto, puntajeInspeccion, recursosSemanales, rendimientosPorPartida, resumenCarta,
-  resumenRestricciones, resumirCambios,
+  hoyIso, resumenRestricciones, resumirCambios,
 } from '../engine/control';
+import { fechaAnalisis, riesgoActual, tablasMetodologias } from './metodologias';
+import { entradaSimulacion } from '../engine/riesgo';
 import type { Resultados } from '../engine/types';
 import { fechaCorta, fmt, num } from '../engine/util';
 import type { Fila, Tabla } from './tablas';
@@ -28,8 +30,9 @@ const nombrePartida = (r: Resultados, id: string) => {
 };
 
 export function tablaTablero(r: Resultados, c: Control): Tabla {
-  const t = calcularTablero(r, c);
+  const t = calcularTablero(r, c, hoyIso(), entradaSimulacion(r, c.riesgo, c.lineaBase).huella);
   const s = t.cambios;
+  const rg = r.programa.actividades.length ? riesgoActual(r, c) : null;
   const m = r.proyecto.meta.moneda;
   const filas: Fila[] = [
     f(['Plazo y costo', null, null], 'subtitulo'),
@@ -40,6 +43,16 @@ export function tablaTablero(r: Resultados, c: Control): Tabla {
     f(['CPI – índice de desempeño del costo', null, pctOrNull(t.cpi)]),
     f([`EAC – costo estimado al terminar (${m})`, null, pctOrNull(t.eac)]),
     f(['Fin estimado según SPI', t.finEstimado ? fechaCorta(t.finEstimado) : '', null]),
+    f(['SPI(t) – Earned Schedule', null, pctOrNull(t.spiT)]),
+    f(['SV(t) – variación del cronograma (días laborables)', null, pctOrNull(t.svT)]),
+    f(['Fin estimado IEAC(t)', t.finEstimadoES ? fechaCorta(t.finEstimadoES) : '', null]),
+    f(['Riesgo y cadena crítica', null, null], 'subtitulo'),
+    f(['Plazo P80 (días laborables)', rg ? fechaCorta(rg.fechas.p80) : '', rg ? rg.plazo.p80 : null]),
+    f(['Probabilidad de cumplir el plazo (%)', null, rg ? rg.probPlazo : null]),
+    f([`Costo directo P80 (${m})`, null, rg?.costo ? rg.costo.p80 : null]),
+    f(['Probabilidad de cumplir el presupuesto (%)', null, rg ? rg.probCosto : null]),
+    f(['Avance de la cadena crítica (%)', null, pctOrNull(t.avanceCadena)]),
+    f(['Colchón del proyecto consumido (%)', t.colchonZona ? `Zona ${t.colchonZona}` : '', pctOrNull(t.colchonConsumo)]),
     f(['Cambios', null, null], 'subtitulo'),
     f([`Monto contractual (${m})`, null, s.contractual]),
     f([`Adicionales aprobados (${m})`, null, s.adicionales]),
@@ -63,6 +76,12 @@ export function tablaTablero(r: Resultados, c: Control): Tabla {
     f(['Trabajo productivo promedio en cartas balance (%)', null, pctOrNull(t.tpPromedio)]),
     f(['Puntaje promedio de inspecciones (%)', null, pctOrNull(t.inspeccionPromedio)]),
     f(['Proyectos DMAIC activos', null, t.dmaicActivos]),
+    f(['Protocolos liberados (%)', null, pctOrNull(t.liberacionCalidad)]),
+    f(['Productos no conformes abiertos', null, t.pncAbiertos]),
+    f(['Logística e ingeniería de valor', null, null], 'subtitulo'),
+    f(['Materiales en quiebre (kanban)', null, t.kanbanQuiebres]),
+    f(['Pedidos vencidos sin emitir', null, t.kanbanPorPedir]),
+    f([`Brecha contra el costo meta (${m})`, t.brechaMetaPct !== null ? `${t.brechaMetaPct.toFixed(1)} %` : '', pctOrNull(t.brechaMeta)]),
   ];
   return T('ctl_tablero', 'TABLERO DE CONTROL DEL PROYECTO', ['Indicador', 'Detalle', 'Valor'], filas, ['l', 'l', 'r'], [null, null, 2], [56, 18, 18]);
 }
@@ -70,16 +89,16 @@ export function tablaTablero(r: Resultados, c: Control): Tabla {
 export function tablaEvm(r: Resultados, c: Control): Tabla {
   const e = calcularEvm(r, c);
   const filas = (e?.puntos ?? []).map((p) =>
-    f([p.nombre, fechaCorta(p.fecha), p.pv, p.ev, p.ac, p.pvPct, p.evPct, p.sv, p.cv, p.spi, p.cpi, p.eac, p.vac, p.tcpi, fechaCorta(p.finEstimado)]),
+    f([p.nombre, fechaCorta(p.fecha), p.pv, p.ev, p.ac, p.pvPct, p.evPct, p.sv, p.cv, p.spi, p.cpi, p.eac, p.vac, p.tcpi, fechaCorta(p.finEstimado), p.es, p.at, p.spiT, p.svT, p.finEstimadoES ? fechaCorta(p.finEstimadoES) : '']),
   );
   return T(
     'ctl_evm',
     'VALOR GANADO POR CORTE DE CONTROL',
-    ['Corte', 'Fecha', 'PV', 'EV', 'AC', '% prog.', '% real', 'SV', 'CV', 'SPI', 'CPI', 'EAC', 'VAC', 'TCPI', 'Fin estimado'],
+    ['Corte', 'Fecha', 'PV', 'EV', 'AC', '% prog.', '% real', 'SV', 'CV', 'SPI', 'CPI', 'EAC', 'VAC', 'TCPI', 'Fin estimado', 'ES (d)', 'AT (d)', 'SPI(t)', 'SV(t) (d)', 'Fin IEAC(t)'],
     filas,
-    ['l', 'c', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'c'],
-    [null, null, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 3, null],
-    [14, 12, 14, 14, 14, 9, 9, 13, 13, 8, 8, 14, 13, 8, 12],
+    ['l', 'c', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'c', 'r', 'r', 'r', 'r', 'c'],
+    [null, null, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 3, null, 1, 0, 3, 1, null],
+    [14, 12, 14, 14, 14, 9, 9, 13, 13, 8, 8, 14, 13, 8, 12, 8, 7, 8, 9, 12],
   );
 }
 
@@ -226,18 +245,24 @@ export function tablasControl(r: Resultados, c: Control): { hoja: string; tabla:
     { hoja: 'Inspecciones', tabla: tablaInspecciones(r, c) },
     { hoja: 'Calidad Cp-Cpk', tabla: tablaCalidad(r, c) },
     { hoja: 'DMAIC', tabla: tablaDmaic(r, c) },
+    ...tablasMetodologias(r, c, fechaAnalisis(c, hoyIso())),
   ];
 }
 
 const VERDE = 'FF1E6B5E';
 
 export async function generarXlsxControl(r: Resultados, c: Control): Promise<Uint8Array> {
+  return generarXlsxTablas(r, `Control de obra – ${r.proyecto.meta.nombre}`, tablasControl(r, c));
+}
+
+/** Libro de Excel con una hoja por tabla (informe de control, dossier de calidad). */
+export async function generarXlsxTablas(r: Resultados, titulo: string, lista: { hoja: string; tabla: Tabla }[]): Promise<Uint8Array> {
   const wb = new ExcelJS.Workbook();
   const cab = datosCabecera(r.proyecto);
   wb.creator = cab.proyectista || 'Expediente Pro';
-  wb.title = `Control de obra – ${r.proyecto.meta.nombre}`;
+  wb.title = titulo;
   wb.created = new Date();
-  for (const { hoja, tabla } of tablasControl(r, c)) {
+  for (const { hoja, tabla } of lista) {
     const ws = wb.addWorksheet(hoja, { views: [{ state: 'frozen', ySplit: 5 }], pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 } });
     const n = tabla.cabecera.length;
     ws.columns = tabla.cabecera.map((_, i) => ({ width: Math.min(60, Math.max(8, tabla.anchos[i] ?? 12)) }));

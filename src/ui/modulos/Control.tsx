@@ -12,6 +12,7 @@ import { estadoIndice, fc, fechaCortaDM, ind, MIME_XLSX, opciones, pct, useContr
 import { descargar, type Contexto } from '../estado';
 import { COLOR, GraficoBarras, GraficoLineas, Indicador, MatrizRiesgos } from '../graficos';
 import { VistaTabla } from '../VistaTabla';
+import { entradaSimulacion } from '../../engine/riesgo';
 
 type Pest = 'tablero' | 'avance' | 'evm' | 'valorizaciones' | 'cambios' | 'riesgos' | 'recursos' | 'registros';
 
@@ -117,7 +118,8 @@ function SinLineaBase({ ctx }: { ctx: Contexto }) {
 function Tablero({ ctx, ir }: { ctx: Contexto; ir: (p: Pest) => void }) {
   const { c } = useControl(ctx);
   const r = ctx.resultados;
-  const t = useMemo(() => calcularTablero(r, c), [r, c]);
+  const huella = useMemo(() => entradaSimulacion(r, c.riesgo, c.lineaBase).huella, [r, c.riesgo, c.lineaBase]);
+  const t = useMemo(() => calcularTablero(r, c, hoyIso(), huella), [r, c, huella]);
   const evm = useMemo(() => calcularEvm(r, c), [r, c]);
   const ppc = useMemo(() => calcularPpc(c), [c]);
   const m = r.proyecto.meta.moneda;
@@ -135,6 +137,20 @@ function Tablero({ ctx, ir }: { ctx: Contexto; ir: (p: Pest) => void }) {
         <Indicador titulo="CPI · costo" valor={ind(t.cpi)} detalle={t.cpi === null ? 'Falta el costo real' : t.cpi >= 1 ? 'Dentro del presupuesto' : 'Sobrecosto'} estado={estadoIndice(t.cpi)} />
         <Indicador titulo={`Costo estimado al terminar (${m})`} valor={t.eac === null ? '—' : fmt(t.eac, 0)} detalle={t.eac === null ? '' : `Presupuesto ${fmt(evm?.bac ?? 0, 0)}`} estado={t.eac === null ? 'neutra' : t.eac <= (evm?.bac ?? 0) * 1.02 ? 'ok' : t.eac <= (evm?.bac ?? 0) * 1.1 ? 'advertencia' : 'error'} />
         <Indicador titulo="Fin estimado" valor={fc(t.finEstimado)} detalle={t.finEstimado ? (atraso > 0 ? `${atraso} días de atraso` : `${-atraso} días antes`) : `Fin base ${fc(lb.fin)}`} estado={!t.finEstimado ? 'neutra' : atraso <= 0 ? 'ok' : atraso <= 7 ? 'advertencia' : 'error'} />
+      </div>
+      <div className="seccion-titulo">Earned Schedule y riesgo de plazo</div>
+      <div className="indicadores">
+        <Indicador titulo="SPI(t) · Earned Schedule" valor={ind(t.spiT)} detalle={t.svT === null ? 'Sin cortes' : `SV(t) ${fmt(t.svT, 1)} días laborables`} estado={estadoIndice(t.spiT)} />
+        <Indicador titulo="Fin estimado IEAC(t)" valor={fc(t.finEstimadoES)} detalle={t.finEstimadoES ? `Fin base ${fc(lb.fin)}` : ''} estado={!t.finEstimadoES ? 'neutra' : t.finEstimadoES <= lb.fin ? 'ok' : difDias(lb.fin, t.finEstimadoES) <= 7 ? 'advertencia' : 'error'} />
+        <Indicador titulo="Plazo P80 (Monte Carlo)" valor={t.riesgo ? fc(t.riesgo.p80Fecha) : '—'} detalle={t.riesgo ? `${pct(t.riesgo.probPlazo, 0)} de cumplir el plazo${t.riesgoDesactualizado ? ' · desactualizado' : ''}` : 'Corra la simulación en Riesgo de plazo y costo'} estado={!t.riesgo ? 'neutra' : t.riesgo.probPlazo >= 80 ? 'ok' : t.riesgo.probPlazo >= 50 ? 'advertencia' : 'error'} />
+        <Indicador titulo={`Costo directo P80 (${m})`} valor={t.riesgo?.p80Costo ? fmt(t.riesgo.p80Costo, 0) : '—'} detalle={t.riesgo?.probCosto !== null && t.riesgo?.probCosto !== undefined ? `${pct(t.riesgo.probCosto, 0)} de cumplir el presupuesto` : ''} estado={!t.riesgo || t.riesgo.probCosto === null ? 'neutra' : t.riesgo.probCosto >= 80 ? 'ok' : t.riesgo.probCosto >= 50 ? 'advertencia' : 'error'} />
+        <Indicador titulo="Colchón del proyecto (CCPM)" valor={pct(t.colchonConsumo, 0)} detalle={t.avanceCadena === null ? 'Sin cortes' : `consumido · cadena al ${pct(t.avanceCadena, 0)}`} estado={t.colchonZona === 'rojo' ? 'error' : t.colchonZona === 'amarillo' ? 'advertencia' : t.colchonZona === 'verde' ? 'ok' : 'neutra'} />
+      </div>
+      <div className="seccion-titulo">Calidad, logística y costo meta</div>
+      <div className="indicadores">
+        <Indicador titulo="Protocolos liberados" valor={pct(t.liberacionCalidad, 0)} detalle={`${t.pncAbiertos} ${t.pncAbiertos === 1 ? 'producto no conforme abierto' : 'productos no conformes abiertos'}`} estado={t.liberacionCalidad === null ? 'neutra' : t.liberacionCalidad >= 90 ? 'ok' : t.liberacionCalidad >= 75 ? 'advertencia' : 'error'} />
+        <Indicador titulo="Materiales en quiebre" valor={t.kanbanQuiebres} detalle={`${t.kanbanPorPedir} pedidos vencidos sin emitir`} estado={t.kanbanQuiebres ? 'error' : t.kanbanPorPedir ? 'advertencia' : 'ok'} />
+        <Indicador titulo={`Brecha contra el costo meta (${m})`} valor={t.brechaMeta === null ? '—' : fmt(t.brechaMeta, 0)} detalle={t.brechaMetaPct === null ? 'Sin costo meta' : `${fmt(t.brechaMetaPct, 1)} % sobre la meta`} estado={t.brechaMeta === null ? 'neutra' : t.brechaMeta <= 0 ? 'ok' : (t.brechaMetaPct ?? 0) <= 3 ? 'advertencia' : 'error'} />
       </div>
       <div className="seccion-titulo">Last Planner y productividad</div>
       <div className="indicadores">
@@ -305,6 +321,18 @@ function ValorGanado({ ctx }: { ctx: Contexto }) {
           <Indicador titulo="CV = EV − AC" valor={u.cv === null ? '—' : fmt(u.cv, 0)} estado={u.cv === null ? 'neutra' : u.cv >= 0 ? 'ok' : 'error'} />
           <Indicador titulo="TCPI" valor={ind(u.tcpi)} detalle="CPI necesario para terminar en presupuesto" estado={u.tcpi === null ? 'neutra' : u.tcpi <= 1 ? 'ok' : u.tcpi <= 1.1 ? 'advertencia' : 'error'} />
         </div>
+      )}
+      {u && (
+        <>
+          <div className="seccion-titulo">Earned Schedule <span className="pequeno">· tiempo medido con la curva PV de la línea base, en días laborables</span></div>
+          <div className="indicadores">
+            <Indicador titulo="SPI clásico (EV ÷ PV)" valor={ind(u.spi)} detalle="Tiende a 1 al final aunque haya atraso" estado={estadoIndice(u.spi)} />
+            <Indicador titulo="ES · cronograma ganado" valor={`${fmt(u.es, 1)} d`} detalle={`AT = ${u.at} d transcurridos · PD = ${evm!.pd} d`} />
+            <Indicador titulo="SPI(t) = ES ÷ AT" valor={ind(u.spiT)} estado={estadoIndice(u.spiT)} />
+            <Indicador titulo="SV(t) = ES − AT" valor={`${fmt(u.svT, 1)} d`} estado={u.svT >= -0.05 ? 'ok' : u.svT >= -5 ? 'advertencia' : 'error'} />
+            <Indicador titulo="IEAC(t) = PD ÷ SPI(t)" valor={u.ieacT === null ? '—' : `${fmt(u.ieacT, 1)} d`} detalle={`Termina el ${fc(u.finEstimadoES)}`} estado={u.ieacT === null ? 'neutra' : u.ieacT <= evm!.pd + 0.05 ? 'ok' : u.ieacT <= evm!.pd * 1.05 ? 'advertencia' : 'error'} />
+          </div>
+        </>
       )}
       <CurvaControl ctx={ctx} />
       <p className="pequeno">El valor ganado de cada partida es el metrado ejecutado (hasta el metrado base) por su precio unitario base. El valor planificado reparte cada partida en sus días laborables del cronograma base.</p>

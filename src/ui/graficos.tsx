@@ -368,3 +368,99 @@ export function Indicador({ titulo, valor, detalle, estado = 'neutra' }: { titul
     </div>
   );
 }
+
+/** Histograma de frecuencias con su curva acumulada (curva S de probabilidad) y líneas de percentiles. */
+export function GraficoProbabilidad({ barras, acumulada, marcas, formatoX = (v) => fmt(v, 0), titulo }: {
+  barras: { desde: number; hasta: number; n: number }[];
+  acumulada: { x: number; pct: number }[];
+  marcas: { x: number; texto: string; color: string }[];
+  formatoX?: (v: number) => string;
+  titulo: string;
+}) {
+  if (!barras.length) return null;
+  const W = 900, H = 260, iz = 46, de = 46, ar = 22, ab = 30;
+  const xMin = Math.min(barras[0].desde, ...marcas.map((m) => m.x));
+  const xMax = Math.max(barras[barras.length - 1].hasta, ...marcas.map((m) => m.x), xMin + 1e-9);
+  const total = barras.reduce((s, b) => s + b.n, 0) || 1;
+  const max = Math.max(...barras.map((b) => b.n / total)) * 1.15 || 1;
+  const X = (x: number) => iz + ((W - iz - de) * (x - xMin)) / (xMax - xMin || 1);
+  const Y = (v: number) => ar + (H - ar - ab) * (1 - v / max);
+  const Yp = (p: number) => ar + (H - ar - ab) * (1 - p / 100);
+  const marcasX = Array.from({ length: 7 }, (_, i) => xMin + ((xMax - xMin) * i) / 6);
+  return (
+    <div className="grafico">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={titulo}>
+        {[0, 25, 50, 75, 100].map((p) => (
+          <g key={p}>
+            <line x1={iz} x2={W - de} y1={Yp(p)} y2={Yp(p)} stroke="var(--linea-2)" />
+            <text x={W - de + 6} y={Yp(p) + 4} fontSize="11" fill={COLOR.real}>{p}%</text>
+            <text x={iz - 6} y={Yp(p) + 4} textAnchor="end" fontSize="11" fill="var(--texto-3)">{fmt((max * p) / 100 * 100, 1)}%</text>
+          </g>
+        ))}
+        {barras.map((b, i) => (
+          <rect key={i} x={X(b.desde) + 0.5} y={Y(b.n / total)} width={Math.max(1, X(b.hasta) - X(b.desde) - 1)} height={Y(0) - Y(b.n / total)} fill={COLOR.suave} stroke={COLOR.plan} strokeWidth="0.5" />
+        ))}
+        <polyline points={acumulada.map((p) => `${X(p.x)},${Yp(p.pct)}`).join(' ')} fill="none" stroke={COLOR.real} strokeWidth="2.4" />
+        {marcas.map((m, i) => (
+          <g key={i}>
+            <line x1={X(m.x)} x2={X(m.x)} y1={ar - 4} y2={Y(0)} stroke={m.color} strokeWidth="1.5" strokeDasharray="5 3" />
+            <text x={X(m.x) + 3} y={ar + 8 + i * 13} fontSize="11" fill={m.color}>{m.texto}</text>
+          </g>
+        ))}
+        {marcasX.map((x, i) => (
+          <text key={i} x={X(x)} y={H - 10} textAnchor={i === 0 ? 'start' : i === 6 ? 'end' : 'middle'} fontSize="11" fill="var(--texto-2)">{formatoX(x)}</text>
+        ))}
+      </svg>
+      <div className="leyenda">
+        <span><i style={{ background: COLOR.suave, border: `1px solid ${COLOR.plan}` }} />Frecuencia (eje izquierdo)</span>
+        <span><i style={{ background: COLOR.real, height: 3 }} />Probabilidad acumulada (eje derecho)</span>
+      </div>
+    </div>
+  );
+}
+
+/** Gráfico de fiebre de la cadena crítica: % de cadena completada contra % de colchón consumido. */
+export function GraficoFiebre({ puntos, titulo, limiteAmarillo, limiteRojo }: {
+  puntos: { avance: number; consumo: number; etiqueta: string }[];
+  titulo: string;
+  limiteAmarillo: (x: number) => number;
+  limiteRojo: (x: number) => number;
+}) {
+  const W = 900, H = 320, iz = 48, de = 14, ar = 14, ab = 34;
+  const yMax = Math.max(120, ...puntos.map((p) => p.consumo * 1.1));
+  const X = (x: number) => iz + ((W - iz - de) * x) / 100;
+  const Y = (y: number) => ar + (H - ar - ab) * (1 - Math.min(y, yMax) / yMax);
+  const poli = (pts: [number, number][]) => pts.map(([x, y]) => `${X(x)},${Y(y)}`).join(' ');
+  return (
+    <div className="grafico">
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={titulo}>
+        <polygon points={poli([[0, 0], [100, 0], [100, limiteAmarillo(100)], [0, limiteAmarillo(0)]])} fill="#dcefe6" />
+        <polygon points={poli([[0, limiteAmarillo(0)], [100, limiteAmarillo(100)], [100, limiteRojo(100)], [0, limiteRojo(0)]])} fill="#f6ead0" />
+        <polygon points={poli([[0, limiteRojo(0)], [100, limiteRojo(100)], [100, yMax], [0, yMax]])} fill="#f4d9d5" />
+        {[0, 25, 50, 75, 100].map((v) => (
+          <g key={v}>
+            <text x={X(v)} y={H - 14} textAnchor={v === 0 ? 'start' : v === 100 ? 'end' : 'middle'} fontSize="11" fill="var(--texto-2)">{v}%</text>
+            <line x1={X(v)} x2={X(v)} y1={ar} y2={Y(0)} stroke="rgba(0,0,0,.06)" />
+          </g>
+        ))}
+        {ejeY(0, yMax).map((g, i) => (
+          <text key={i} x={iz - 6} y={Y(g) + 4} textAnchor="end" fontSize="11" fill="var(--texto-3)">{fmt(g, 0)}%</text>
+        ))}
+        <text x={(iz + W - de) / 2} y={H - 1} textAnchor="middle" fontSize="11" fill="var(--texto-2)">% de la cadena crítica completada</text>
+        <polyline points={puntos.map((p) => `${X(p.avance)},${Y(p.consumo)}`).join(' ')} fill="none" stroke="#1f2b37" strokeWidth="2" />
+        {puntos.map((p, i) => (
+          <g key={i}>
+            <circle cx={X(p.avance)} cy={Y(p.consumo)} r={4.2} fill="#1f2b37" />
+            <text x={X(p.avance) + 6} y={Y(p.consumo) - 6} fontSize="10.5" fill="#1f2b37">{p.etiqueta}</text>
+          </g>
+        ))}
+      </svg>
+      <div className="leyenda">
+        <span><i style={{ background: '#dcefe6' }} />Verde: en control</span>
+        <span><i style={{ background: '#f6ead0' }} />Amarillo: preparar acciones</span>
+        <span><i style={{ background: '#f4d9d5' }} />Rojo: ejecutar acciones de recuperación</span>
+        <span>Eje vertical: % del colchón del proyecto consumido</span>
+      </div>
+    </div>
+  );
+}
