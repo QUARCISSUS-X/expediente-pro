@@ -435,3 +435,22 @@ describe('integración de la versión 2.5', () => {
     expect(ve.getRow(5).values).toContain('SPI(t)');
   });
 });
+
+describe('dossier de calidad', () => {
+  it('se exporta en Excel y PDF', async () => {
+    const { tablasDossier } = await import('../src/export/metodologias');
+    const { generarXlsxTablas } = await import('../src/export/control');
+    const { definicionPdfTablas } = await import('../src/export/pdfdoc');
+    const { renderPdfNode } = await import('../src/export/render-node');
+    const p = proyectoEjemplo();
+    p.control = controlDemostracion(r);
+    const rr = calcularTodo(p);
+    const tablas = tablasDossier(rr, p.control);
+    const xl = await generarXlsxTablas(rr, 'Dossier', tablas);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(xl as unknown as ArrayBuffer);
+    expect(wb.worksheets.map((w) => w.name)).toEqual(['Plan de inspección', 'Protocolos', 'PNC', 'Liberación por frente']);
+    const pdf = await renderPdfNode(definicionPdfTablas(rr, 'Dossier de calidad', tablas.map((t) => t.tabla)));
+    expect(new TextDecoder().decode(pdf.slice(0, 5))).toBe('%PDF-');
+  }, 60000);
+});
