@@ -1,6 +1,6 @@
 // Programación: calendario, CPM, periodos y cronogramas derivados.
 import type {
-  ActividadCalc, ApuCalc, Desembolso, FilaCronograma, FilaPresupuesto, Periodo, Pie, Programa, Proyecto, Valorizado,
+  ActividadCalc, ApuCalc, Desembolso, FilaCronograma, FilaPresupuesto, Periodo, Pie, Pred, Programa, Proyecto, TipoPred, Valorizado,
 } from './types';
 import { diaSemana, difDias, fechaAIso, isoAFecha, mesAnio, num, redondear, sumarDias } from './util';
 
@@ -31,6 +31,86 @@ export class Calendario {
     for (let d = desde; d <= hasta; d = sumarDias(d, 1)) if (this.esLaborable(d)) n++;
     return n;
   }
+}
+
+// ------------------------------------------------------------------ red CPM reutilizable
+
+/** Red de precedencias por índices: orden topológico y predecesoras con tipo y desfase. */
+export interface RedCpm {
+  ids: string[];
+  preds: { i: number; tipo: TipoPred; desfase: number }[][];
+  orden: number[]; // índices en orden topológico
+}
+
+/** Arma la red y su orden topológico; los ciclos se informan en errores y se cortan. */
+export function construirRed(nodos: { id: string; codigo?: string; predecesoras: Pred[] }[], errores: string[] = []): RedCpm {
+  const idx = new Map(nodos.map((n, i) => [n.id, i]));
+  const preds = nodos.map((n) => n.predecesoras.filter((x) => idx.has(x.id) && x.id !== n.id).map((x) => ({ i: idx.get(x.id)!, tipo: x.tipo, desfase: num(x.desfase) })));
+  const orden: number[] = [];
+  const estado = new Uint8Array(nodos.length);
+  const visitar = (i: number, pila: number[]): void => {
+    if (estado[i] === 2) return;
+    if (estado[i] === 1) {
+      errores.push(`Hay un ciclo en las precedencias: ${[...pila, i].map((k) => nodos[k].codigo ?? nodos[k].id).join(' → ')}.`);
+      return;
+    }
+    estado[i] = 1;
+    for (const pr of preds[i]) visitar(pr.i, [...pila, i]);
+    estado[i] = 2;
+    orden.push(i);
+  };
+  for (let i = 0; i < nodos.length; i++) visitar(i, []);
+  // las aristas que cerraban un ciclo no se usan en las pasadas
+  const pos = new Int32Array(nodos.length);
+  orden.forEach((i, k) => (pos[i] = k));
+  return { ids: nodos.map((n) => n.id), preds: preds.map((ps, i) => ps.filter((pr) => pos[pr.i] < pos[i])), orden };
+}
+
+/** Red de las actividades del cronograma calculado (mismas predecesoras y desfases). */
+export function redDePrograma(prog: Programa): RedCpm {
+  return construirRed(prog.actividades.map((a) => ({ id: a.partidaId, codigo: a.codigo, predecesoras: a.predecesoras })));
+}
+
+export interface PasadasCpm {
+  es: Float64Array;
+  ef: Float64Array;
+  ls: Float64Array;
+  lf: Float64Array;
+  fin: number;
+}
+
+/** Pasadas hacia adelante y hacia atrás del método de la ruta crítica (FC, CC y FF con desfase). */
+export function pasadasCpm(red: RedCpm, dur: ArrayLike<number>, sal?: PasadasCpm): PasadasCpm {
+  const n = red.ids.length;
+  const o = sal ?? { es: new Float64Array(n), ef: new Float64Array(n), ls: new Float64Array(n), lf: new Float64Array(n), fin: 0 };
+  const { es, ef, ls, lf, preds, orden } = { ...o, preds: red.preds, orden: red.orden };
+  for (const a of orden) {
+    let e = 0;
+    for (const pr of preds[a]) {
+      const b = pr.i;
+      if (pr.tipo === 'CC') e = Math.max(e, es[b] + pr.desfase);
+      else if (pr.tipo === 'FF') e = Math.max(e, ef[b] + pr.desfase - dur[a]);
+      else e = Math.max(e, ef[b] + pr.desfase);
+    }
+    es[a] = Math.max(0, e);
+    ef[a] = es[a] + dur[a];
+  }
+  let fin = 0;
+  for (const a of orden) fin = Math.max(fin, ef[a]);
+  for (const a of orden) lf[a] = fin;
+  for (let k = orden.length - 1; k >= 0; k--) {
+    const a = orden[k];
+    ls[a] = lf[a] - dur[a];
+    for (const pr of preds[a]) {
+      const b = pr.i;
+      if (pr.tipo === 'CC') lf[b] = Math.min(lf[b], ls[a] - pr.desfase + dur[b]);
+      else if (pr.tipo === 'FF') lf[b] = Math.min(lf[b], lf[a] - pr.desfase);
+      else lf[b] = Math.min(lf[b], ls[a] - pr.desfase);
+    }
+  }
+  for (let a = 0; a < n; a++) ls[a] = lf[a] - dur[a];
+  o.fin = fin;
+  return o;
 }
 
 export function calcularPrograma(p: Proyecto, filas: FilaPresupuesto[], apus: Record<string, ApuCalc>): Programa {
@@ -79,55 +159,17 @@ export function calcularPrograma(p: Proyecto, filas: FilaPresupuesto[], apus: Re
     });
   }
 
-  // orden topológico
-  const orden: ActividadCalc[] = [];
-  const estado = new Map<string, number>();
-  const visitar = (a: ActividadCalc, pila: string[]): void => {
-    const e = estado.get(a.partidaId);
-    if (e === 2) return;
-    if (e === 1) {
-      errores.push(`Hay un ciclo en las precedencias: ${[...pila, a.codigo].join(' → ')}.`);
-      return;
-    }
-    estado.set(a.partidaId, 1);
-    for (const pr of a.predecesoras) {
-      const b = act.get(pr.id);
-      if (b) visitar(b, [...pila, a.codigo]);
-    }
-    estado.set(a.partidaId, 2);
-    orden.push(a);
-  };
-  for (const a of act.values()) visitar(a, []);
-
-  // pasada hacia adelante
-  for (const a of orden) {
-    let es = 0;
-    for (const pr of a.predecesoras) {
-      const b = act.get(pr.id);
-      if (!b) continue;
-      const lag = num(pr.desfase);
-      if (pr.tipo === 'CC') es = Math.max(es, b.es + lag);
-      else if (pr.tipo === 'FF') es = Math.max(es, b.ef + lag - a.duracion);
-      else es = Math.max(es, b.ef + lag);
-    }
-    a.es = Math.max(0, es);
-    a.ef = a.es + a.duracion;
-  }
-  const fin = orden.reduce((m, a) => Math.max(m, a.ef), 0);
-  // pasada hacia atrás
-  for (const a of orden) a.lf = fin;
-  for (let i = orden.length - 1; i >= 0; i--) {
-    const a = orden[i];
-    a.ls = a.lf - a.duracion;
-    for (const pr of a.predecesoras) {
-      const b = act.get(pr.id);
-      if (!b) continue;
-      const lag = num(pr.desfase);
-      if (pr.tipo === 'CC') b.lf = Math.min(b.lf, a.ls - lag + b.duracion);
-      else if (pr.tipo === 'FF') b.lf = Math.min(b.lf, a.lf - lag);
-      else b.lf = Math.min(b.lf, a.ls - lag);
-    }
-  }
+  // red CPM (orden topológico + pasadas hacia adelante y atrás), compartida con Monte Carlo y cadena crítica
+  const lista = [...act.values()];
+  const red = construirRed(lista.map((a) => ({ id: a.partidaId, codigo: a.codigo, predecesoras: a.predecesoras })), errores);
+  const res = pasadasCpm(red, lista.map((a) => a.duracion));
+  const orden = red.orden.map((i) => lista[i]);
+  lista.forEach((a, i) => {
+    a.es = res.es[i];
+    a.ef = res.ef[i];
+    a.lf = res.lf[i];
+  });
+  const fin = res.fin;
   const cal = new Calendario(p.meta.fechaInicio, p.meta.diasLaborables, p.meta.feriados);
   for (const a of orden) {
     a.ls = a.lf - a.duracion;

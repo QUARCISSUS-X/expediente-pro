@@ -1,8 +1,14 @@
 // Control de proyectos durante la ejecución: línea base, valor ganado, valorizaciones, cambios, riesgos,
 // cuaderno de obra, Last Planner System, Lean Construction (rendimientos y frentes) y Six Sigma.
 // Todo se guarda en Proyecto.control y se calcula sobre el presupuesto y el cronograma del expediente.
+import { ccpmDePrograma, type ConfigCcpm, configCcpmVacia, normalizarConfigCcpm, puntosFiebre } from './ccpm';
+import { type Calidad, calidadVacia, firmasPorDefecto, normalizarCalidad, puntosSugeridos, resumenCalidad } from './calidad';
+import { enlazarRestriccion, generarTarjetas, type Kanban, kanbanVacio, moverTarjeta, normalizarKanban, resumenKanban } from './kanban';
+import { type ConfigRiesgo, configRiesgoVacia, normalizarConfigRiesgo, resumirRiesgo, type ResumenRiesgo, simularRiesgo } from './riesgo';
 import { Calendario } from './schedule';
 import type { Resultados } from './types';
+import { calcularMetas, normalizarValor, type Valor, valorVacio } from './valor';
+import { demostracionValor } from './valorDemo';
 import { diaSemana, difDias, num, redondear, sumarDias, uid } from './util';
 
 // ======================================================================= modelo
@@ -339,6 +345,12 @@ export interface Control {
   ishikawas: Ishikawa[];
   dmaic: ProyectoDmaic[];
   series: SerieCalidad[];
+  // versión 2.5
+  riesgo: ConfigRiesgo; // Monte Carlo / PERT
+  ccpm: ConfigCcpm; // cadena crítica
+  kanban: Kanban; // kanban de materiales
+  calidad: Calidad; // plan de calidad ISO 9001
+  valor: Valor; // ingeniería de valor y Target Value Design
 }
 
 export function controlVacio(): Control {
@@ -361,6 +373,11 @@ export function controlVacio(): Control {
     ishikawas: [],
     dmaic: [],
     series: [],
+    riesgo: configRiesgoVacia(),
+    ccpm: configCcpmVacia(),
+    kanban: kanbanVacio(),
+    calidad: calidadVacia(),
+    valor: valorVacio(),
   };
 }
 
@@ -388,6 +405,11 @@ export function normalizarControl(x: unknown): Control {
     ishikawas: arr(c.ishikawas),
     dmaic: arr(c.dmaic).map((d) => ({ ...d, acciones: arr(d.acciones) })),
     series: arr(c.series).map((s) => ({ ...s, valores: arr(s.valores).map((n) => num(n)) })),
+    riesgo: normalizarConfigRiesgo(c.riesgo),
+    ccpm: normalizarConfigCcpm(c.ccpm),
+    kanban: normalizarKanban(c.kanban),
+    calidad: normalizarCalidad(c.calidad),
+    valor: normalizarValor(c.valor),
   };
 }
 
@@ -486,6 +508,13 @@ export interface PuntoEvm {
   vac: number | null;
   tcpi: number | null;
   finEstimado: string;
+  // Earned Schedule (en días laborables desde el inicio de la línea base)
+  es: number; // cronograma ganado: tiempo en que el plan alcanzaba el EV actual
+  at: number; // tiempo real transcurrido al corte
+  spiT: number | null; // SPI(t) = ES / AT
+  svT: number; // SV(t) = ES − AT (días laborables; negativo = atraso)
+  ieacT: number | null; // duración estimada IEAC(t) = PD / SPI(t), en días laborables
+  finEstimadoES: string; // fecha de término según IEAC(t)
 }
 
 export interface AvancePartida {
@@ -500,6 +529,8 @@ export interface AvancePartida {
 
 export interface Evm {
   bac: number;
+  pd: number; // duración planificada en días laborables
+  pvDias: number[]; // PV acumulado al final de cada día laborable de la línea base
   puntos: PuntoEvm[];
   ultimo: PuntoEvm | null;
   partidas: AvancePartida[];
@@ -519,6 +550,27 @@ export function pvALaFecha(r: Resultados, lb: LineaBase, fecha: string): number 
   return lb.partidas.reduce((s, b) => s + pvPartida(cal, b, fecha), 0);
 }
 
+/** Cronograma ganado: tiempo (en días, con fracción) en que la curva PV alcanza el valor ganado.
+ * pvDias[k] es el PV acumulado al final del día k+1. ES = C + (EV − PV_C) / (PV_C+1 − PV_C). */
+export function cronogramaGanado(pvDias: number[], ev: number): number {
+  if (!pvDias.length || ev <= 0) return 0;
+  if (ev >= pvDias[pvDias.length - 1] - 1e-9) return pvDias.length;
+  let c = 0; // días completos en que PV ≤ EV
+  while (c < pvDias.length && pvDias[c] <= ev + 1e-9) c++;
+  const ant = c === 0 ? 0 : pvDias[c - 1];
+  const sig = pvDias[c];
+  return sig > ant ? c + (ev - ant) / (sig - ant) : c;
+}
+
+/** PV acumulado al final de cada día laborable de la línea base. */
+export function curvaPvDiaria(r: Resultados, lb: LineaBase): { fechas: string[]; pv: number[] } {
+  const cal = calendarioDe(r, lb.inicio);
+  const pd = laborables(cal, lb.inicio, lb.fin);
+  const fechas: string[] = [];
+  for (let i = 0; i < pd; i++) fechas.push(cal.fecha(i));
+  return { fechas, pv: fechas.map((f) => lb.partidas.reduce((s, b) => s + pvPartida(cal, b, f), 0)) };
+}
+
 export const cortesOrdenados = (c: Control) => [...c.cortes].sort((a, b) => a.fecha.localeCompare(b.fecha));
 
 export function calcularEvm(r: Resultados, c: Control): Evm | null {
@@ -527,6 +579,8 @@ export function calcularEvm(r: Resultados, c: Control): Evm | null {
   const cal = calendarioDe(r, lb.inicio);
   const bac = lb.partidas.reduce((s, b) => s + b.parcial, 0);
   const cortes = cortesOrdenados(c);
+  const { pv: pvDias } = curvaPvDiaria(r, lb);
+  const pd = pvDias.length;
   const acum: Record<string, number> = {};
   let acAcum = 0;
   let acConocido = true;
@@ -547,6 +601,10 @@ export function calcularEvm(r: Resultados, c: Control): Evm | null {
     const cpi = ac !== null && ac > 0 ? ev / ac : null;
     const eac = cpi ? bac / cpi : null;
     const plazoEst = spi > 0 ? Math.round(lb.plazoDias / spi) : lb.plazoDias;
+    const es = cronogramaGanado(pvDias, ev);
+    const at = laborables(cal, lb.inicio, k.fecha);
+    const spiT = at > 0 ? es / at : null;
+    const ieacT = spiT && spiT > 0 ? pd / spiT : null;
     puntos.push({
       corteId: k.id,
       fecha: k.fecha,
@@ -565,6 +623,12 @@ export function calcularEvm(r: Resultados, c: Control): Evm | null {
       vac: eac === null ? null : redondear(bac - eac),
       tcpi: ac !== null && bac - ac !== 0 ? (bac - ev) / (bac - ac) : null,
       finEstimado: sumarDias(lb.inicio, Math.max(0, plazoEst - 1)),
+      es,
+      at,
+      spiT,
+      svT: es - at,
+      ieacT,
+      finEstimadoES: ieacT === null ? '' : cal.fecha(Math.max(0, Math.ceil(ieacT - 1e-9) - 1)),
     });
   }
   const ultimo = puntos[puntos.length - 1] ?? null;
@@ -591,7 +655,7 @@ export function calcularEvm(r: Resultados, c: Control): Evm | null {
     curvaPlan.push({ fecha, pv, pct: bac > 0 ? (pv / bac) * 100 : 0 });
     if (fecha >= lb.fin) break;
   }
-  return { bac: redondear(bac), puntos, ultimo, partidas, curvaPlan };
+  return { bac: redondear(bac), pd, pvDias, puntos, ultimo, partidas, curvaPlan };
 }
 
 /** Metrado acumulado ejecutado por partida hasta la fecha (incluida). */
@@ -1215,10 +1279,31 @@ export interface Tablero {
   tpPromedio: number | null;
   inspeccionPromedio: number | null;
   dmaicActivos: number;
+  // versión 2.5
+  spiT: number | null; // Earned Schedule
+  svT: number | null; // días laborables
+  finEstimadoES: string | null;
+  riesgo: ResumenRiesgo | null; // último resultado guardado de Monte Carlo
+  riesgoDesactualizado: boolean;
+  colchonConsumo: number | null; // % del colchón del proyecto consumido (cadena crítica)
+  colchonZona: 'verde' | 'amarillo' | 'rojo' | null;
+  avanceCadena: number | null;
+  kanbanQuiebres: number;
+  kanbanPorPedir: number;
+  liberacionCalidad: number | null; // % de protocolos liberados
+  pncAbiertos: number;
+  brechaMeta: number | null; // estimado con alternativas aprobadas − costo meta
+  brechaMetaPct: number | null;
 }
 
-export function calcularTablero(r: Resultados, c: Control, hoy = hoyIso()): Tablero {
+export function calcularTablero(r: Resultados, c: Control, hoy = hoyIso(), huellaRiesgo?: string): Tablero {
   const evm = calcularEvm(r, c);
+  const fiebre = c.lineaBase && c.cortes.length ? puntosFiebre(r, ccpmDePrograma(r, c.ccpm), c.lineaBase, c.cortes) : [];
+  const ultF = fiebre[fiebre.length - 1];
+  const kb = resumenKanban(c, hoy);
+  const cal = resumenCalidad(c);
+  const hayMetas = c.valor.costoPermitido !== null || c.valor.reduccionPct > 0 || Object.keys(c.valor.metas).length > 0;
+  const metas = hayMetas ? calcularMetas(r, c.valor) : null;
   const ppc = calcularPpc(c);
   const rest = resumenRestricciones(c, hoy);
   const abiertos = c.riesgos.filter((x) => x.estado !== 'cerrado');
@@ -1253,6 +1338,20 @@ export function calcularTablero(r: Resultados, c: Control, hoy = hoyIso()): Tabl
     tpPromedio: cartas.length ? cartas.reduce((s, x) => s + x.tp, 0) / cartas.length : null,
     inspeccionPromedio: insp.length ? insp.reduce((a, b) => a + b, 0) / insp.length : null,
     dmaicActivos: c.dmaic.filter((x) => x.fase !== 'cerrado').length,
+    spiT: evm?.ultimo?.spiT ?? null,
+    svT: evm?.ultimo ? evm.ultimo.svT : null,
+    finEstimadoES: evm?.ultimo?.finEstimadoES || null,
+    riesgo: c.riesgo.resumen,
+    riesgoDesactualizado: !!c.riesgo.resumen && !!huellaRiesgo && c.riesgo.resumen.huella !== huellaRiesgo,
+    colchonConsumo: ultF ? ultF.consumoPct : null,
+    colchonZona: ultF ? ultF.zona : null,
+    avanceCadena: ultF ? ultF.avancePct : null,
+    kanbanQuiebres: kb.quiebres,
+    kanbanPorPedir: kb.porPedirVencidas,
+    liberacionCalidad: cal.indiceLiberacion,
+    pncAbiertos: cal.pncAbiertos,
+    brechaMeta: metas ? metas.brecha : null,
+    brechaMetaPct: metas ? metas.brechaPct : null,
   };
 }
 
@@ -1425,5 +1524,116 @@ export function controlDemostracion(r: Resultados): Control {
     ],
     planControl: 'Carta de control semanal del índice de productividad.',
   });
+  // ---------------------------------------------------------------- versión 2.5
+  const hoyDemo = c.cortes[c.cortes.length - 1]?.fecha ?? lb.inicio;
+  // riesgo de plazo y costo: tres valores propios en las actividades más largas, ± % general en el resto
+  const largas = [...r.programa.actividades].sort((a, b) => b.duracion - a.duracion).slice(0, 3);
+  for (const a of largas)
+    c.riesgo.estimaciones[a.partidaId] = { optimista: Math.max(1, Math.round(a.duracion * 0.8)), probable: a.duracion, pesimista: Math.round(a.duracion * 1.6), costoOptimista: null, costoProbable: null, costoPesimista: null };
+  c.riesgo.resumen = resumirRiesgo(simularRiesgo(r, c.riesgo, lb), hoyDemo);
+  // kanban de materiales: lo que ya debía estar en obra llegó; lo próximo está pedido o en tránsito
+  generarTarjetas(r, c, false, hoyDemo);
+  let k = 0;
+  for (const t of c.kanban.tarjetas) {
+    if (t.fechaNecesaria <= hoyDemo) moverTarjeta(c, t.id, k++ % 9 === 4 ? 'almacen' : 'frente', t.fechaNecesaria);
+    else if (t.fechaPedido <= hoyDemo) {
+      enlazarRestriccion(c, t, hoyDemo);
+      moverTarjeta(c, t.id, k++ % 3 === 0 ? 'transito' : 'pedido', t.fechaPedido);
+    } else if (t.fechaNecesaria <= sumarDias(hoyDemo, 28)) enlazarRestriccion(c, t, hoyDemo);
+  }
+  // un material que no llegó a tiempo (quiebre de stock) y bloquea su actividad
+  const atrasada = c.kanban.tarjetas.find((t) => t.fechaNecesaria <= hoyDemo && t.fechaNecesaria > sumarDias(hoyDemo, -14) && t.cantidad > 10);
+  if (atrasada) {
+    enlazarRestriccion(c, atrasada, hoyDemo);
+    moverTarjeta(c, atrasada.id, 'transito', hoyDemo);
+    atrasada.nota = 'Proveedor reprogramó el despacho';
+  }
+  // plan de calidad: puntos de inspección desde las EETT, protocolos de lo ejecutado y productos no conformes
+  c.calidad.puntos = puntosSugeridos(r);
+  const ppiDe = (pid: string) => c.calidad.puntos.find((x) => x.partidaId === pid);
+  for (const x of c.calidad.puntos) if (/concreto|acero|geomembrana/i.test(r.hojas.find((h) => h.partida.id === x.partidaId)?.partida.descripcion ?? '')) x.tipo = 'H';
+  const compactacion = c.calidad.puntos.find((x) => /compact/i.test(r.hojas.find((h) => h.partida.id === x.partidaId)?.partida.descripcion ?? ''));
+  if (compactacion && c.series[0]) {
+    compactacion.serieId = c.series[0].id;
+    compactacion.norma = 'NTP 339.141 / ASTM D1557 (Proctor modificado); densidad de campo NTP 339.143';
+    compactacion.criterio = 'Grado de compactación ≥ 95 % de la máxima densidad seca del Proctor modificado';
+    compactacion.frecuencia = '1 ensayo por cada 250 m² por capa';
+  }
+  const ejecutado = ejecutadoHasta(c, hoyDemo);
+  let np = 0;
+  const firmado = (fecha: string) => firmasPorDefecto().map((f, i) => ({ ...f, nombre: ['Ing. de campo', 'Ing. de calidad', 'Supervisor de obra'][i], fecha, firmado: true }));
+  for (const b of lb.partidas) {
+    const ej = ejecutado[b.id] ?? 0;
+    const ppi = ppiDe(b.id);
+    if (!ppi || ej <= 0) continue;
+    const n = b.metrado > 0 && ej / b.metrado > 0.5 ? 2 : 1;
+    for (let i = 0; i < n; i++) {
+      np++;
+      const fecha = sumarDias(b.inicio, 3 + i * 5) > hoyDemo ? hoyDemo : sumarDias(b.inicio, 3 + i * 5);
+      const pendiente = np % 7 === 3;
+      const observado = np % 11 === 5;
+      c.calidad.protocolos.push({
+        id: uid('prt'),
+        numero: `PC-${String(np).padStart(3, '0')}`,
+        puntoId: ppi.id,
+        partidaId: b.id,
+        frenteId: frenteDe(b.id),
+        fecha,
+        ubicacion: `Tramo ${i + 1}`,
+        metrado: redondear(ej / n, 2),
+        resultado: observado ? 'observado' : 'conforme',
+        firmas: pendiente ? firmado(fecha).map((f, j) => (j === 2 ? { ...f, nombre: '', fecha: '', firmado: false } : f)) : observado ? firmasPorDefecto() : firmado(fecha),
+        observaciones: observado ? 'Se observa espesor menor al especificado en un sector; se repite la medición.' : '',
+      });
+    }
+  }
+  const protNc = c.calidad.protocolos.find((x) => x.resultado === 'observado') ?? c.calidad.protocolos[0];
+  if (protNc) {
+    c.calidad.pnc.push({
+      id: uid('pnc'),
+      numero: 'PNC-001',
+      fecha: protNc.fecha,
+      partidaId: protNc.partidaId,
+      frenteId: protNc.frenteId,
+      protocoloId: protNc.id,
+      descripcion: 'Espesor de capa por debajo del especificado en un sector del tramo inspeccionado.',
+      detectadoPor: 'Supervisión',
+      disposicion: 'reprocesar',
+      causaRaiz: 'Control de niveles con estacas espaciadas a más de 10 m',
+      ishikawaId: '',
+      acciones: [
+        { id: uid('acc'), accion: 'Reponer material y volver a compactar el sector', responsable: 'Capataz', fecha: sumarDias(protNc.fecha, 2), hecho: true },
+        { id: uid('acc'), accion: 'Colocar estacas de nivel cada 5 m', responsable: 'Topógrafo', fecha: sumarDias(protNc.fecha, 3), hecho: false },
+      ],
+      verificacion: 'Nuevo protocolo del sector con espesores medidos cada 5 m.',
+      costo: 1850,
+      fechaCierre: '',
+      estado: 'tratamiento',
+      dmaicId: '',
+    });
+    const otro = c.calidad.protocolos.find((x) => x.id !== protNc.id && x.partidaId !== protNc.partidaId);
+    if (otro)
+      c.calidad.pnc.push({
+        id: uid('pnc'),
+        numero: 'PNC-002',
+        fecha: otro.fecha,
+        partidaId: otro.partidaId,
+        frenteId: otro.frenteId,
+        protocoloId: otro.id,
+        descripcion: 'Traslape de geosintético menor a 30 cm en dos paños.',
+        detectadoPor: 'Control de calidad',
+        disposicion: 'reparar',
+        causaRaiz: 'Cuadrilla sin plantilla de traslape',
+        ishikawaId: '',
+        acciones: [{ id: uid('acc'), accion: 'Colocar parche con traslape de 50 cm y soldar', responsable: 'Instalador', fecha: sumarDias(otro.fecha, 1), hecho: true }],
+        verificacion: 'Prueba de vacío de las uniones reparadas: conforme.',
+        costo: 620,
+        fechaCierre: sumarDias(otro.fecha, 2),
+        estado: 'cerrado',
+        dmaicId: '',
+      });
+  }
+  // ingeniería de valor y costo meta
+  c.valor = demostracionValor(r, hoyDemo);
   return c;
 }
