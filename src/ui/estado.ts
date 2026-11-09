@@ -145,7 +145,11 @@ export type ModuloId =
   | 'polinomica'
   | 'documentos'
   | 'validacion'
-  | 'exportar';
+  | 'exportar'
+  | 'control'
+  | 'lps'
+  | 'ejecucion'
+  | 'sigma';
 
 export function descargar(nombre: string, datos: Uint8Array | string, tipo: string) {
   const blob = new Blob([typeof datos === 'string' ? datos : (datos as BlobPart)], { type: tipo });

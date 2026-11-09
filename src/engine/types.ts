@@ -252,6 +252,7 @@ export interface Proyecto {
   plantillasEett: PlantillaEett[];
   memoria: TextosMemoria;
   origen?: OrigenImportacion; // expediente del que se importó (con sus observaciones)
+  control?: import('./control').Control; // control de ejecución: valor ganado, Last Planner, lean, six sigma
 }
 
 // ----------------------------- Resultados ---------------------------------

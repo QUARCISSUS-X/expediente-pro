@@ -182,7 +182,7 @@ export function Modal({ titulo, children, alCerrar, pie }: { titulo: string; chi
 export interface Columna<T> {
   clave: string;
   titulo: string;
-  tipo?: 'texto' | 'numero' | 'select' | 'lectura' | 'casilla';
+  tipo?: 'texto' | 'numero' | 'select' | 'lectura' | 'casilla' | 'fecha';
   ancho?: number | string;
   decimales?: number;
   opciones?: { valor: string; texto: string }[];
@@ -288,7 +288,7 @@ export function TablaEditable<T>({ filas, columnas, clave, alEliminar, pie, vaci
                   );
                 return (
                   <td key={c.clave} className={cls}>
-                    <EntradaTexto valor={(v as string) ?? ''} placeholder={c.placeholder} ariaLabel={c.titulo} lista={c.lista} alCambiar={(x) => c.cambiar!(f, x, i)} onKeyDown={mover} dataF={i} dataC={ci} />
+                    <EntradaTexto valor={(v as string) ?? ''} placeholder={c.placeholder} ariaLabel={c.titulo} lista={c.lista} alCambiar={(x) => c.cambiar!(f, x, i)} onKeyDown={mover} dataF={i} dataC={ci} type={c.tipo === 'fecha' ? 'date' : undefined} />
                   </td>
                 );
               })}

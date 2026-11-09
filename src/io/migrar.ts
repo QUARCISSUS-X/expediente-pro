@@ -3,6 +3,7 @@ import { PLANTILLAS_EETT } from '../data/plantillasEett';
 import { documentoPorDefecto, entidadVacia, metaPorDefecto, responsableVacio, textosEettPorDefecto } from '../data/proyectos';
 import { MANO_OBRA_DEFECTO } from '../engine/eett';
 import type { PlantillaEett, Proyecto } from '../engine/types';
+import { normalizarControl } from '../engine/control';
 
 type Viejo = Partial<Proyecto> & { meta?: Record<string, unknown> };
 
@@ -58,5 +59,6 @@ export function migrarProyecto(x: unknown): Proyecto {
     plantillasEett: plantillas,
     memoria: { antecedentes: '', objetivo: '', alcance: '', descripcionTecnica: '', consideraciones: '', ...(p.memoria ?? {}) },
     ...(p.origen ? { origen: p.origen } : {}),
+    ...(p.control ? { control: normalizarControl(p.control) } : {}),
   };
 }

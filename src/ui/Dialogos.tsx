@@ -296,6 +296,7 @@ function Atajos({ alCerrar }: { alCerrar: () => void }) {
     ['Ctrl + Tab / Ctrl + Shift + Tab', 'Pestaña siguiente / anterior'],
     ['Ctrl + 1 … Ctrl + 9', 'Ir a un módulo: panel, configuración, TdR, presupuesto, insumos, GG, polinómica, cronograma, valorizado'],
     ['Ctrl + D / F7 / Ctrl + E', 'Documentos / Validación / Exportar'],
+    ['Alt + 1 … Alt + 4', 'Control de obra / Last Planner / Ejecución lean / Six Sigma'],
     ['Ctrl + O', 'Importar archivos'],
   );
   return (
