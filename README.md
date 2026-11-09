@@ -10,6 +10,8 @@ entregables de una cotización o de un expediente técnico. Sin IA y sin conexi�
 - `src/data/` catálogo base, índices unificados INEI (base dic-2025), biblioteca de partidas, plantillas de EETT, proyecto de ejemplo.
 - `src/ui/` interfaz React (un solo archivo HTML al compilar): panel de proyectos (IndexedDB), configuración general con logos, barra de herramientas tipo S10.
 - `cli/` línea de comandos. `tests/` pruebas del motor (Vitest).
+- El motor de control está dividido por fase en `src/engine/control/` (PMBOK, Earned Schedule, Last Planner, Lean, Six Sigma, tablero, demostración); `src/engine/control.ts` los reexporta.
+- `CLAUDE.md`: mapa de cada función a sus archivos (motor, pantalla, hojas del informe y pruebas) para que cada mejora toque solo su parte. `npm run probar:modulo -- "<módulo>"` prueba un solo módulo en el navegador.
 - `electron/` app de escritorio para Windows: ventana con pestañas de proyectos, menú de módulos con atajos, ícono e instalador. La interfaz es la misma de la web (`dist/index.html`); `src/ui/escritorio.ts` la conecta con la ventana y en el navegador no hace nada.
 
 ## Comandos
