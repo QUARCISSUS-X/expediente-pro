@@ -149,6 +149,8 @@
 <p>El botón <b>Versiones</b> (arriba, junto a Guardar) muestra los puntos de restauración del proyecto: el programa guarda uno con el primer cambio de cada día (conserva los últimos 12) y usted puede guardar versiones con nombre antes de un cambio grande. «Restaurar» reemplaza el contenido actual y también se puede deshacer.</p>
 <h2>6.2 Resumen del proyecto e informes gerenciales</h2>
 <p><b>Resumen del proyecto</b> (grupo Expediente; Alt+9 en la app) reúne los indicadores principales, el costo por título, la composición del costo (mano de obra, materiales, equipos, subcontratos), la estructura del precio, la curva S y la <b>clasificación ABC</b> de partidas e insumos: la clase A es lo que suma el 80 % del costo y merece la mayor revisión. Desde ahí se descargan el <b>Informe ejecutivo</b> (PDF con gráficos) y el <b>Reporte gerencial</b> (Excel). Por línea de comandos: <code>expediente informe proyecto.json --salida carpeta</code> y <code>expediente integridad proyecto.json --reparar</code>.</p>
+<h2>6.3 Extensión para Firefox y Chrome</h2>
+<p>El programa también se instala como extensión del navegador: aparece un botón en la barra que lo abre en una pestaña, sin conexión. En Firefox se instala el archivo <b>.xpi</b> firmado (arrastrándolo a la ventana) o desde addons.mozilla.org; en Chrome o Edge, desde la tienda o en modo desarrollador con «Cargar descomprimida». Los proyectos de la extensión se guardan solo en ese navegador y se borran si se desinstala: respáldelos con «Guardar» (.json).</p>
 <h2 class="salto">7. Entregables que genera</h2>
 <table>
   <tr><th style="width:40%">Archivo</th><th>Contenido</th></tr>

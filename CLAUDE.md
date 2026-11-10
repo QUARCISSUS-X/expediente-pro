@@ -35,6 +35,7 @@ archivos grandes completos:
 | Ingeniería de valor / Target Value Design | `engine/valor.ts` (+ `valorDemo.ts`) | `ui/modulos/Valor.tsx` | Costo meta, Alternativas VE | `"ingeniería de valor"` |
 | **Resumen del proyecto** (indicadores, ABC, Pareto, curva S, alertas) | `engine/analisis.ts` | `ui/modulos/Resumen.tsx` | Informe ejecutivo PDF y Reporte gerencial Excel: `export/gerencial.ts` | `"análisis gerencial"` |
 | **Integridad de datos** (referencias rotas, repetidos, números no válidos) | `engine/integridad.ts` (`recorrer`) | `ui/modulos/Validacion.tsx` (sección Integridad) | Hoja Consistencia del reporte gerencial | `"integridad de datos"` |
+| Extensión de navegador (Firefox, Chrome/Edge) | — | misma interfaz; `extension/` (manifiesto base, fondo, íconos) y `scripts/extension.mjs` | — | `web-ext lint --source-dir dist-ext-firefox` |
 | Versiones del proyecto y almacenamiento | — | `ui/almacen.ts` (IndexedDB, copias, aviso entre pestañas), `ui/Copias.tsx` | — | — |
 
 Piezas comunes (solo si la mejora las necesita):
@@ -65,7 +66,7 @@ Piezas comunes (solo si la mejora las necesita):
   cálculo del expediente se agrega a `FUERA_DEL_CALCULO`. Copiar antes de ordenar listas de `Resultados` (`[...lista].sort()`).
 - Días laborables siempre con `Calendario` (`engine/schedule.ts`), que tiene caché; no contar día por día en bucles.
 - Un proyecto guardado con una versión anterior siempre debe abrir: todo campo nuevo pasa por `migrarProyecto` / `normalizarControl`.
-- Sin dependencias nuevas ni llamadas a internet.
+- Sin dependencias nuevas ni llamadas a internet. Nada de `eval`, `new Function` ni scripts en línea en código propio: la extensión no los permite.
 - Archivo nuevo: primera línea con un comentario `//` que diga qué hace (lo usa `docs/MAPA.md`).
 
 ## Verificación acotada

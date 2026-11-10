@@ -14,7 +14,8 @@
     "escritorio:dev": "node -e \"process.env.EXPEDIENTE_URL='http://localhost:5173/';require('child_process').spawn(require('electron'),['.'],{stdio:'inherit',env:process.env})\"",
     "app:win": "vite build && electron-builder --win nsis portable --x64",
     "mapa": "node scripts/mapa.mjs",
-    "verificar": "tsc --noEmit -p . && vitest run && vite build && npm run cli:build && node scripts/mapa.mjs"
+    "verificar": "tsc --noEmit -p . && vitest run && vite build && npm run cli:build && node scripts/mapa.mjs",
+    "extension": "node scripts/extension.mjs"
   },
   "keywords": [],
   "author": "Expediente Pro",

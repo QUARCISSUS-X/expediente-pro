@@ -385,6 +385,9 @@ Puente de la barra de pestañas (pestanas.html) con la ventana.
 
 ## Herramientas — `scripts/`
 
+### `scripts/extension.mjs` · 44 líneas
+Arma la extensión de Firefox y de Chrome/Edge a partir de la misma interfaz web.
+
 ### `scripts/mapa.mjs` · 32 líneas
 Genera docs/MAPA.md: qué hace cada archivo y en qué línea está cada función exportada.
 

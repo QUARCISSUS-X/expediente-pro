@@ -26,6 +26,7 @@ entregables de una cotización o de un expediente técnico. Sin IA y sin conexi�
     npm run escritorio   # compila la web y abre la app de escritorio
     npm run app:win      # instalador y portable de Windows en release/ (en Linux requiere wine)
     # al unir a main una versión nueva, GitHub compila el instalador y publica el release (Releases)
+    npm run extension    # extensión de Firefox y Chrome/Edge en release/ (y carpetas dist-ext-*)
     npm run verificar    # tipos + pruebas + compilación web y CLI (antes de cada entrega)
     npm run mapa         # regenera docs/MAPA.md
     npm run cli -- informe proyecto.json --salida carpeta      # informe ejecutivo (PDF) y reporte gerencial (Excel)

@@ -10,3 +10,6 @@ salida/
 entregables/
 release/
 capturas/
+dist-ext/
+dist-ext-firefox/
+dist-ext-chrome/
