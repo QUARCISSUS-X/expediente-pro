@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { repararIntegridad, resumenIntegridad, revisarIntegridad } from '../../engine/integridad';
 import { fmt } from '../../engine/util';
 import { Insignia } from '../componentes';
 import type { Contexto, ModuloId } from '../estado';
@@ -36,7 +37,7 @@ export function ModValidacion({ ctx }: { ctx: Contexto }) {
       <div className="modulo-cabecera">
         <div>
           <h1>Validación</h1>
-          <p className="proposito">Quince controles que se recalculan con cada cambio. Un error impide que el expediente sea consistente; una advertencia pide revisión.</p>
+          <p className="proposito">Quince controles de consistencia del expediente y una revisión de la integridad de los datos, que se recalculan con cada cambio. Un error impide que el expediente sea consistente; una advertencia pide revisión.</p>
         </div>
       </div>
       <div className="cifras">
@@ -44,6 +45,7 @@ export function ModValidacion({ ctx }: { ctx: Contexto }) {
         <div><span>Con advertencias</span><strong style={{ color: 'var(--ocre)' }}>{s.advertencias}</strong></div>
         <div><span>Con errores</span><strong style={{ color: 'var(--sello)' }}>{s.errores}</strong></div>
       </div>
+      <Integridad ctx={ctx} />
       {p.origen && <ObservacionesOrigen ctx={ctx} />}
       <h2>Reglas de consistencia</h2>
       <div className="reglas">
@@ -136,6 +138,50 @@ function ObservacionesOrigen({ ctx }: { ctx: Contexto }) {
           </tbody>
         </table>
       </div>
+    </>
+  );
+}
+
+/** Integridad de los datos: referencias rotas, repetidos y números no válidos, con reparación en un clic. */
+function Integridad({ ctx }: { ctx: Contexto }) {
+  const lista = useMemo(() => revisarIntegridad(ctx.proyecto), [ctx.proyecto]);
+  const s = resumenIntegridad(lista);
+  const reparar = () => {
+    const rep = repararIntegridad(ctx.proyecto);
+    const n = rep.reparados.reduce((a, x) => a + x.cantidad, 0);
+    if (!n) return;
+    ctx.reemplazar(rep.proyecto);
+    ctx.avisar(`Se repararon ${n} datos (Ctrl+Z para deshacer).${rep.pendientes.length ? ` Quedan ${rep.pendientes.length} por corregir a mano.` : ''}`);
+  };
+  return (
+    <>
+      <h2>Integridad de los datos</h2>
+      {lista.length === 0 ? (
+        <div className="aviso info">El proyecto no tiene datos sueltos, repetidos ni dañados.</div>
+      ) : (
+        <div className="panel" style={{ padding: 14, marginBottom: 18 }}>
+          <div className="fila-flex" style={{ marginBottom: 8 }}>
+            <span>{s.errores} errores y {s.avisos} avisos en los datos del proyecto.</span>
+            <span className="separador" />
+            <button className="boton chico" onClick={() => ctx.abrirDialogo('copias')}>Versiones</button>
+            {s.reparables > 0 && <button className="boton primario" onClick={reparar}>Reparar {s.reparables} automáticamente</button>}
+          </div>
+          <table className="tabla">
+            <thead><tr><th style={{ width: 96 }}>Tipo</th><th>Problema</th><th className="num" style={{ width: 70 }}>Casos</th><th>Ejemplos</th><th style={{ width: 110 }}>Solución</th></tr></thead>
+            <tbody>
+              {lista.map((x) => (
+                <tr key={x.clave}>
+                  <td><Insignia estado={x.nivel === 'error' ? 'error' : 'advertencia'}>{x.nivel === 'error' ? 'Error' : 'Aviso'}</Insignia></td>
+                  <td>{x.mensaje}</td>
+                  <td className="num">{x.cantidad}</td>
+                  <td className="pequeno">{x.detalle.slice(0, 4).join(' · ')}{x.cantidad > 4 ? ' …' : ''}</td>
+                  <td className="pequeno">{x.reparable ? 'Automática' : 'A mano'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </>
   );
 }

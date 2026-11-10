@@ -1,0 +1,113 @@
+# Compila la app de escritorio en Windows y publica el release.
+# - Al unir a main una versión nueva (campo "version" de package.json sin etiqueta todavía): crea la etiqueta vX.Y.Z
+#   y publica el release con el instalador, el portable y el ZIP.
+# - En cada pull request: compila y deja el instalador como artefacto descargable, sin publicar nada.
+# - También se puede lanzar a mano desde la pestaña Actions o subiendo una etiqueta v*.
+name: Release Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ¿Versión nueva?
+        id: version
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $existe = [bool](git tag -l "v$v")
+          $publicar = '${{ github.event_name }}' -ne 'pull_request' -and -not ($existe -and '${{ github.ref_type }}' -ne 'tag')
+          "tag=v$v" >> $env:GITHUB_OUTPUT
+          "publicar=$($publicar.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          "Versión $v · etiqueta existente: $existe · publicar: $publicar"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar (tipos y pruebas)
+        run: |
+          npx tsc --noEmit -p .
+          npx vitest run
+
+      - name: Compilar web y línea de comandos
+        run: |
+          npx vite build
+          npm run cli:build
+
+      - name: Compilar instalador y portable de Windows
+        run: npx electron-builder --win nsis portable --x64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Paquete web + línea de comandos (ZIP)
+        shell: pwsh
+        run: |
+          $d = 'paquete/ExpedientePro_v2'
+          New-Item -ItemType Directory -Force "$d/Linea_de_comandos", "$d/Programa" | Out-Null
+          Copy-Item dist-cli/expediente.cjs "$d/Linea_de_comandos/"
+          Copy-Item dist/index.html "$d/Programa/ExpedientePro.html"
+          Copy-Item docs/guia.html, docs/HISTORIAL.md $d
+          Compress-Archive -Path $d -DestinationPath release/ExpedientePro_v2.zip -Force
+
+      - name: Notas del release
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $h = Get-Content docs/HISTORIAL.md -Raw -Encoding utf8
+          $partes = $h -split '(?m)^## '
+          $ultima = if ($partes.Count -gt 1) { '## ' + $partes[1].TrimEnd() } else { '' }
+          $notas = @"
+          ## Instalación en Windows
+          - **Expediente-Pro-Setup-$v.exe**: instalador (elige carpeta, crea accesos directos en el escritorio y el menú Inicio).
+          - **Expediente-Pro-Portable-$v.exe**: no se instala; se abre con doble clic desde cualquier carpeta o USB.
+          - **ExpedientePro_v2.zip**: versión web (un solo archivo HTML) y línea de comandos (`node expediente.cjs`).
+
+          El instalador no tiene firma digital: si Windows muestra «Windows protegió su PC», elija **Más información → Ejecutar de todas formas**.
+          Los proyectos guardados se conservan al actualizar a una versión nueva.
+
+          $ultima
+          "@
+          $notas -replace '(?m)^ {10}', '' | Set-Content notas-release.md -Encoding utf8
+
+      - name: Instalador como artefacto (pull request o versión ya publicada)
+        if: steps.version.outputs.publicar != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Expediente-Pro-Windows-${{ steps.version.outputs.tag }}
+          path: |
+            release/Expediente-Pro-Setup-*.exe
+            release/Expediente-Pro-Portable-*.exe
+            release/ExpedientePro_v2.zip
+          retention-days: 14
+
+      - name: Publicar release
+        if: steps.version.outputs.publicar == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Expediente Pro ${{ steps.version.outputs.tag }}
+          body_path: notas-release.md
+          make_latest: true
+          files: |
+            release/Expediente-Pro-Setup-*.exe
+            release/Expediente-Pro-Portable-*.exe
+            release/ExpedientePro_v2.zip

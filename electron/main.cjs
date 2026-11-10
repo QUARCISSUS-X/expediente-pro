@@ -22,33 +22,8 @@ const TIPOS = {
   '.woff2': 'font/woff2',
 };
 
-const MODULOS = [
-  ['proyectos', 'Panel de proyectos', 'CmdOrCtrl+1'],
-  ['proyecto', 'Configuración general', 'CmdOrCtrl+2'],
-  ['tdr', 'Términos de referencia', 'CmdOrCtrl+3'],
-  null,
-  ['presupuesto', 'Presupuesto, APU y metrados', 'CmdOrCtrl+4'],
-  ['insumos', 'Relación de insumos', 'CmdOrCtrl+5'],
-  ['gg', 'Gastos generales', 'CmdOrCtrl+6'],
-  ['polinomica', 'Fórmula polinómica', 'CmdOrCtrl+7'],
-  ['valor', 'Ingeniería de valor y costo meta', 'Alt+0'],
-  null,
-  ['programa', 'Cronograma de ejecución', 'CmdOrCtrl+8'],
-  ['cronogramas', 'Valorizado y calendarios', 'CmdOrCtrl+9'],
-  null,
-  ['control', 'Control de obra y valor ganado', 'Alt+1'],
-  ['lps', 'Last Planner System', 'Alt+2'],
-  ['ejecucion', 'Ejecución lean (rendimientos y frentes)', 'Alt+3'],
-  ['sigma', 'Calidad y mejora Six Sigma', 'Alt+4'],
-  ['riesgo', 'Riesgo de plazo y costo (Monte Carlo)', 'Alt+5'],
-  ['ccpm', 'Cadena crítica (CCPM)', 'Alt+6'],
-  ['logistica', 'Kanban de materiales', 'Alt+7'],
-  ['calidad', 'Plan de calidad ISO 9001', 'Alt+8'],
-  null,
-  ['documentos', 'Documentos', 'CmdOrCtrl+D'],
-  ['validacion', 'Validación', 'F7'],
-  ['exportar', 'Exportar entregables', 'CmdOrCtrl+E'],
-];
+// Lista única de módulos (la misma que usa la interfaz web): electron/modulos.json
+const MODULOS = require('./modulos.json').flatMap((g, i) => [...(i ? [null] : []), ...g.items.map((m) => [m.id, m.menu, m.atajo])]);
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } },

@@ -3,7 +3,7 @@ import { calcularApu, calcularGG, calcularPie, construirPresupuesto, costoDirect
 import { generarEett } from './eett';
 import { calcularPolinomica } from './polinomica';
 import { calcularDesembolsos, calcularPrograma, calcularValorizado, distribuirInsumos } from './schedule';
-import type { ApuCalc, FleteCalc, Proyecto, RelacionInsumos, Resultados } from './types';
+import type { Apu, ApuCalc, FleteCalc, Insumo, Proyecto, RelacionInsumos, Resultados } from './types';
 import { num, redondear } from './util';
 import { validar } from './validate';
 
@@ -26,11 +26,49 @@ export function calcularFlete(p: Proyecto, rel: RelacionInsumos): FleteCalc {
   return { items, sinPeso, toneladas, total: redondear(items.reduce((a, i) => a + i.flete, 0), 2) };
 }
 
-export function calcularTodo(p: Proyecto): Resultados {
+// ---------------------------------------------------------------- cálculo incremental
+// La interfaz edita con immer: lo que no cambia conserva su referencia. Se aprovecha en dos niveles:
+//  1. recalcular(): si solo cambió el control de obra, el presupuesto y el cronograma no se vuelven a calcular.
+//  2. un APU y una especificación se reutilizan mientras no cambien el análisis, el catálogo de insumos ni la jornada.
+// Las cachés van por referencia, así que solo las usa recalcular(); calcularTodo() siempre calcula desde cero
+// (la línea de comandos, los importadores y las pruebas modifican el proyecto en el sitio).
+
+const cacheApu = new WeakMap<Apu, Map<string, { insumos: Insumo[]; jornada: number; res: ApuCalc }>>();
+
+function apuEnCache(id: string, apu: Apu | undefined, p: Proyecto, mapa: Map<string, Insumo>, jornada: number): ApuCalc {
+  if (!apu) return calcularApu(id, apu, mapa, jornada);
+  let porId = cacheApu.get(apu);
+  const c = porId?.get(id);
+  if (c && c.insumos === p.insumos && c.jornada === jornada) return c.res;
+  const res = calcularApu(id, apu, mapa, jornada);
+  if (!porId) cacheApu.set(apu, (porId = new Map()));
+  porId.set(id, { insumos: p.insumos, jornada, res });
+  return res;
+}
+
+/** Datos del proyecto que no entran al cálculo del expediente (se editan sin recalcular). */
+const FUERA_DEL_CALCULO = new Set<string>(['control']);
+
+/** Verdadero si entre los dos proyectos solo cambiaron datos que no entran al cálculo. */
+export function mismoCalculo(a: Proyecto, b: Proyecto): boolean {
+  if (a === b) return true;
+  const ra = a as unknown as Record<string, unknown>;
+  const rb = b as unknown as Record<string, unknown>;
+  for (const k of new Set([...Object.keys(ra), ...Object.keys(rb)])) if (!FUERA_DEL_CALCULO.has(k) && ra[k] !== rb[k]) return false;
+  return true;
+}
+
+/** Como calcularTodo, pero reutiliza el resultado anterior cuando el cambio no afecta al cálculo. */
+export function recalcular(p: Proyecto, previo?: Resultados | null): Resultados {
+  if (previo && mismoCalculo(previo.proyecto, p)) return previo.proyecto === p ? previo : { ...previo, proyecto: p };
+  return calcularTodo(p, true);
+}
+
+export function calcularTodo(p: Proyecto, incremental = false): Resultados {
   const insumos = mapaInsumos(p);
   const jornada = num(p.meta.jornadaHoras, 8) || 8;
   const apus: Record<string, ApuCalc> = {};
-  for (const pt of p.partidas) if (!pt.titulo) apus[pt.id] = calcularApu(pt.id, p.apus[pt.id], insumos, jornada);
+  for (const pt of p.partidas) if (!pt.titulo) apus[pt.id] = incremental ? apuEnCache(pt.id, p.apus[pt.id], p, insumos, jornada) : calcularApu(pt.id, p.apus[pt.id], insumos, jornada);
   const metradoPorPartida = metradosPorPartida(p);
   const filas = construirPresupuesto(p, apus, metradoPorPartida);
   const hojas = filas.filter((f) => !f.esTitulo);
@@ -57,7 +95,7 @@ export function calcularTodo(p: Proyecto): Resultados {
     personalPico = Math.max(personalPico, hh / jornada);
   }
   const desembolsos = calcularDesembolsos(p, programa, valorizado, pie);
-  const eett = generarEett(hojas, apus, p.plantillasEett);
+  const eett = generarEett(hojas, apus, p.plantillasEett, incremental);
   const parcial = {
     proyecto: p,
     apus,

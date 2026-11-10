@@ -2,6 +2,8 @@
 //   expediente generar <proyecto.expediente.json | plantilla.xlsx> [--salida carpeta] [--zip]
 //   expediente validar <archivo>
 //   expediente resumen <archivo>
+//   expediente informe <archivo> [--salida carpeta]
+//   expediente integridad <archivo> [--reparar] [--salida proyecto.json]
 //   expediente plantilla [--salida archivo.xlsx] [--desde proyecto.json]
 //   expediente ejemplo [--salida archivo.json]
 //   expediente cargar <proyecto.exp.txt> [--salida proyecto.json] [--generar carpeta] [--zip]   (formato compacto)
@@ -14,7 +16,9 @@ import { proyectoEjemplo, proyectoEnBlanco } from '../src/data/proyectos';
 import { calcularTodo } from '../src/engine/index';
 import type { Proyecto } from '../src/engine/types';
 import { fmt } from '../src/engine/util';
-import { empaquetarZip, generarTodos, nombreBase } from '../src/export/paquete';
+import { archivoEjecutivo, archivoGerencial, empaquetarZip, generarTodos, nombreBase } from '../src/export/paquete';
+import { analizar } from '../src/engine/analisis';
+import { repararIntegridad, resumenIntegridad, revisarIntegridad } from '../src/engine/integridad';
 import { renderPdfNode } from '../src/export/render-node';
 import { exportarPlantilla, importarPlantilla } from '../src/io/plantilla';
 import { migrarProyecto } from '../src/io/migrar';
@@ -151,6 +155,38 @@ async function main() {
     case 'resumen':
       imprimirResumen(await cargar(args[1]));
       break;
+    case 'informe': {
+      // informe ejecutivo (PDF) y reporte gerencial (Excel), sin generar el resto de entregables
+      if (!args[1]) throw new Error('Indique el archivo del proyecto.');
+      const r = imprimirResumen(await cargar(args[1]));
+      const a = analizar(r);
+      console.log(`ABC partidas: A=${a.abcPartidas.clases.A.n} B=${a.abcPartidas.clases.B.n} C=${a.abcPartidas.clases.C.n} · ABC insumos: A=${a.abcInsumos.clases.A.n} B=${a.abcInsumos.clases.B.n} C=${a.abcInsumos.clases.C.n}`);
+      for (const x of a.alertas) console.log(`  [${x.nivel}] ${x.texto}`);
+      const salida = resolve(opt('--salida') ?? '.');
+      mkdirSync(salida, { recursive: true });
+      for (const ar of [await archivoEjecutivo(r, renderPdfNode), await archivoGerencial(r)]) {
+        writeFileSync(join(salida, ar.nombre), ar.datos);
+        console.log(`  ${join(salida, ar.nombre)}  (${(ar.datos.length / 1024).toFixed(0)} KB)`);
+      }
+      break;
+    }
+    case 'integridad': {
+      // revisa datos sueltos, repetidos o dañados; con --reparar escribe el proyecto corregido
+      if (!args[1]) throw new Error('Indique el archivo del proyecto.');
+      const p = await cargar(args[1]);
+      const lista = revisarIntegridad(p);
+      const s = resumenIntegridad(lista);
+      console.log(lista.length ? `Integridad: ${s.errores} errores, ${s.avisos} avisos (${s.reparables} reparables)` : 'Integridad: sin problemas.');
+      for (const x of lista) console.log(`  [${x.nivel}${x.reparable ? ', reparable' : ''}] ${x.mensaje}: ${x.cantidad} (${x.detalle.slice(0, 3).join('; ')})`);
+      if (flag('--reparar') && s.reparables) {
+        const rep = repararIntegridad(p);
+        const ruta = resolve(opt('--salida') ?? args[1].replace(/(\.expediente)?\.\w+$/, '') + '_reparado.expediente.json');
+        writeFileSync(ruta, JSON.stringify(rep.proyecto, null, 2));
+        console.log(`Reparado: ${ruta} (quedan ${rep.pendientes.length} problemas por corregir a mano)`);
+      }
+      process.exit(s.errores ? 2 : 0);
+      break;
+    }
     case 'plantilla': {
       const base = opt('--desde') ? await cargar(opt('--desde')!) : proyectoEnBlanco();
       const ruta = resolve(opt('--salida') ?? 'Plantilla_de_carga.xlsx');
@@ -228,6 +264,8 @@ Uso:
   expediente generar <proyecto.expediente.json | plantilla.xlsx | proyecto.exp.txt> [--salida carpeta] [--zip] [--forzar]
   expediente validar <archivo>
   expediente resumen <archivo>
+  expediente informe <archivo> [--salida carpeta]            (informe ejecutivo PDF y reporte gerencial Excel)
+  expediente integridad <archivo> [--reparar] [--salida proyecto.json]
   expediente plantilla [--salida archivo.xlsx] [--desde proyecto.json]
   expediente ejemplo [--salida archivo.json]
   expediente cargar <proyecto.exp.txt> [--config datos.json] [--salida proyecto.json] [--generar carpeta] [--zip] [--forzar]

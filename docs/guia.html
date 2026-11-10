@@ -144,6 +144,11 @@
   <tr><td>15</td><td>Cumplimiento del TdR</td><td>Cada entregable exigido está cubierto por un documento.</td></tr>
 </table>
 
+<h2>6.1 Integridad de datos y versiones</h2>
+<p>En <b>Validación</b>, la sección «Integridad de los datos» revisa que el proyecto no tenga datos sueltos o dañados: metrados, análisis o actividades de partidas que ya no existen, predecesoras rotas, identificadores repetidos y números no válidos. El botón <b>Reparar automáticamente</b> los corrige sin tocar el presupuesto válido (se deshace con Ctrl+Z). Al abrir un archivo .json la reparación se hace sola y se avisa.</p>
+<p>El botón <b>Versiones</b> (arriba, junto a Guardar) muestra los puntos de restauración del proyecto: el programa guarda uno con el primer cambio de cada día (conserva los últimos 12) y usted puede guardar versiones con nombre antes de un cambio grande. «Restaurar» reemplaza el contenido actual y también se puede deshacer.</p>
+<h2>6.2 Resumen del proyecto e informes gerenciales</h2>
+<p><b>Resumen del proyecto</b> (grupo Expediente; Alt+9 en la app) reúne los indicadores principales, el costo por título, la composición del costo (mano de obra, materiales, equipos, subcontratos), la estructura del precio, la curva S y la <b>clasificación ABC</b> de partidas e insumos: la clase A es lo que suma el 80 % del costo y merece la mayor revisión. Desde ahí se descargan el <b>Informe ejecutivo</b> (PDF con gráficos) y el <b>Reporte gerencial</b> (Excel). Por línea de comandos: <code>expediente informe proyecto.json --salida carpeta</code> y <code>expediente integridad proyecto.json --reparar</code>.</p>
 <h2 class="salto">7. Entregables que genera</h2>
 <table>
   <tr><th style="width:40%">Archivo</th><th>Contenido</th></tr>

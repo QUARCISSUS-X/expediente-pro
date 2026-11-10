@@ -1,9 +1,9 @@
 // Estado del proyecto abierto: edición inmutable (immer), deshacer/rehacer y autoguardado en el almacén local.
 import { produce, type Draft } from 'immer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { calcularTodo } from '../engine/index';
+import { recalcular } from '../engine/index';
 import type { Proyecto, Resultados } from '../engine/types';
-import { guardarProyecto, recordarUltimo } from './almacen';
+import { alGuardarEnOtraPestana, avisarGuardado, guardarProyecto, recordarUltimo } from './almacen';
 
 interface Historia {
   id: string;
@@ -47,7 +47,9 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
     setH((s) => (s.futuro.length ? { ...s, actual: s.futuro[0], pasado: [...s.pasado, s.actual], futuro: s.futuro.slice(1) } : s));
   }, []);
 
-  const resultados: Resultados = useMemo(() => calcularTodo(h.actual), [h.actual]);
+  // solo se recalcula lo que cambió (ver recalcular en engine/index.ts)
+  const previo = useRef<Resultados | null>(null);
+  const resultados: Resultados = useMemo(() => (previo.current = recalcular(h.actual, previo.current)), [h.actual]);
 
   // autoguardado en el almacén del navegador
   const temporizador = useRef<number | undefined>(undefined);
@@ -59,6 +61,7 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
     window.clearTimeout(temporizador.current);
     try {
       await guardarProyecto(p.id, p.actual, p.resultados);
+      avisarGuardado(p.id);
       setGuardadoLocal('guardado');
       setVersion((v) => v + 1);
     } catch {
@@ -79,6 +82,13 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
   }, [h.actual, h.id]);
   // al desmontar (o cerrar la pestaña de escritorio) no se pierde el último cambio
   useEffect(() => () => void escribir(), [escribir]);
+
+  // otra pestaña del navegador guardó este mismo proyecto: lo que se ve aquí quedó atrás
+  const [editadoFuera, setEditadoFuera] = useState(false);
+  useEffect(() => {
+    setEditadoFuera(false);
+    return alGuardarEnOtraPestana(h.id, () => setEditadoFuera(true));
+  }, [h.id]);
 
   /** Guarda de inmediato el cambio pendiente (sin esperar el autoguardado). */
   const guardarAhora = escribir;
@@ -109,10 +119,11 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
     guardadoLocal,
     guardarAhora,
     version,
+    editadoFuera,
   };
 }
 
-export type Dialogo = 'biblioteca' | 'buscar' | 'calculadoraHH' | 'cuadrilla' | 'nuevo' | 'atajos' | null;
+export type Dialogo = 'biblioteca' | 'buscar' | 'calculadoraHH' | 'cuadrilla' | 'nuevo' | 'atajos' | 'copias' | null;
 
 export type Contexto = ReturnType<typeof useProyecto> & {
   ir: (modulo: ModuloId, partidaId?: string) => void;
@@ -135,6 +146,7 @@ export type Contexto = ReturnType<typeof useProyecto> & {
 
 export type ModuloId =
   | 'proyectos'
+  | 'resumen'
   | 'proyecto'
   | 'tdr'
   | 'presupuesto'

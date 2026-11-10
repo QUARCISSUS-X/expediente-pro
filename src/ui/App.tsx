@@ -11,6 +11,10 @@ import { crearProyecto, leerProyecto, listarProyectos, olvidarV1, proyectoV1, ul
 import { Cinta } from './Cinta';
 import { escritorio, parametrosInicio, publicarApiPagina } from './escritorio';
 import { Marca } from './componentes';
+import { Barrera } from './Barrera';
+import { Copias } from './Copias';
+import { repararIntegridad } from '../engine/integridad';
+import { MODULOS, NAV } from './modulos/registro';
 
 async function esPlantillaDeCarga(f: File): Promise<boolean> {
   try {
@@ -26,76 +30,7 @@ import { descargar, elegirArchivos, useProyecto, type Contexto, type Dialogo, ty
 import { importarExpediente, type ResultadoImportacion } from '../io/importarExpediente';
 import ExcelJS from 'exceljs';
 import { Modal } from './componentes';
-import { ModCronogramas } from './modulos/Cronogramas';
-import { ModDocumentos } from './modulos/Documentos';
-import { ModExportar } from './modulos/Exportar';
-import { ModGG } from './modulos/GastosGenerales';
-import { ModInsumos } from './modulos/Insumos';
-import { ModPolinomica } from './modulos/Polinomica';
-import { ModPresupuesto } from './modulos/Presupuesto';
-import { ModPrograma } from './modulos/Programa';
-import { ModProyecto } from './modulos/Proyecto';
-import { ModProyectos } from './modulos/Proyectos';
-import { ModTdr } from './modulos/Tdr';
-import { ModValidacion } from './modulos/Validacion';
-import { ModControl } from './modulos/Control';
-import { ModLps } from './modulos/Lps';
-import { ModEjecucion } from './modulos/Ejecucion';
-import { ModSigma } from './modulos/Sigma';
-import { ModRiesgo } from './modulos/Riesgo';
-import { ModCcpm } from './modulos/Ccpm';
-import { ModLogistica } from './modulos/Logistica';
-import { ModCalidad } from './modulos/Calidad';
-import { ModValor } from './modulos/Valor';
 
-const NAV: { grupo: string; items: { id: ModuloId; texto: string; reglas: number[] }[] }[] = [
-  {
-    grupo: 'Expediente',
-    items: [
-      { id: 'proyectos', texto: 'Panel de proyectos', reglas: [] },
-      { id: 'proyecto', texto: 'Configuración general', reglas: [] },
-      { id: 'tdr', texto: 'Términos de referencia', reglas: [15] },
-    ],
-  },
-  {
-    grupo: 'Costos',
-    items: [
-      { id: 'presupuesto', texto: 'Presupuesto, APU y metrados', reglas: [1, 2, 3, 12] },
-      { id: 'insumos', texto: 'Relación de insumos', reglas: [4, 5] },
-      { id: 'gg', texto: 'Gastos generales', reglas: [7, 11] },
-      { id: 'polinomica', texto: 'Fórmula polinómica', reglas: [10] },
-      { id: 'valor', texto: 'Ingeniería de valor y costo meta', reglas: [] },
-    ],
-  },
-  {
-    grupo: 'Tiempo',
-    items: [
-      { id: 'programa', texto: 'Cronograma de ejecución', reglas: [14] },
-      { id: 'cronogramas', texto: 'Valorizado y calendarios', reglas: [6, 8, 9] },
-    ],
-  },
-  {
-    grupo: 'Control de obra',
-    items: [
-      { id: 'control', texto: 'Control y valor ganado', reglas: [] },
-      { id: 'lps', texto: 'Last Planner', reglas: [] },
-      { id: 'ejecucion', texto: 'Ejecución lean', reglas: [] },
-      { id: 'sigma', texto: 'Calidad Six Sigma', reglas: [] },
-      { id: 'riesgo', texto: 'Riesgo de plazo y costo', reglas: [] },
-      { id: 'ccpm', texto: 'Cadena crítica', reglas: [] },
-      { id: 'logistica', texto: 'Kanban de materiales', reglas: [] },
-      { id: 'calidad', texto: 'Plan de calidad ISO 9001', reglas: [] },
-    ],
-  },
-  {
-    grupo: 'Entrega',
-    items: [
-      { id: 'documentos', texto: 'Documentos', reglas: [13] },
-      { id: 'validacion', texto: 'Validación', reglas: [] },
-      { id: 'exportar', texto: 'Exportar', reglas: [] },
-    ],
-  },
-];
 
 type ManejadorArchivo = { name: string; createWritable: () => Promise<{ write: (d: Blob) => Promise<void>; close: () => Promise<void> }> };
 
@@ -199,7 +134,9 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
       if (resto.length === 1 && /\.json$/i.test(resto[0].name)) {
         const datos = JSON.parse(await resto[0].text());
         if (datos?.formato === 'expediente-pro-respaldo') return avisar('Es un respaldo de varios proyectos: use “Restaurar respaldo” en el panel de proyectos.', true);
-        return void (await crearYAbrir(migrarProyecto(datos), `Proyecto abierto desde ${resto[0].name}`, 'presupuesto'));
+        const rep = repararIntegridad(migrarProyecto(datos));
+        const n = rep.reparados.reduce((s, x) => s + x.cantidad, 0);
+        return void (await crearYAbrir(rep.proyecto, `Proyecto abierto desde ${resto[0].name}${n ? `. Se repararon ${n} datos sueltos o dañados del archivo.` : ''}`, 'presupuesto'));
       }
       if (resto.length === 1 && /\.(txt|exp)$/i.test(resto[0].name)) {
         const { proyecto: p, avisos, imagenes } = leerCompacto(await resto[0].text());
@@ -362,29 +299,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
   const m = proyecto.meta;
   const publico = m.modo === 'publico';
   const cliente = proyecto.entidades.cliente.nombre;
-  const Mod = {
-    proyectos: ModProyectos,
-    proyecto: ModProyecto,
-    tdr: ModTdr,
-    presupuesto: ModPresupuesto,
-    insumos: ModInsumos,
-    gg: ModGG,
-    programa: ModPrograma,
-    cronogramas: ModCronogramas,
-    polinomica: ModPolinomica,
-    documentos: ModDocumentos,
-    validacion: ModValidacion,
-    exportar: ModExportar,
-    control: ModControl,
-    lps: ModLps,
-    ejecucion: ModEjecucion,
-    sigma: ModSigma,
-    riesgo: ModRiesgo,
-    ccpm: ModCcpm,
-    logistica: ModLogistica,
-    calidad: ModCalidad,
-    valor: ModValor,
-  }[modulo];
+  const Mod = MODULOS[modulo];
 
   return (
     <div className="app">
@@ -406,6 +321,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
             {st.guardadoLocal === 'guardado' ? 'Guardado' : st.guardadoLocal === 'pendiente' ? 'Guardando…' : 'Sin guardar'}
           </span>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('atajos')} title="Atajos de teclado" aria-label="Atajos de teclado">⌨</button>
+          <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('copias')} title="Versiones guardadas de este proyecto: restaurar o guardar una nueva">Versiones</button>
           <button className="boton chico siempre" onClick={() => void guardarArchivo()} title="Guardar una copia .json (Ctrl+S)">Guardar</button>
           <button className="boton chico primario" onClick={() => ir('exportar')}>Exportar entregables</button>
         </div>
@@ -434,7 +350,15 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
       </nav>
 
       <main className="trabajo">
-        <Mod ctx={ctx} />
+        {st.editadoFuera && (
+          <div className="aviso advertencia" style={{ margin: '12px 18px 0' }}>
+            Este proyecto se modificó en otra pestaña del navegador. Para no pisar esos cambios, trabaje en una sola pestaña.{' '}
+            <button className="boton chico" onClick={() => void leerProyecto(st.id).then((reg) => reg && abrirProyecto(reg.id, reg.proyecto, 'Se cargó la última versión guardada.'))}>Cargar la última versión</button>
+          </div>
+        )}
+        <Barrera key={`${st.id}:${modulo}`} alDeshacer={st.deshacer} alDescargar={() => void guardarArchivo()} alIrAValidacion={() => ir('validacion')}>
+          <Mod ctx={ctx} />
+        </Barrera>
       </main>
 
       <footer className="rotulo" aria-label="Rótulo del expediente">
@@ -473,6 +397,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
       </footer>
 
       <Dialogos ctx={ctx} alNuevo={nuevoProyecto} />
+      {dialogo === 'copias' && <Copias ctx={ctx} alCerrar={() => abrirDialogo(null)} />}
       {importado && (
         <Modal
           titulo="Expediente importado"

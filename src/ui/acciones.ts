@@ -2,7 +2,7 @@
 import type { DocKey, Proyecto, Resultados } from '../engine/types';
 import {
   archivoCarta, archivoConsistencia, archivoObservaciones, archivoEett, archivoExcel, archivoMatriz, archivoMemoria, archivoMsProject, archivoPdf, archivoProyecto,
-  empaquetarZip, generarTodos, MIME, nombreBase, type Archivo,
+  archivoEjecutivo, archivoGerencial, empaquetarZip, generarTodos, MIME, nombreBase, type Archivo,
 } from '../export/paquete';
 import { renderPdfBrowser } from '../export/render-browser';
 import { exportarPlantilla } from '../io/plantilla';
@@ -10,7 +10,7 @@ import { escribirCompacto } from '../io/compacto';
 import { agregarPartida, agregarTitulo, aumentarNivel, disminuirNivel, duplicar, eliminar, mover, renumerar } from './arbol';
 import type { Contexto } from './estado';
 
-export type TipoExport = 'xlsx' | 'eett' | 'memoria' | 'carta' | 'matriz' | 'consistencia' | 'informe' | 'msp' | 'pdf' | 'zip' | 'json' | 'plantilla' | 'compacto';
+export type TipoExport = 'xlsx' | 'eett' | 'memoria' | 'carta' | 'matriz' | 'consistencia' | 'informe' | 'msp' | 'pdf' | 'ejecutivo' | 'gerencial' | 'zip' | 'json' | 'plantilla' | 'compacto';
 
 export const NOMBRE_EXPORT: Record<TipoExport, string> = {
   xlsx: 'Excel con fórmulas',
@@ -22,6 +22,8 @@ export const NOMBRE_EXPORT: Record<TipoExport, string> = {
   informe: 'Informe de revisión',
   msp: 'MS Project',
   pdf: 'PDF consolidado',
+  ejecutivo: 'Informe ejecutivo',
+  gerencial: 'Reporte gerencial',
   zip: 'Todos los entregables',
   json: 'Proyecto',
   plantilla: 'Plantilla de carga',
@@ -43,6 +45,8 @@ export async function generarArchivo(r: Resultados, p: Proyecto, tipo: TipoExpor
     }
     case 'msp': return archivoMsProject(r);
     case 'pdf': return archivoPdf(r, renderPdfBrowser, secciones);
+    case 'ejecutivo': return archivoEjecutivo(r, renderPdfBrowser);
+    case 'gerencial': return archivoGerencial(r);
     case 'json': return archivoProyecto(r);
     case 'compacto': return { nombre: `${nombreBase(r)}.exp.txt`, tipo: 'text/plain;charset=utf-8', datos: new TextEncoder().encode(escribirCompacto(p)) };
     case 'plantilla': return { nombre: `${nombreBase(r)}_Plantilla_de_carga.xlsx`, tipo: MIME.xlsx, datos: await exportarPlantilla(p) };

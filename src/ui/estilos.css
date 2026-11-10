@@ -526,3 +526,12 @@ kbd { font-family: inherit; font-size: 12px; background: var(--hoja-2); border: 
 .progreso > div { height: 100%; background: var(--patina, #1e6b5e); transition: width .15s; }
 .firma-celda { display: flex; gap: 6px; flex-wrap: nowrap; white-space: nowrap; }
 .firma-celda label { display: inline-flex; gap: 3px; align-items: center; font-size: 12px; }
+
+/* ---------- resumen del proyecto ---------- */
+.rejilla-graficos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 14px; margin-bottom: 18px; align-items: start; }
+.grafico { min-width: 0; display: grid; gap: 10px; }
+.grafico svg { max-width: 100%; height: auto; }
+.tabla.compacta td { padding: 3px 6px; font-size: 12.5px; border-bottom-color: var(--linea-2); }
+.lista-alertas { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+.tabla tr.clic { cursor: pointer; }
+.tabla tr.clic:hover td { background: var(--patina-tinte); }

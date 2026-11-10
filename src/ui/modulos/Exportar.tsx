@@ -55,6 +55,8 @@ export function ModExportar({ ctx }: { ctx: Contexto }) {
         {p.meta.modo === 'privado' && tarjeta('word', 'Carta de presentación', 'Monto en letras, plazo, validez y condiciones de la oferta, del proyectista al cliente.', 'Word .docx', 'carta')}
         {tarjeta('word', 'Matriz de cumplimiento del TdR', 'Cada entregable exigido y el documento que lo cubre.', 'Word .docx', 'matriz')}
         {tarjeta('word', 'Reporte de consistencia', 'Resultado de las 15 reglas con sus observaciones.', 'Word .docx', 'consistencia')}
+        {tarjeta('pdf', 'Informe ejecutivo', 'Resumen para la gerencia o el cliente: indicadores, costo por título, composición, clasificación ABC de partidas e insumos, curva S y estado de consistencia, con gráficos.', 'PDF', 'ejecutivo')}
+        {tarjeta('excel', 'Reporte gerencial', 'Las mismas tablas del informe ejecutivo en hojas de Excel, con el detalle completo de la clasificación ABC.', 'Excel .xlsx', 'gerencial')}
         {tarjeta('msproject', 'Cronograma de ejecución', 'Actividades con la codificación del presupuesto, duraciones, predecesoras y calendario para abrir en MS Project.', 'MS Project .xml', 'msp')}
         {tarjeta('guardar', 'Proyecto', 'Archivo de trabajo para volver a abrirlo en este programa o en otra computadora.', 'Expediente Pro .json', 'json')}
         {tarjeta('importar', 'Plantilla de carga', 'Este proyecto en hojas de Excel simples (partidas, metrados, APU, insumos, GG, TdR) para editarlo fuera y cargarlo de nuevo.', 'Excel .xlsx', 'plantilla')}
