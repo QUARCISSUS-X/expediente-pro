@@ -36,6 +36,8 @@ export interface Respaldo {
 
 const DB = 'expediente-pro';
 const STORE = 'proyectos';
+const COPIAS = 'copias'; // puntos de restauración (solo con IndexedDB)
+const MAX_AUTOMATICAS = 12;
 const CLAVE_ULTIMO = 'expediente-pro:ultimo';
 const CLAVE_V1 = 'expediente-pro:proyecto';
 const PREFIJO_LS = 'expediente-pro:p:';
@@ -68,10 +70,11 @@ function abrirDb(): Promise<IDBDatabase | null> {
   dbPromesa = new Promise((resolve) => {
     try {
       if (typeof indexedDB === 'undefined') return resolve(null);
-      const req = indexedDB.open(DB, 1);
+      const req = indexedDB.open(DB, 2);
       req.onupgradeneeded = () => {
         const db = req.result;
         if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(COPIAS)) db.createObjectStore(COPIAS, { keyPath: 'id' }).createIndex('proyectoId', 'proyectoId');
       };
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => resolve(null);
@@ -83,10 +86,10 @@ function abrirDb(): Promise<IDBDatabase | null> {
   return dbPromesa;
 }
 
-function tx<T>(db: IDBDatabase, modo: IDBTransactionMode, f: (s: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+function tx<T>(db: IDBDatabase, modo: IDBTransactionMode, f: (s: IDBObjectStore) => IDBRequest<T>, almacen = STORE): Promise<T> {
   return new Promise((resolve, reject) => {
-    const t = db.transaction(STORE, modo);
-    const req = f(t.objectStore(STORE));
+    const t = db.transaction(almacen, modo);
+    const req = f(t.objectStore(almacen));
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
@@ -149,6 +152,10 @@ export async function guardarRegistro(reg: RegistroProyecto): Promise<void> {
 export async function guardarProyecto(id: string, p: Proyecto, r?: Resultados, extra: Partial<RegistroProyecto> = {}): Promise<RegistroProyecto> {
   const previo = await leerSinMigrar(id);
   const ahora = new Date().toISOString();
+  // primer cambio del día: el estado anterior queda como punto de restauración automático
+  if (previo && diaLocal(previo.actualizado) !== diaLocal(ahora) && previo.proyecto !== p) {
+    await crearCopia(previo, `Antes de los cambios del ${diaLocal(ahora).split('-').reverse().join('/')}`, true).catch(() => undefined);
+  }
   const reg: RegistroProyecto = {
     id,
     creado: previo?.creado ?? ahora,
@@ -198,6 +205,7 @@ export async function eliminarProyecto(id: string): Promise<void> {
   const db = await abrirDb();
   if (db) await tx(db, 'readwrite', (s) => s.delete(id));
   else localStorage.removeItem(PREFIJO_LS + id);
+  for (const c of await listarCopias(id)) await eliminarCopia(c.id);
   if (ultimoAbierto() === id) recordarUltimo(null);
 }
 
@@ -253,4 +261,66 @@ export async function restaurarRespaldo(r: Respaldo): Promise<number> {
     n++;
   }
   return n;
+}
+
+// ------------------------------------------------------------ puntos de restauración
+
+/** Copia fechada de un proyecto. Las automáticas se crean con el primer cambio de cada día. */
+export interface CopiaProyecto {
+  id: string;
+  proyectoId: string;
+  fecha: string; // ISO
+  nota: string;
+  automatica: boolean;
+  resumen: ResumenProyecto;
+  proyecto: Proyecto;
+}
+
+const diaLocal = (iso: string) => {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+export async function listarCopias(proyectoId: string): Promise<CopiaProyecto[]> {
+  const db = await abrirDb();
+  if (!db) return [];
+  const lista = await tx<CopiaProyecto[]>(db, 'readonly', (s) => s.index('proyectoId').getAll(proyectoId) as IDBRequest<CopiaProyecto[]>, COPIAS);
+  return lista.sort((a, b) => b.fecha.localeCompare(a.fecha));
+}
+
+export async function crearCopia(reg: Pick<RegistroProyecto, 'id' | 'resumen' | 'proyecto'>, nota: string, automatica = false): Promise<CopiaProyecto | null> {
+  const db = await abrirDb();
+  if (!db) return null;
+  const copia: CopiaProyecto = { id: `cop-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, proyectoId: reg.id, fecha: new Date().toISOString(), nota, automatica, resumen: reg.resumen, proyecto: reg.proyecto };
+  await tx(db, 'readwrite', (s) => s.put(copia), COPIAS);
+  if (automatica) {
+    const viejas = (await listarCopias(reg.id)).filter((c) => c.automatica).slice(MAX_AUTOMATICAS);
+    for (const c of viejas) await eliminarCopia(c.id);
+  }
+  return copia;
+}
+
+export async function eliminarCopia(id: string): Promise<void> {
+  const db = await abrirDb();
+  if (db) await tx(db, 'readwrite', (s) => s.delete(id), COPIAS);
+}
+
+// ------------------------------------------------------------ aviso entre pestañas del navegador
+
+let canalAbierto: BroadcastChannel | null | undefined;
+const abrirCanal = () => (canalAbierto === undefined ? (canalAbierto = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('expediente-pro') : null) : canalAbierto);
+const ESTA_PESTANA = Math.random().toString(36).slice(2);
+
+/** Avisa a las demás pestañas que este proyecto se guardó aquí. */
+export function avisarGuardado(id: string) {
+  abrirCanal()?.postMessage({ id, de: ESTA_PESTANA });
+}
+
+/** Llama a `f` cuando OTRA pestaña guarda el proyecto indicado. Devuelve la función para dejar de escuchar. */
+export function alGuardarEnOtraPestana(id: string, f: () => void): () => void {
+  const canal = abrirCanal();
+  if (!canal) return () => undefined;
+  const oir = (e: MessageEvent) => { if (e.data?.id === id && e.data?.de !== ESTA_PESTANA) f(); };
+  canal.addEventListener('message', oir);
+  return () => canal.removeEventListener('message', oir);
 }

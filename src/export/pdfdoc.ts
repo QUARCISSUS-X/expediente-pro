@@ -307,7 +307,7 @@ function gantt(r: Resultados): Content[] {
   ];
 }
 
-function curvaS(r: Resultados): Content[] {
+export function curvaS(r: Resultados): Content[] {
   const v = r.valorizado;
   const n = v.cd.length;
   if (!n) return [];
@@ -591,7 +591,7 @@ export function definicionPdf(r: Resultados, op: OpcionesPdf = {}): TDocumentDef
 }
 
 /** PDF con portada y una sección por tabla (por ejemplo, el dossier de calidad). Usa el mismo marco del expediente. */
-export function definicionPdfTablas(r: Resultados, titulo: string, tablas: Tabla[]): TDocumentDefinitions {
+export function definicionPdfTablas(r: Resultados, titulo: string, tablas: Tabla[], graficos: Record<string, Content[]> = {}): TDocumentDefinitions {
   const d = definicionPdf(r, { secciones: [] });
   const c = datosCabecera(r.proyecto);
   const contenido: Content[] = [...caratula(r, c, titulo)];
@@ -599,6 +599,7 @@ export function definicionPdfTablas(r: Resultados, titulo: string, tablas: Tabla
     const h = !!t.horizontal || t.cabecera.length > 7;
     contenido.push({ text: t.titulo.toUpperCase(), style: 'seccion', pageBreak: 'before', pageOrientation: h ? 'landscape' : 'portrait' } as Content);
     contenido.push(cajetin(c, h ? W_H : W_V, t.subtitulo));
+    contenido.push(...(graficos[t.clave] ?? [])); // gráfico de la sección (informe ejecutivo)
     contenido.push(...(h ? tablaAncha(t) : [tablaPdf(t, false)]));
   }
   d.content = contenido;

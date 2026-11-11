@@ -50,6 +50,8 @@ export function validar(r: Parcial): ReglaResultado[] {
   // 2. APU vs PU / 3. completitud
   const eettPorId = new Map(r.eett.map((e) => [e.partida.id, e]));
   const actPorId = new Map(r.programa.actividades.map((a) => [a.partidaId, a]));
+  const conSustento = new Set<string>(); // partidas con al menos una fila de metrado con plano o sustento
+  for (const m of p.metrados) if (m.referencia && m.referencia.trim()) conSustento.add(m.partidaId);
   for (const f of r.hojas) {
     const pt = f.partida;
     const apu = r.apus[pt.id];
@@ -63,8 +65,7 @@ export function validar(r: Parcial): ReglaResultado[] {
     }
     if (f.metrado <= 0) add(3, 'error', `La partida ${pt.codigo} no tiene metrado.`, pt.codigo);
     else {
-      const filasMet = p.metrados.filter((m) => m.partidaId === pt.id);
-      if (filasMet.every((m) => !m.referencia || !m.referencia.trim()))
+      if (!conSustento.has(pt.id))
         add(3, 'advertencia', `El metrado de ${pt.codigo} no indica plano o sustento.`, pt.codigo);
     }
     const e = eettPorId.get(pt.id);
@@ -75,17 +76,20 @@ export function validar(r: Parcial): ReglaResultado[] {
 
   // 4. catálogo
   const cod = new Set<string>();
+  const usados = new Set<string>();
+  for (const a of Object.values(r.apus)) for (const x of a.items) usados.add(x.insumo.codigo);
+  const partidaPorId = new Map(p.partidas.map((x) => [x.id, x]));
+  const comprados = new Set(r.adquisiciones.map((a) => a.codigo));
   for (const i of p.insumos) {
     if (cod.has(i.codigo)) add(4, 'error', `Insumo duplicado: ${i.codigo}.`, i.codigo);
     cod.add(i.codigo);
     if (!i.unidad.startsWith('%') && num(i.precio) <= 0) {
-      const usado = Object.values(r.apus).some((a) => a.items.some((x) => x.insumo.codigo === i.codigo));
-      if (usado) add(4, 'error', `El insumo ${i.codigo} (${i.descripcion}) se usa y no tiene precio.`, i.codigo);
+      if (usados.has(i.codigo)) add(4, 'error', `El insumo ${i.codigo} (${i.descripcion}) se usa y no tiene precio.`, i.codigo);
     }
     if (!i.iu) add(4, 'advertencia', `El insumo ${i.codigo} no tiene índice unificado.`, i.codigo);
   }
   for (const a of Object.values(r.apus)) for (const c of a.faltantes) {
-    const pt = p.partidas.find((x) => x.id === a.partidaId);
+    const pt = partidaPorId.get(a.partidaId);
     add(4, 'error', `El APU de ${pt?.codigo ?? '?'} usa el insumo ${c}, que no existe en el catálogo.`, pt?.codigo);
   }
 
@@ -115,7 +119,7 @@ export function validar(r: Parcial): ReglaResultado[] {
     const s = f.valores.reduce((a, b) => a + b, 0);
     if (Math.abs(s - q) > Math.max(0.05, q * 0.001)) add(8, 'error', `El calendario de ${f.descripcion} suma ${s.toFixed(2)} y la relación de insumos ${q.toFixed(2)}.`, f.codigo);
   }
-  const sinPlazo = p.insumos.filter((i) => i.tipo === 'MAT' && (i.plazoCompraDias === null || i.plazoCompraDias === undefined) && r.adquisiciones.some((a) => a.codigo === i.codigo));
+  const sinPlazo = p.insumos.filter((i) => i.tipo === 'MAT' && (i.plazoCompraDias === null || i.plazoCompraDias === undefined) && comprados.has(i.codigo));
   if (sinPlazo.length) add(8, 'advertencia', `${sinPlazo.length} materiales usan la anticipación de compra por defecto (${p.meta.plazoCompraDefecto} días).`);
 
   // 9. personal

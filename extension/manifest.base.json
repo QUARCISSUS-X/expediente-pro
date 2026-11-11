@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Expediente Pro",
+  "short_name": "Expediente Pro",
+  "description": "Costos, presupuestos, cronogramas y control de obra (tipo S10). Funciona sin conexión; los proyectos se guardan solo en este navegador.",
+  "homepage_url": "https://github.com/QUARCISSUS-X/expediente-pro",
+  "icons": { "16": "iconos/icono-16.png", "32": "iconos/icono-32.png", "48": "iconos/icono-48.png", "96": "iconos/icono-96.png", "128": "iconos/icono-128.png" },
+  "action": {
+    "default_title": "Abrir Expediente Pro",
+    "default_icon": { "16": "iconos/icono-16.png", "32": "iconos/icono-32.png", "48": "iconos/icono-48.png" }
+  },
+  "permissions": ["unlimitedStorage"]
+}

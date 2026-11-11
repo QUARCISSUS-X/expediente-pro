@@ -5,6 +5,7 @@ import { cartaPresentacion, especificacionesTecnicas, informeObservaciones, matr
 import type { DocKey, Resultados } from '../engine/types';
 import { generarDocx } from './docx';
 import { generarMsProject } from './msproject';
+import { definicionPdfEjecutivo, generarXlsxGerencial } from './gerencial';
 import { definicionPdf } from './pdfdoc';
 import { generarXlsx } from './xlsx';
 
@@ -66,6 +67,12 @@ export function archivoMsProject(r: Resultados): Archivo {
 export async function archivoPdf(r: Resultados, render: RenderPdf, secciones?: DocKey[]): Promise<Archivo> {
   return { nombre: `${nombreBase(r)}_Expediente_consolidado.pdf`, tipo: MIME.pdf, datos: await render(definicionPdf(r, { secciones })) };
 }
+export async function archivoEjecutivo(r: Resultados, render: RenderPdf): Promise<Archivo> {
+  return { nombre: `${nombreBase(r)}_Informe_ejecutivo.pdf`, tipo: MIME.pdf, datos: await render(definicionPdfEjecutivo(r)) };
+}
+export async function archivoGerencial(r: Resultados): Promise<Archivo> {
+  return { nombre: `${nombreBase(r)}_Reporte_gerencial.xlsx`, tipo: MIME.xlsx, datos: await generarXlsxGerencial(r) };
+}
 export function archivoProyecto(r: Resultados): Archivo {
   return { nombre: `${nombreBase(r)}.expediente.json`, tipo: MIME.json, datos: texto(JSON.stringify(r.proyecto, null, 2)) };
 }
@@ -89,6 +96,8 @@ export async function generarTodos(r: Resultados, render: RenderPdf, progreso?: 
   }
   await paso('MS Project', () => archivoMsProject(r));
   await paso('PDF consolidado', () => archivoPdf(r, render));
+  await paso('Informe ejecutivo', () => archivoEjecutivo(r, render));
+  await paso('Reporte gerencial', () => archivoGerencial(r));
   await paso('Proyecto', () => archivoProyecto(r));
   return out;
 }

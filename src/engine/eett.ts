@@ -23,6 +23,15 @@ export function normalizar(t: string): string {
     .replace(/[̀-ͯ]/g, '');
 }
 
+const cachePalabras = new WeakMap<PlantillaEett, { de: string[]; res: string[] }>();
+function palabrasNormalizadas(pl: PlantillaEett): string[] {
+  const c = cachePalabras.get(pl);
+  if (c && c.de === pl.palabras && c.res.length === pl.palabras.length) return c.res;
+  const res = pl.palabras.map(normalizar);
+  cachePalabras.set(pl, { de: pl.palabras, res });
+  return res;
+}
+
 export function detectarPlantilla(descripcion: string, plantillas: PlantillaEett[]): PlantillaEett | null {
   const d = normalizar(descripcion);
   let mejor: PlantillaEett | null = null;
@@ -30,8 +39,7 @@ export function detectarPlantilla(descripcion: string, plantillas: PlantillaEett
   for (const pl of plantillas) {
     if (pl.clave === 'generica') continue;
     let s = 0;
-    for (const w of pl.palabras) {
-      const nw = normalizar(w);
+    for (const nw of palabrasNormalizadas(pl)) {
       if (nw && d.includes(nw)) s += nw.length > 6 ? 2 : 1;
     }
     if (s > puntaje) {
@@ -42,15 +50,20 @@ export function detectarPlantilla(descripcion: string, plantillas: PlantillaEett
   return mejor;
 }
 
+const cacheEett = new WeakMap<object, { apu: ApuCalc | undefined; plantillas: PlantillaEett[]; res: EettPartida }>();
+
 function listar(items: string[], vacio: string): string {
   return items.length ? items.map((x) => `- ${x}`).join('\n') : vacio;
 }
 
-export function generarEett(hojas: FilaPresupuesto[], apus: Record<string, ApuCalc>, plantillas: PlantillaEett[]): EettPartida[] {
+export function generarEett(hojas: FilaPresupuesto[], apus: Record<string, ApuCalc>, plantillas: PlantillaEett[], conCache = false): EettPartida[] {
   const porClave = new Map(plantillas.map((p) => [p.clave, p]));
   const generica = porClave.get('generica') ?? plantillas[0];
   return hojas.map((f) => {
     const pt = f.partida;
+    // la especificación solo depende de la partida, de su APU y de las plantillas: se reutiliza si no cambiaron
+    const previa = conCache ? cacheEett.get(pt) : undefined;
+    if (previa && previa.apu === apus[pt.id] && previa.plantillas === plantillas) return previa.res;
     let pl: PlantillaEett | null | undefined = pt.eett ? porClave.get(pt.eett) : null;
     if (!pl) pl = detectarPlantilla(pt.descripcion, plantillas);
     const esGenerica = !pl;
@@ -81,6 +94,8 @@ export function generarEett(hojas: FilaPresupuesto[], apus: Record<string, ApuCa
       else if (k === 'manoObra' && mo.length === 0 && base.includes('{{manoObra}}')) secciones[k] = sc.length ? 'No aplica mano de obra directa; el trabajo se ejecuta mediante subcontrato.' : 'No aplica mano de obra directa.';
       else secciones[k] = rellenarPlantilla(base, vars);
     }
-    return { partida: pt, plantilla: plantilla.clave, generica: esGenerica && !pt.eettTexto?.descripcion, secciones };
+    const res: EettPartida = { partida: pt, plantilla: plantilla.clave, generica: esGenerica && !pt.eettTexto?.descripcion, secciones };
+    if (conCache) cacheEett.set(pt, { apu, plantillas, res });
+    return res;
   });
 }

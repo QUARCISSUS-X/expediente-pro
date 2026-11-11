@@ -4,11 +4,16 @@ import type {
 } from './types';
 import { diaSemana, difDias, fechaAIso, isoAFecha, mesAnio, num, redondear, sumarDias } from './util';
 
+const ISO = /^\d{4}-\d{2}-\d{2}$/;
+
 export class Calendario {
   private fechas: string[] = [];
   private cursor: string;
   private laborables: Set<number>;
   private feriados: Set<string>;
+  private acum = new Map<string, number>();
+  private cursorAcum = '';
+  private nAcum = 0;
   constructor(public inicio: string, laborables: number[], feriados: string[]) {
     this.cursor = inicio;
     this.laborables = new Set(laborables.length ? laborables : [1, 2, 3, 4, 5, 6]);
@@ -26,10 +31,28 @@ export class Calendario {
     }
     return this.fechas[Math.max(0, i)];
   }
+  /** Días laborables en [desde, hasta]. Usa un acumulado en caché: después de la primera consulta cuesta O(1). */
   laborablesEntre(desde: string, hasta: string): number {
-    let n = 0;
-    for (let d = desde; d <= hasta; d = sumarDias(d, 1)) if (this.esLaborable(d)) n++;
-    return n;
+    if (hasta < desde) return 0;
+    if (desde < this.inicio || !ISO.test(desde) || !ISO.test(hasta)) {
+      let n = 0;
+      for (let d = desde, g = 0; d <= hasta && g < 200000; d = sumarDias(d, 1), g++) if (this.esLaborable(d)) n++;
+      return n;
+    }
+    return this.acumHasta(hasta) - this.acumHasta(desde) + (this.esLaborable(desde) ? 1 : 0);
+  }
+  /** Laborables en [inicio, iso] (iso ≥ inicio). */
+  private acumHasta(iso: string): number {
+    const v = this.acum.get(iso);
+    if (v !== undefined) return v;
+    if (this.cursorAcum === '') this.cursorAcum = this.inicio;
+    let g = 0;
+    while (this.cursorAcum <= iso && g++ < 200000) {
+      if (this.esLaborable(this.cursorAcum)) this.nAcum++;
+      this.acum.set(this.cursorAcum, this.nAcum);
+      this.cursorAcum = sumarDias(this.cursorAcum, 1);
+    }
+    return this.acum.get(iso) ?? this.nAcum;
   }
 }
 

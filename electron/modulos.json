@@ -1,0 +1,34 @@
+[
+  { "grupo": "Expediente", "items": [
+    {"id": "proyectos", "texto": "Panel de proyectos", "menu": "Panel de proyectos", "atajo": "CmdOrCtrl+1", "reglas": []},
+    {"id": "resumen", "texto": "Resumen del proyecto", "menu": "Resumen del proyecto (gráficos e indicadores)", "atajo": "Alt+9", "reglas": []},
+    {"id": "proyecto", "texto": "Configuración general", "menu": "Configuración general", "atajo": "CmdOrCtrl+2", "reglas": []},
+    {"id": "tdr", "texto": "Términos de referencia", "menu": "Términos de referencia", "atajo": "CmdOrCtrl+3", "reglas": [15]}
+  ] },
+  { "grupo": "Costos", "items": [
+    {"id": "presupuesto", "texto": "Presupuesto, APU y metrados", "menu": "Presupuesto, APU y metrados", "atajo": "CmdOrCtrl+4", "reglas": [1, 2, 3, 12]},
+    {"id": "insumos", "texto": "Relación de insumos", "menu": "Relación de insumos", "atajo": "CmdOrCtrl+5", "reglas": [4, 5]},
+    {"id": "gg", "texto": "Gastos generales", "menu": "Gastos generales", "atajo": "CmdOrCtrl+6", "reglas": [7, 11]},
+    {"id": "polinomica", "texto": "Fórmula polinómica", "menu": "Fórmula polinómica", "atajo": "CmdOrCtrl+7", "reglas": [10]},
+    {"id": "valor", "texto": "Ingeniería de valor y costo meta", "menu": "Ingeniería de valor y costo meta", "atajo": "Alt+0", "reglas": []}
+  ] },
+  { "grupo": "Tiempo", "items": [
+    {"id": "programa", "texto": "Cronograma de ejecución", "menu": "Cronograma de ejecución", "atajo": "CmdOrCtrl+8", "reglas": [14]},
+    {"id": "cronogramas", "texto": "Valorizado y calendarios", "menu": "Valorizado y calendarios", "atajo": "CmdOrCtrl+9", "reglas": [6, 8, 9]}
+  ] },
+  { "grupo": "Control de obra", "items": [
+    {"id": "control", "texto": "Control y valor ganado", "menu": "Control de obra y valor ganado", "atajo": "Alt+1", "reglas": []},
+    {"id": "lps", "texto": "Last Planner", "menu": "Last Planner System", "atajo": "Alt+2", "reglas": []},
+    {"id": "ejecucion", "texto": "Ejecución lean", "menu": "Ejecución lean (rendimientos y frentes)", "atajo": "Alt+3", "reglas": []},
+    {"id": "sigma", "texto": "Calidad Six Sigma", "menu": "Calidad y mejora Six Sigma", "atajo": "Alt+4", "reglas": []},
+    {"id": "riesgo", "texto": "Riesgo de plazo y costo", "menu": "Riesgo de plazo y costo (Monte Carlo)", "atajo": "Alt+5", "reglas": []},
+    {"id": "ccpm", "texto": "Cadena crítica", "menu": "Cadena crítica (CCPM)", "atajo": "Alt+6", "reglas": []},
+    {"id": "logistica", "texto": "Kanban de materiales", "menu": "Kanban de materiales", "atajo": "Alt+7", "reglas": []},
+    {"id": "calidad", "texto": "Plan de calidad ISO 9001", "menu": "Plan de calidad ISO 9001", "atajo": "Alt+8", "reglas": []}
+  ] },
+  { "grupo": "Entrega", "items": [
+    {"id": "documentos", "texto": "Documentos", "menu": "Documentos", "atajo": "CmdOrCtrl+D", "reglas": [13]},
+    {"id": "validacion", "texto": "Validación", "menu": "Validación e integridad", "atajo": "F7", "reglas": []},
+    {"id": "exportar", "texto": "Exportar", "menu": "Exportar entregables", "atajo": "CmdOrCtrl+E", "reglas": []}
+  ] }
+]
