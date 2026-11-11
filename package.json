@@ -5,6 +5,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "test": "vitest run",
+    "probar:modulo": "node scripts/probar-modulo.cjs",
     "dev": "vite",
     "build": "vite build",
     "cli": "tsx cli/expediente.ts",
