@@ -16,6 +16,7 @@ export interface Insumo {
   plazoCompraDias?: number | null; // anticipación de compra
   fuente?: string; // fuente del precio o proveedor de la cotización
   fechaPrecio?: string; // fecha de la cotización
+  moneda?: string; // moneda del precio (vacío = la del proyecto); se convierte con meta.tiposCambio
 }
 
 export interface Partida {
@@ -26,6 +27,41 @@ export interface Partida {
   titulo?: boolean;
   eett?: string; // clave de plantilla de EETT; vacío = detección automática
   eettTexto?: Partial<SeccionesEett>; // texto propio de la partida (reemplaza plantilla)
+  subpresupuesto?: string; // id del subpresupuesto (solo en títulos de primer nivel; sus partidas lo heredan)
+}
+
+/** Subpresupuesto (estructuras, arquitectura, instalaciones…): agrupa títulos de primer nivel y tiene su propio pie. */
+export interface Subpresupuesto {
+  id: string;
+  nombre: string;
+}
+
+/** Análisis reutilizable dentro de otros APU (su análisis se guarda en apus['sp:' + codigo]). */
+export interface Subpartida {
+  codigo: string; // SP001…
+  descripcion: string;
+  unidad: string;
+}
+export const prefijoSubpartida = 'sp:';
+
+/** Tipo de cambio a una fecha: 1 unidad de `moneda` = `valor` en la moneda del proyecto. */
+export interface TipoCambioMoneda {
+  moneda: string;
+  fecha: string;
+  valor: number;
+}
+
+export type TipoEscenario = 'oferta' | 'negociado' | 'contractual' | 'otro';
+
+/** Versión con nombre del presupuesto (oferta, negociado, contractual…): copia de lo que entra al cálculo. */
+export interface Escenario {
+  id: string;
+  nombre: string;
+  tipo: TipoEscenario;
+  fecha: string; // ISO con hora
+  nota?: string;
+  datos: Pick<Proyecto, 'partidas' | 'metrados' | 'apus' | 'insumos' | 'gg' | 'programa' | 'meta'> & { subpresupuestos?: Subpresupuesto[]; subpartidas?: Subpartida[] };
+  resumen?: { costoDirecto: number; gg: number; utilidad: number; subtotal: number; igv: number; total: number; plazoDias: number }; // cifras al guardarla
 }
 
 export interface MetradoFila {
@@ -41,6 +77,7 @@ export interface MetradoFila {
   alto?: number | null;
   area?: number | null; // área medida en CAD (m2)
   volumen?: number | null; // volumen medido en CAD (m3)
+  formulas?: Partial<Record<'veces' | 'cantidad' | 'factor' | 'largo' | 'ancho' | 'alto' | 'area' | 'volumen', string>>; // «2*(3.5+4.2)»: el campo guarda su resultado
 }
 // Parcial = producto de los campos llenos (como =PRODUCTO() en la planilla de metrados).
 
@@ -208,6 +245,7 @@ export interface Meta {
   foliacion: 'ascendente' | 'descendente';
   validezOfertaDias: number;
   formaPago: string;
+  tiposCambio?: TipoCambioMoneda[]; // insumos en otra moneda: se usa el último tipo de cambio no posterior a la fecha base
 }
 
 export interface TextosMemoria {
@@ -261,6 +299,9 @@ export interface Proyecto {
   plantillasEett: PlantillaEett[];
   memoria: TextosMemoria;
   origen?: OrigenImportacion; // expediente del que se importó (con sus observaciones)
+  subpresupuestos?: Subpresupuesto[];
+  subpartidas?: Subpartida[];
+  escenarios?: Escenario[];
   control?: import('./control').Control; // control de ejecución: valor ganado, Last Planner, lean, six sigma
 }
 
@@ -274,6 +315,7 @@ export interface ApuItemCalc {
   precio: number;
   parcial: number; // 2 decimales
   porcentaje: number | null;
+  subpartida?: string; // código de la subpartida de la que sale este recurso (desglosada en sus recursos)
 }
 
 export interface ApuCalc {
@@ -473,4 +515,14 @@ export interface Resultados {
   eett: EettPartida[];
   validacion: ReglaResultado[];
   resumenValidacion: { errores: number; advertencias: number; ok: number };
+  subpresupuestos: PieSubpresupuesto[]; // vacío si el proyecto no tiene subpresupuestos
+  subpartidas: Record<string, ApuCalc>; // por código
+}
+
+/** Pie de un subpresupuesto: GG prorrateados por su costo directo; la suma de todos da el pie consolidado. */
+export interface PieSubpresupuesto {
+  id: string;
+  nombre: string;
+  titulos: string[]; // ids de los títulos de primer nivel
+  pie: Pie;
 }

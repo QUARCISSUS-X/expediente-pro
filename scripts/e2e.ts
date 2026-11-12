@@ -83,6 +83,26 @@ prueba('banco: importar una lista con revisión de fusión y actualizar los prec
   await pg.getByText(/Se actualizaron 2 precio/).waitFor({ timeout: 5000 });
 });
 
+prueba('versiones: guardar la oferta, cambiar un metrado con fórmula y comparar', async (pg) => {
+  await ir(pg, 'Versiones del presupuesto');
+  await pg.getByPlaceholder('Por ejemplo: Oferta técnica-económica').fill('Oferta de prueba');
+  await pg.getByRole('button', { name: 'Guardar el presupuesto actual como versión' }).click();
+  await pg.getByText('Versión guardada: Oferta de prueba').waitFor({ timeout: 5000 });
+  await ir(pg, 'Presupuesto, APU y metrados');
+  await pg.locator('table[aria-label="Presupuesto"] tbody tr[data-v]:not(.titulo):not(.titulo-2)').nth(2).click();
+  await pg.getByRole('tab', { name: 'Metrados' }).click();
+  const largo = pg.locator('table[aria-label="Metrados"] input[aria-label="Largo"]').first();
+  await largo.fill('2*(3.5+4.2)');
+  await largo.press('Tab');
+  await pg.waitForTimeout(300);
+  exigir((await largo.getAttribute('class'))?.includes('con-formula'), 'la casilla no quedó con fórmula');
+  exigir((await largo.inputValue()) === '15.40', `valor inesperado: ${await largo.inputValue()}`);
+  await ir(pg, 'Versiones del presupuesto');
+  await pg.getByRole('tab', { name: /^Partidas \(\d+\)/ }).click();
+  const filas = await pg.locator('table[aria-label="Comparación por partida"] tbody tr[data-v]').count();
+  exigir(filas >= 1, 'la comparación no muestra la partida cambiada');
+});
+
 prueba('exportar el ZIP no congela la pantalla', async (pg) => {
   await ir(pg, 'Exportar');
   // latido cada 50 ms: mide el mayor tiempo que la página quedó sin responder

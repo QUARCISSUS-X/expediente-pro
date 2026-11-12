@@ -53,6 +53,9 @@ export function migrarProyecto(x: unknown): Proyecto {
     plantillasEett: plantillas,
     memoria: { antecedentes: '', objetivo: '', alcance: '', descripcionTecnica: '', consideraciones: '', ...(p.memoria ?? {}) },
     bitacora: (p.bitacora ?? []).filter((e) => e && typeof e.texto === 'string' && typeof e.fecha === 'string').slice(-500),
+    subpresupuestos: (p.subpresupuestos ?? []).filter((s) => s && typeof s.id === 'string'),
+    subpartidas: (p.subpartidas ?? []).filter((s) => s && typeof s.codigo === 'string'),
+    escenarios: (p.escenarios ?? []).filter((e) => e && typeof e.id === 'string' && e.datos && Array.isArray(e.datos.partidas)),
     ...(p.origen ? { origen: p.origen } : {}),
     ...(p.control ? { control: normalizarControl(p.control) } : {}),
   };

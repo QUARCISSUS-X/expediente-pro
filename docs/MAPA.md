@@ -28,9 +28,9 @@ TipoPuntoᵗ:8 · TIPOS_PUNTO:9 · PuntoInspeccionᵗ:16 · ResultadoProtocolo�
 Cadena crítica (CCPM, Goldratt): duraciones agresivas, colchón del proyecto, colchones de alimentación y gráfico de fiebre.
 MetodoColchonᵗ:8 · ConfigCcpmᵗ:10 · configCcpmVacia:15 · normalizarConfigCcpm:16 · NodoCcpmᵗ:21 · ActividadCcpmᵗ:29 · ColchonAlimentacionᵗ:42 · Ccpmᵗ:51 · tamanoColchon:62 · duracionAgresiva:67 · calcularCcpm:79 · ccpmDePrograma:149 · ZonaFiebreᵗ:159 · limiteAmarillo:161 · limiteRojo:162 · zonaFiebre:163 · PuntoFiebreᵗ:169 · avancePlanCadena:181 · diaPlanParaAvance:190 · puntosFiebre:204
 
-### `src/engine/compute.ts` · 192 líneas
+### `src/engine/compute.ts` · 238 líneas
 Núcleo de costos: metrados, APU, presupuesto, gastos generales, pie e insumos.
-CAMPOS_METRADO:10 · parcialMetrado:14 · metradosPorPartida:20 · mapaInsumos:27 · calcularApu:35 · ordenarPartidas:81 · construirPresupuesto:85 · costoDirecto:116 · calcularGG:120 · calcularPie:135 · relacionInsumos:153
+CAMPOS_METRADO:10 · parcialMetrado:14 · metradosPorPartida:20 · tipoCambio:28 · mapaInsumos:36 · insumosSinTipoCambio:46 · ResolverSubpartidaᵗ:51 · calcularApu:55 · ordenarPartidas:127 · construirPresupuesto:131 · costoDirecto:162 · calcularGG:166 · calcularPie:181 · relacionInsumos:199
 
 ### `src/engine/control.ts` · 17 líneas
 Control de proyectos durante la ejecución. Cada fase vive en su archivo de src/engine/control/;
@@ -43,13 +43,21 @@ Bloqueᵗ:9 · Documentoᵗ:19 · NOMBRE_DOC:27 · parrafos:51 · firmasProyecto
 Especificaciones técnicas por plantilla (sin IA): detección por palabras clave y relleno con datos del APU.
 MANO_OBRA_DEFECTO:5 · SECCIONES_EETT:8 · normalizar:19 · detectarPlantilla:35 · generarEett:59
 
-### `src/engine/index.ts` · 128 líneas
-Punto de entrada del motor: calcula todos los entregables a partir del Proyecto.
-calcularFlete:12 · mismoCalculo:53 · recalcular:62 · calcularTodo:67
+### `src/engine/escenarios.ts` · 140 líneas
+Versiones del presupuesto (oferta, negociado, contractual…): copia con nombre de lo que entra al cálculo,
+TIPOS_ESCENARIO:7 · crearEscenario:17 · proyectoDeEscenario:30 · restaurarEscenario:35 · resultadosDeEscenario:49 · escenarioContractual:52 · FilaComparacionPartidaᵗ:57 · FilaComparacionInsumoᵗ:72 · ComparacionPresupuestosᵗ:85 · compararPresupuestos:95
 
-### `src/engine/integridad.ts` · 188 líneas
+### `src/engine/expresion.ts` · 92 líneas
+Evaluador propio de fórmulas aritméticas para metrados («2*(3.5+4.2)», «12,5/2»), sin eval ni new Function
+ErrorExpresion:4 · evaluarExpresion:28 · esFormula:82 · formulaExcel:88
+
+### `src/engine/index.ts` · 189 líneas
+Punto de entrada del motor: calcula todos los entregables a partir del Proyecto.
+calcularFlete:12 · piesSubpresupuestos:73 · mismoCalculo:111 · recalcular:120 · calcularTodo:125
+
+### `src/engine/integridad.ts` · 192 líneas
 Integridad de los datos del proyecto: referencias rotas, identificadores repetidos y números no válidos.
-ProblemaIntegridadᵗ:7 · revisarIntegridad:167 · repararIntegridad:175 · resumenIntegridad:183
+ProblemaIntegridadᵗ:7 · revisarIntegridad:171 · repararIntegridad:179 · resumenIntegridad:187
 
 ### `src/engine/kanban.ts` · 246 líneas
 Kanban de materiales: tarjetas desde la relación de insumos y el cronograma, stock mínimo, punto de pedido,
@@ -67,9 +75,9 @@ Distribucionᵗ:9 · ModoCostoᵗ:10 · EstimacionActividadᵗ:13 · ResumenRies
 Programación: calendario, CPM, periodos y cronogramas derivados.
 Calendario:9 · RedCpmᵗ:62 · construirRed:69 · redDePrograma:93 · PasadasCpmᵗ:97 · pasadasCpm:106 · calcularPrograma:155 · periodoDeFecha:278 · calcularValorizado:298 · distribuirInsumos:337 · calcularDesembolsos:386
 
-### `src/engine/types.ts` · 477 líneas
+### `src/engine/types.ts` · 529 líneas
 Modelo de datos del expediente. Todo el programa se alimenta de un único objeto Proyecto.
-TipoInsumoᵗ:3 · Modoᵗ:4 · TipoPredᵗ:5 · Severidadᵗ:6 · Insumoᵗ:8 · Partidaᵗ:21 · MetradoFilaᵗ:31 · ApuItemᵗ:47 · Apuᵗ:54 · GGItemᵗ:60 · GrupoGGᵗ:73 · Predᵗ:75 · Actividadᵗ:81 · DocKeyᵗ:87 · EntregableTdRᵗ:110 · SeccionesEettᵗ:118 · PlantillaEettᵗ:129 · Logoᵗ:135 · Entidadᵗ:141 · Responsableᵗ:152 · ConfigDocumentoᵗ:159 · TextosEettᵗ:170 · Metaᵗ:178 · TextosMemoriaᵗ:213 · ObservacionOrigenᵗ:222 · OrigenImportacionᵗ:230 · EntradaBitacoraᵗ:239 · Proyectoᵗ:245 · ApuItemCalcᵗ:269 · ApuCalcᵗ:279 · FilaPresupuestoᵗ:289 · Pieᵗ:299 · InsumoTotalᵗ:312 · RelacionInsumosᵗ:319 · GGCalcᵗ:327 · Monomioᵗ:335 · Polinomicaᵗ:342 · ActividadCalcᵗ:350 · Periodoᵗ:371 · Programaᵗ:379 · FilaCronogramaᵗ:391 · Valorizadoᵗ:401 · Desembolsoᵗ:414 · FleteCalcᵗ:424 · Hallazgoᵗ:431 · ReglaResultadoᵗ:439 · EettPartidaᵗ:447 · Resultadosᵗ:454
+TipoInsumoᵗ:3 · Modoᵗ:4 · TipoPredᵗ:5 · Severidadᵗ:6 · Insumoᵗ:8 · Partidaᵗ:22 · Subpresupuestoᵗ:34 · Subpartidaᵗ:40 · prefijoSubpartida:45 · TipoCambioMonedaᵗ:48 · TipoEscenarioᵗ:54 · Escenarioᵗ:57 · MetradoFilaᵗ:67 · ApuItemᵗ:84 · Apuᵗ:91 · GGItemᵗ:97 · GrupoGGᵗ:110 · Predᵗ:112 · Actividadᵗ:118 · DocKeyᵗ:124 · EntregableTdRᵗ:147 · SeccionesEettᵗ:155 · PlantillaEettᵗ:166 · Logoᵗ:172 · Entidadᵗ:178 · Responsableᵗ:189 · ConfigDocumentoᵗ:196 · TextosEettᵗ:207 · Metaᵗ:215 · TextosMemoriaᵗ:251 · ObservacionOrigenᵗ:260 · OrigenImportacionᵗ:268 · EntradaBitacoraᵗ:277 · Proyectoᵗ:283 · ApuItemCalcᵗ:310 · ApuCalcᵗ:321 · FilaPresupuestoᵗ:331 · Pieᵗ:341 · InsumoTotalᵗ:354 · RelacionInsumosᵗ:361 · GGCalcᵗ:369 · Monomioᵗ:377 · Polinomicaᵗ:384 · ActividadCalcᵗ:392 · Periodoᵗ:413 · Programaᵗ:421 · FilaCronogramaᵗ:433 · Valorizadoᵗ:443 · Desembolsoᵗ:456 · FleteCalcᵗ:466 · Hallazgoᵗ:473 · ReglaResultadoᵗ:481 · EettPartidaᵗ:489 · Resultadosᵗ:496 · PieSubpresupuestoᵗ:523
 
 ### `src/engine/util.ts` · 224 líneas
 Utilidades: redondeo, formato, fechas, número a letras.
@@ -89,17 +97,17 @@ demostracionValor:6
 
 ## Motor: control de obra — `src/engine/control/`
 
-### `src/engine/control/cambios.ts` · 54 líneas
+### `src/engine/control/cambios.ts` · 62 líneas
 Adicionales, deductivos, ampliaciones y matriz de riesgos.
-ResumenCambiosᵗ:9 · resumirCambios:23 · nivelRiesgo:47 · claseRiesgo:48
+ResumenCambiosᵗ:10 · resumirCambios:29 · nivelRiesgo:55 · claseRiesgo:56
 
 ### `src/engine/control/demo.ts` · 303 líneas
 Datos de demostración (controlDemostracion) para todas las funciones de control.
 controlDemostracion:18
 
-### `src/engine/control/evm.ts` · 186 líneas
+### `src/engine/control/evm.ts` · 191 líneas
 Valor ganado (PMBOK) y Earned Schedule: PV, EV, AC, SPI, CPI, EAC, ES, SPI(t), IEAC(t).
-PuntoEvmᵗ:12 · AvancePartidaᵗ:39 · Evmᵗ:49 · pvPartida:60 · pvALaFecha:67 · cronogramaGanado:74 · curvaPvDiaria:85 · cortesOrdenados:93 · calcularEvm:95 · ejecutadoHasta:181
+PuntoEvmᵗ:12 · AvancePartidaᵗ:39 · Evmᵗ:49 · pvPartida:61 · pvALaFecha:68 · cronogramaGanado:75 · curvaPvDiaria:86 · cortesOrdenados:94 · calcularEvm:96 · ejecutadoHasta:186
 
 ### `src/engine/control/fechas.ts` · 39 líneas
 Utilidades de fechas y días laborables del control.
@@ -200,9 +208,9 @@ AZUL:9 · AZUL_INPUT:10 · VERDE_LINK:11 · GRIS:12 · GRIS2:13 · BORDE_FINO:14
 Excel del expediente: flete, controles de consistencia y cumplimiento del TdR.
 hojaFlete:7 · hojaControles:33 · hojaCumplimiento:82
 
-### `src/export/xlsx/costos.ts` · 401 líneas
+### `src/export/xlsx/costos.ts` · 413 líneas
 Excel del expediente: insumos, metrados, resumen de metrados, APU, presupuesto y resumen de costos.
-TIPOS:6 · insumosUsados:13 · planInsumos:21 · hojaInsumos:32 · hojaMetrados:91 · hojaResumenMetrados:139 · hojaApu:160 · filaUltimoDescendiente:254 · hojaPresupuesto:261 · completarGGPresupuesto:337 · hojaResumen:344
+TIPOS:7 · insumosUsados:14 · planInsumos:22 · hojaInsumos:33 · hojaMetrados:92 · hojaResumenMetrados:143 · hojaApu:164 · filaUltimoDescendiente:266 · hojaPresupuesto:273 · completarGGPresupuesto:349 · hojaResumen:356
 
 ### `src/export/xlsx/datos.ts` · 95 líneas
 Excel del expediente: hoja Datos (parámetros con nombre que usan las fórmulas de las demás hojas).
@@ -212,13 +220,17 @@ hojaDatos:7
 Excel del expediente: gastos generales y fórmula polinómica.
 hojaGG:6 · hojaPolinomica:89
 
-### `src/export/xlsx/index.ts` · 152 líneas
+### `src/export/xlsx/index.ts` · 155 líneas
 Exportación a Excel (.xlsx) totalmente editable: arma el libro con las hojas vinculadas por fórmulas (ver comun.ts).
-generarXlsx:13
+generarXlsx:14
 
 ### `src/export/xlsx/programa.ts` · 384 líneas
 Excel del expediente: cronograma, distribución por periodos, valorizado, calendarios y desembolsos.
 hojaPrograma:7 · Bloqueᵗ:147 · planPeriodos:156 · apuPeriodos:165 · insumosAnticipacion:193 · hojaDistribucion:204 · filasValorizado:253 · hojaValorizado:259 · hojaCalendario:311 · hojaDesembolsos:348
+
+### `src/export/xlsx/subpresupuestos.ts` · 108 líneas
+Excel del expediente: una hoja por subpresupuesto (sus partidas vinculadas al Presupuesto y su propio pie) y el consolidado.
+crearHojasSubpresupuestos:16 · hojasSubpresupuestos:27
 
 ## Importación y formatos — `src/io/`
 
@@ -242,9 +254,9 @@ EspecificacionLeidaᵗ:10 · EettLeidasᵗ:11 · leerEettDocx:61 · aplicarEett:
 Importa un expediente existente hecho en S10, Delphin, PowerCost o Excel:
 Observacionᵗ:18 · ControlImportacionᵗ:20 · ResultadoImportacionᵗ:28 · ArchivoEntradaᵗ:36 · codigoItem:100 · leerMsProjectXml:389 · importarExpediente:424
 
-### `src/io/migrar.ts` · 70 líneas
+### `src/io/migrar.ts` · 73 líneas
 Normaliza un proyecto leído de archivo: revisa su forma, aplica las migraciones numeradas
-migrarProyecto:15 · esSoloLectura:62 · conEsquema:67
+migrarProyecto:15 · esSoloLectura:65 · conEsquema:70
 
 ### `src/io/plantilla.ts` · 327 líneas
 Plantilla de carga en Excel: exporta un proyecto a hojas editables y lo vuelve a importar.
@@ -260,9 +272,13 @@ nombre:6 · aplicar:8
 Migración 2 → 3 (versiones 2.0 a 2.6 → 2.7): número de esquema y bitácora de cambios vacía.
 nombre:4 · aplicar:6
 
-### `src/io/migraciones/index.ts` · 39 líneas
+### `src/io/migraciones/03-presupuesto-avanzado.ts` · 10 líneas
+Migración 3 → 4 (2.7 → 2.9): subpresupuestos, subpartidas y versiones del presupuesto (vacíos en proyectos anteriores).
+nombre:4 · aplicar:6
+
+### `src/io/migraciones/index.ts` · 41 líneas
 Migraciones numeradas del archivo de proyecto: cada una lleva el esquema N al N + 1. Para agregar una:
-Migracionᵗ:7 · MIGRACIONES:13 · ESQUEMA_ACTUAL:19 · esquemaDe:22 · migrar:28
+Migracionᵗ:8 · MIGRACIONES:14 · ESQUEMA_ACTUAL:21 · esquemaDe:24 · migrar:30
 
 ## Datos base — `src/data/`
 
@@ -334,8 +350,8 @@ hijos:11 · descendientes:15 · siguienteCodigo:19 · cambiarPrefijo:40 · agreg
 Almacén del banco de datos en el navegador (IndexedDB, almacén `banco`, fuera de los proyectos) con puntos de restauración.
 PuntoBancoᵗ:9 · leerBanco:20 · guardarBanco:33 · alCambiarBanco:43 · listarPuntos:56 · restaurarPunto:64
 
-### `src/ui/componentes.tsx` · 417 líneas
-parsearNumero:6 · EntradaNumero:29 · EntradaTexto:79 · AreaTexto:111 · Campo:132 · Pestanas:142 · Insignia:154 · Modal:158 · UMBRAL_VIRTUAL:183 · useFilasVirtuales:190 · Espaciador:233 · Columnaᵗ:244 · TablaEditable:273 · IconoCerrar:395 · IconoQuitar:398 · IconoMas:401 · IconoArriba:404 · IconoAbajo:407 · Marca:410
+### `src/ui/componentes.tsx` · 445 líneas
+parsearNumero:7 · EntradaNumero:33 · EntradaTexto:104 · AreaTexto:136 · Campo:157 · Pestanas:167 · Insignia:179 · Modal:183 · UMBRAL_VIRTUAL:208 · useFilasVirtuales:215 · Espaciador:258 · Columnaᵗ:269 · TablaEditable:301 · IconoCerrar:423 · IconoQuitar:426 · IconoMas:429 · IconoArriba:432 · IconoAbajo:435 · Marca:438
 
 ### `src/ui/control.ts` · 37 líneas
 Ayudas comunes de los módulos de control de ejecución.
@@ -345,9 +361,9 @@ useControl:8 · opcionesPartidas:18 · opcionesFrentes:22 · opciones:26 · pct:
 Puente con la app de escritorio (Electron, carpeta electron/). En el navegador no existe y nada cambia.
 ComandoEscritorioᵗ:5 · InfoPestanaᵗ:15 · escritorio:33 · parametrosInicio:37 · ApiPaginaᵗ:48 · publicarApiPagina:55
 
-### `src/ui/estado.ts` · 247 líneas
+### `src/ui/estado.ts` · 248 líneas
 Estado del proyecto abierto: edición inmutable (immer), deshacer/rehacer y autoguardado en el almacén local.
-Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:160 · descargar:185 · elegirArchivos:197 · elegirArchivo:208 · leerLogo:219
+Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:160 · descargar:186 · elegirArchivos:198 · elegirArchivo:209 · leerLogo:220
 
 ### `src/ui/graficos.tsx` · 467 líneas
 Gráficos SVG livianos para los módulos de control (sin librerías externas).
@@ -395,8 +411,8 @@ ModExportar:9
 ### `src/ui/modulos/GastosGenerales.tsx` · 103 líneas
 ModGG:7
 
-### `src/ui/modulos/Insumos.tsx` · 220 líneas
-celda:18 · leerListaPrecios:30 · ModInsumos:48
+### `src/ui/modulos/Insumos.tsx` · 263 líneas
+celda:19 · leerListaPrecios:31 · ModInsumos:49 · TiposCambio:234
 
 ### `src/ui/modulos/Logistica.tsx` · 246 líneas
 Kanban de materiales: tablero por estados, stock mínimo y punto de pedido, alertas y enlace con Last Planner.
@@ -409,8 +425,12 @@ ModLps:17 · Maestro:54 · Fases:109 · inicioVentana:179 · Lookahead:186 · Re
 ### `src/ui/modulos/Polinomica.tsx` · 67 líneas
 ModPolinomica:5
 
-### `src/ui/modulos/Presupuesto.tsx` · 461 líneas
-ModPresupuesto:19 · PieResumen:120 · DetalleTitulo:146 · DetallePartida:170 · EditorApu:217 · EditorMetrados:331 · EditorPrograma:373 · EditorEett:418
+### `src/ui/modulos/Presupuesto.tsx` · 495 líneas
+ModPresupuesto:21 · PieResumen:134 · DetalleTitulo:160 · DetallePartida:185 · EditorApu:232 · EditorMetrados:358 · EditorPrograma:407 · EditorEett:452
+
+### `src/ui/modulos/PresupuestoAvanzado.tsx` · 212 líneas
+Presupuesto avanzado (2.9): subpresupuestos con su pie, subpartidas (análisis reutilizables dentro de otros APU) y piezas
+filasDeSubpresupuesto:10 · SelectorSubpresupuesto:24 · CampoSubpresupuesto:37 · PiesSubpresupuestos:50 · partidaDeSubpartida:69 · SeccionSubpartidas:72 · guardarComoSubpartida:108 · GestionPresupuesto:124
 
 ### `src/ui/modulos/Programa.tsx` · 164 líneas
 Gantt:9 · ModPrograma:70
@@ -445,9 +465,13 @@ ModValidacion:30 · ObservacionesOrigen:90 · Integridad:146
 Ingeniería de valor y Target Value Design: costo meta por título, alternativas con índice de valor, matriz de
 ModValor:25 · Metas:62 · opcionesAmbito:153 · Alternativas:157 · Matriz:285
 
-### `src/ui/modulos/registro.ts` · 63 líneas
+### `src/ui/modulos/Versiones.tsx` · 172 líneas
+Versiones del presupuesto (oferta, negociado, contractual…): guardar, restaurar, comparar lado a lado por partida, insumo y
+ModVersiones:17
+
+### `src/ui/modulos/registro.ts` · 65 líneas
 Registro único de módulos. Para agregar uno:
-ItemNavᵗ:33 · NAV:36 · MODULOS:38
+ItemNavᵗ:34 · NAV:37 · MODULOS:39
 
 ## Línea de comandos — `cli/`
 
@@ -472,7 +496,7 @@ Puente de la barra de pestañas (pestanas.html) con la ventana.
 
 ## Herramientas — `scripts/`
 
-### `scripts/e2e.ts` · 176 líneas
+### `scripts/e2e.ts` · 196 líneas
 Pruebas de extremo a extremo con Playwright sobre dist/index.html (las corre `npm run verificar`).
 
 ### `scripts/extension.mjs` · 44 líneas
@@ -501,3 +525,6 @@ Versión 2.6: cálculo incremental, calendario, análisis gerencial, integridad 
 Pruebas de la versión 2.5: Earned Schedule, Monte Carlo / PERT, cadena crítica, kanban de materiales,
 
 ### `tests/motor.test.ts` · 315 líneas
+
+### `tests/presupuesto.test.ts` · 209 líneas
+Versión 2.9 (etapa 3 del plan 3.0): subpresupuestos, versiones del presupuesto, vigente, monedas, fórmulas en metrados y subpartidas.

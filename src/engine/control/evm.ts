@@ -48,6 +48,7 @@ export interface AvancePartida {
 
 export interface Evm {
   bac: number;
+  bacVigente: number; // BAC + cambios aprobados (en costo directo): base de EAC, VAC y TCPI
   pd: number; // duración planificada en días laborables
   pvDias: number[]; // PV acumulado al final de cada día laborable de la línea base
   puntos: PuntoEvm[];
@@ -97,6 +98,10 @@ export function calcularEvm(r: Resultados, c: Control): Evm | null {
   if (!lb) return null;
   const cal = calendarioDe(r, lb.inicio);
   const bac = lb.partidas.reduce((s, b) => s + b.parcial, 0);
+  // presupuesto vigente: la línea base más los adicionales y menos los deductivos aprobados, llevados a costo directo
+  // (los montos de los cambios son sin IGV, con GG y utilidad); se usa para EAC, VAC y TCPI
+  const neto = c.cambios.filter((x) => x.estado === 'aprobado').reduce((s, x) => s + (x.tipo === 'adicional' ? num(x.monto) : x.tipo === 'deductivo' ? -Math.abs(num(x.monto)) : 0), 0);
+  const bacVigente = bac + (lb.subtotal > 0 ? (neto * lb.costoDirecto) / lb.subtotal : 0);
   const cortes = cortesOrdenados(c);
   const { pv: pvDias } = curvaPvDiaria(r, lb);
   const pd = pvDias.length;
@@ -118,7 +123,7 @@ export function calcularEvm(r: Resultados, c: Control): Evm | null {
     const ac = acConocido ? acAcum : null;
     const spi = pv > 0 ? ev / pv : ev > 0 ? 1 : 0;
     const cpi = ac !== null && ac > 0 ? ev / ac : null;
-    const eac = cpi ? bac / cpi : null;
+    const eac = cpi ? bacVigente / cpi : null;
     const plazoEst = spi > 0 ? Math.round(lb.plazoDias / spi) : lb.plazoDias;
     const es = cronogramaGanado(pvDias, ev);
     const at = laborables(cal, lb.inicio, k.fecha);
@@ -139,8 +144,8 @@ export function calcularEvm(r: Resultados, c: Control): Evm | null {
       cpi,
       eac: eac === null ? null : redondear(eac),
       etc: eac === null || ac === null ? null : redondear(eac - ac),
-      vac: eac === null ? null : redondear(bac - eac),
-      tcpi: ac !== null && bac - ac !== 0 ? (bac - ev) / (bac - ac) : null,
+      vac: eac === null ? null : redondear(bacVigente - eac),
+      tcpi: ac !== null && bacVigente - ac !== 0 ? (bacVigente - ev) / (bacVigente - ac) : null,
       finEstimado: sumarDias(lb.inicio, Math.max(0, plazoEst - 1)),
       es,
       at,
@@ -174,7 +179,7 @@ export function calcularEvm(r: Resultados, c: Control): Evm | null {
     curvaPlan.push({ fecha, pv, pct: bac > 0 ? (pv / bac) * 100 : 0 });
     if (fecha >= lb.fin) break;
   }
-  return { bac: redondear(bac), pd, pvDias, puntos, ultimo, partidas, curvaPlan };
+  return { bac: redondear(bac), bacVigente: redondear(bacVigente), pd, pvDias, puntos, ultimo, partidas, curvaPlan };
 }
 
 /** Metrado acumulado ejecutado por partida hasta la fecha (incluida). */

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { esFormula, evaluarExpresion } from '../engine/expresion';
 import { fmt } from '../engine/util';
 
 // ------------------------------------------------------------ entradas
@@ -24,21 +25,45 @@ interface EntradaNumeroProps {
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   dataF?: number;
   dataC?: number;
+  /** Con esto la casilla acepta fórmulas («2*(3.5+4.2)»): recibe el resultado y el texto de la fórmula (o undefined). */
+  alCambiarFormula?: (v: number | null, formula: string | undefined) => void;
+  formula?: string;
 }
 
-export function EntradaNumero({ valor, alCambiar, decimales = 2, placeholder, className, ariaLabel, permitirVacio = true, onKeyDown, dataF, dataC }: EntradaNumeroProps) {
+export function EntradaNumero({ valor, alCambiar, decimales = 2, placeholder, className, ariaLabel, permitirVacio = true, onKeyDown, dataF, dataC, alCambiarFormula, formula }: EntradaNumeroProps) {
   const [editando, setEditando] = useState(false);
   const [texto, setTexto] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const mostrar = valor === null || valor === undefined || (valor as unknown) === '' ? '' : fmt(Number(valor), decimales);
   const confirmar = () => {
     setEditando(false);
+    if (alCambiarFormula) {
+      const t = texto.trim();
+      if (esFormula(t)) {
+        try {
+          const v = evaluarExpresion(t);
+          setError(null);
+          if (v !== (valor ?? null) || t !== formula) alCambiarFormula(v, t.replace(/^=/, ''));
+        } catch (e) {
+          setError((e as Error).message);
+        }
+        return;
+      }
+      setError(null);
+      const n = parsearNumero(t);
+      if (n === null && !permitirVacio) return;
+      if (n !== (valor ?? null) || formula) alCambiarFormula(n, undefined);
+      return;
+    }
     const n = parsearNumero(texto);
     if (n === null && !permitirVacio) return;
     if (n !== (valor ?? null)) alCambiar(n);
   };
   return (
     <input
-      className={className}
+      className={[className, formula ? 'con-formula' : '', error ? 'con-error' : ''].filter(Boolean).join(' ') || undefined}
+      title={error ? `Fórmula no válida: ${error}` : formula ? `= ${formula}` : undefined}
+      aria-invalid={error ? true : undefined}
       inputMode="decimal"
       aria-label={ariaLabel}
       placeholder={placeholder}
@@ -47,7 +72,7 @@ export function EntradaNumero({ valor, alCambiar, decimales = 2, placeholder, cl
       value={editando ? texto : mostrar}
       onFocus={(e) => {
         setEditando(true);
-        setTexto(valor === null || valor === undefined ? '' : String(valor));
+        setTexto(formula ?? (valor === null || valor === undefined ? '' : String(valor)));
         requestAnimationFrame(() => e.target.select());
       }}
       onChange={(e) => setTexto(e.target.value)}
@@ -254,6 +279,9 @@ export interface Columna<T> {
   placeholder?: string;
   lista?: string;
   formato?: (fila: T, i: number) => ReactNode;
+  /** Columnas numéricas que aceptan fórmulas: el texto guardado y cómo cambiar valor y fórmula a la vez. */
+  formula?: (fila: T) => string | undefined;
+  cambiarFormula?: (fila: T, v: number | null, formula: string | undefined, i: number) => void;
   clase?: (fila: T) => string | undefined;
 }
 
@@ -338,7 +366,7 @@ export function TablaEditable<T>({ filas, columnas, clave, alEliminar, pie, vaci
                 if (c.tipo === 'numero')
                   return (
                     <td key={c.clave} className={cls}>
-                      <EntradaNumero valor={v as number | null} decimales={c.decimales ?? 2} placeholder={c.placeholder} ariaLabel={c.titulo} alCambiar={(x) => c.cambiar!(f, x, i)} onKeyDown={mover} dataF={i} dataC={ci} />
+                      <EntradaNumero valor={v as number | null} decimales={c.decimales ?? 2} placeholder={c.placeholder} ariaLabel={c.titulo} alCambiar={(x) => c.cambiar!(f, x, i)} onKeyDown={mover} dataF={i} dataC={ci} formula={c.formula?.(f)} alCambiarFormula={c.cambiarFormula ? (x, fo) => c.cambiarFormula!(f, x, fo, i) : undefined} />
                     </td>
                   );
                 if (c.tipo === 'select')

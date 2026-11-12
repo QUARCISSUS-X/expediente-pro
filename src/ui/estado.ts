@@ -164,6 +164,7 @@ export type ModuloId =
   | 'tdr'
   | 'banco'
   | 'presupuesto'
+  | 'versiones'
   | 'insumos'
   | 'gg'
   | 'programa'

@@ -29,6 +29,7 @@ import { ModSigma } from './Sigma';
 import { ModTdr } from './Tdr';
 import { ModValidacion } from './Validacion';
 import { ModValor } from './Valor';
+import { ModVersiones } from './Versiones';
 
 export interface ItemNav { id: ModuloId; texto: string; menu: string; atajo: string; reglas: number[] }
 
@@ -42,6 +43,7 @@ export const MODULOS: Record<ModuloId, ComponentType<{ ctx: Contexto }>> = {
   tdr: ModTdr,
   banco: ModBanco,
   presupuesto: ModPresupuesto,
+  versiones: ModVersiones,
   insumos: ModInsumos,
   gg: ModGG,
   polinomica: ModPolinomica,
