@@ -20,6 +20,8 @@ archivos grandes completos:
 | Función | Motor (cálculo) | Pantalla | Hojas del informe de control | Pruebas (`-t`) |
 |---|---|---|---|---|
 | Presupuesto, APU, metrados, insumos, GG | `engine/compute.ts` (orquesta en `engine/index.ts`: `calcularTodo`) | `ui/modulos/{Presupuesto,Insumos,GastosGenerales}.tsx` | — (entregables en `export/xlsx/`) | `motor.test.ts` |
+| **Presupuesto avanzado:** subpresupuestos, subpartidas, monedas y fórmulas en metrados | `engine/index.ts` (`piesSubpresupuestos`, subpartidas), `engine/compute.ts` (`tipoCambio`, `mapaInsumos`), `engine/expresion.ts` | `ui/modulos/PresupuestoAvanzado.tsx` (+ Presupuesto e Insumos) | — (Excel: `export/xlsx/subpresupuestos.ts`) | `presupuesto.test.ts` |
+| **Versiones del presupuesto y vigente** | `engine/escenarios.ts`; vigente en `control/cambios.ts` y `control/evm.ts` (`bacVigente`) | `ui/modulos/Versiones.tsx` | — | `"versiones del presupuesto"`, `"presupuesto vigente"` |
 | Fórmula polinómica | `engine/polinomica.ts` | `ui/modulos/Polinomica.tsx` | — | `motor.test.ts` |
 | Validación (15 reglas), EETT y documentos | `engine/{validate,eett,documentos}.ts` | `ui/modulos/{Validacion,Documentos}.tsx` | — | `"las reglas detectan errores sembrados"` |
 | Cronograma CPM (red compartida) | `engine/schedule.ts` (`construirRed`, `pasadasCpm`, `calcularPrograma`) | `ui/modulos/Programa.tsx` | — | `"programación CPM"` |
@@ -73,6 +75,7 @@ Piezas comunes (solo si la mejora las necesita):
   `ctx.actualizar` (immer); nunca modificar `proyecto` ni `resultados` en el sitio. Un dato nuevo del proyecto que no entra al
   cálculo del expediente se agrega a `FUERA_DEL_CALCULO`. Copiar antes de ordenar listas de `Resultados` (`[...lista].sort()`).
 - Días laborables siempre con `Calendario` (`engine/schedule.ts`), que tiene caché; no contar día por día en bucles.
+- Subpartidas: su análisis vive en `apus['sp:' + código]` (`prefijoSubpartida`); `calcularApu` las desglosa en recursos con `subpartida` marcado.
 - Un proyecto guardado con una versión anterior siempre debe abrir: todo campo nuevo pasa por `migrarProyecto` / `normalizarControl`.
   Uno de un esquema más nuevo se abre solo para leer (`esSoloLectura`); al guardar en archivo o almacén se usa `conEsquema`.
 - Sin dependencias nuevas ni llamadas a internet. Nada de `eval`, `new Function` ni scripts en línea en código propio: la extensión no los permite.

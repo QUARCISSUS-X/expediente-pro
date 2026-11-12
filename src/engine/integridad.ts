@@ -57,13 +57,17 @@ function recorrer(p: Proyecto, reparar: boolean, anotar: Anotar) {
 
   // --- análisis de precios
   const insumos = new Set(p.insumos.map((i) => i.codigo));
+  // los análisis de subpartidas (apus['sp:' + código]) y sus códigos son válidos dentro de otros análisis
+  const subpartidas = new Set((p.subpartidas ?? []).map((s) => s.codigo));
+  for (const c of subpartidas) insumos.add(c);
   for (const [id, apu] of Object.entries(p.apus)) {
-    if (!esHoja(id)) {
+    const esSub = id.startsWith('sp:') && subpartidas.has(id.slice(3));
+    if (!esHoja(id) && !esSub) {
       anotar('apu-huerfano', 'aviso', 'Análisis de precios de partidas que ya no existen', true, id);
       if (reparar) delete p.apus[id];
       continue;
     }
-    const cod = partidas.get(id)!.codigo;
+    const cod = esSub ? id.slice(3) : partidas.get(id)!.codigo;
     if (noFinito(apu.rendimiento) || noFinito(apu.jornada)) {
       anotar('numero', 'error', 'Números no válidos (resultado de una operación imposible)', true, `APU de ${cod}: rendimiento o jornada`);
       if (reparar) {

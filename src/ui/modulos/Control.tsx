@@ -422,7 +422,7 @@ function Cambios({ ctx }: { ctx: Contexto }) {
   return (
     <>
       <div className="cifras">
-        <div><span>Monto contractual</span><strong>{m} {fmt(s.contractual)}</strong></div>
+        <div><span>Monto contractual</span><strong>{m} {fmt(s.contractual)}</strong><small className="pequeno">{s.origenContractual === 'version' ? 'de la versión contractual del presupuesto' : s.origenContractual === 'lineaBase' ? 'de la línea base (marque una versión como contractual en Versiones del presupuesto)' : 'del presupuesto actual'}</small></div>
         <div><span>Adicionales aprobados</span><strong>{m} {fmt(s.adicionales)}</strong></div>
         <div><span>Deductivos aprobados</span><strong>{m} {fmt(s.deductivos)}</strong></div>
         <div><span>Presupuesto vigente</span><strong>{m} {fmt(s.vigente)}</strong></div>

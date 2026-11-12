@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { INDICES_UNIFICADOS } from '../../data/iu';
 import type { Insumo, TipoInsumo } from '../../engine/types';
 import { fmt, num } from '../../engine/util';
-import { IconoMas, Insignia, Pestanas, TablaEditable } from '../componentes';
+import { IconoMas, Insignia, Modal, Pestanas, TablaEditable } from '../componentes';
+import { insumosSinTipoCambio, tipoCambio } from '../../engine/compute';
 import { descargar, elegirArchivo, type Contexto } from '../estado';
 import { ActualizarPrecios, AgregarInsumosBanco } from '../BancoDialogos';
 
@@ -54,6 +55,9 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
   }, [ctx.consultaInsumo, ctx]);
   const [soloUsados, setSoloUsados] = useState(false);
   const [deBanco, setDeBanco] = useState<'precios' | 'insumos' | null>(null);
+  const [verTc, setVerTc] = useState(false);
+  const sinTc = useMemo(() => insumosSinTipoCambio(p), [p]);
+  const monedas = useMemo(() => [...new Set([p.meta.moneda, 'S/', 'US$', 'EUR', ...p.insumos.map((i) => i.moneda ?? '').filter(Boolean)])], [p.meta.moneda, p.insumos]);
   const uso = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of Object.values(p.apus)) for (const it of a.items) m.set(it.insumo, (m.get(it.insumo) ?? 0) + 1);
@@ -142,6 +146,7 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
           <button className="boton" onClick={importar} title="Excel o CSV con columnas Código, Descripción, Unidad, Precio (Tipo e IU opcionales)">Importar precios</button>
           <button className="boton" onClick={() => setDeBanco('precios')} title="Compara los precios del proyecto con el banco a una fecha y lugar, y aplica los elegidos">Actualizar precios desde el banco</button>
           <button className="boton" onClick={() => setDeBanco('insumos')}>Agregar del banco</button>
+          <button className="boton" onClick={() => setVerTc(true)} title="Insumos con precio en otra moneda: tipo de cambio por fecha">Tipos de cambio</button>
           <button
             className="boton primario"
             onClick={() => {
@@ -170,6 +175,7 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
         <span className="separador" />
         <span className="pequeno">{filas.length} de {p.insumos.length} insumos</span>
       </div>
+      {sinTc.length > 0 && <div className="aviso advertencia" style={{ marginBottom: 8 }}>Falta el tipo de cambio para {sinTc.length} insumo(s) en otra moneda ({sinTc.slice(0, 5).join(', ')}): su precio se toma tal cual. <button className="boton chico" onClick={() => setVerTc(true)}>Registrar tipo de cambio</button></div>}
       <TablaEditable
         etiqueta="Catálogo de insumos"
         alto="calc(100vh - 330px)"
@@ -196,6 +202,11 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
           { clave: 'u', titulo: 'Und', ancho: 58, valor: (x) => x.ins.unidad, cambiar: (x, v) => set(x.gi, (i) => (i.unidad = String(v))) },
           { clave: 't', titulo: 'Tipo', tipo: 'select', ancho: 70, opciones: OPC_TIPO, valor: (x) => x.ins.tipo, cambiar: (x, v) => set(x.gi, (i) => (i.tipo = v as TipoInsumo)) },
           { clave: 'p', titulo: 'Precio', tipo: 'numero', ancho: 94, decimales: 2, valor: (x) => (x.ins.unidad.startsWith('%') ? null : x.ins.precio), cambiar: (x, v) => set(x.gi, (i) => (i.precio = (v as number) ?? 0)) },
+          {
+            clave: 'mo', titulo: 'Moneda', tipo: 'select', ancho: 74, opciones: monedas.map((m) => ({ valor: m, texto: m })), valor: (x) => x.ins.moneda || p.meta.moneda,
+            cambiar: (x, v) => set(x.gi, (i) => { i.moneda = v === p.meta.moneda ? undefined : String(v); }),
+            clase: (x) => (x.ins.moneda && x.ins.moneda !== p.meta.moneda ? 'otra-moneda' : undefined),
+          },
           { clave: 'iu', titulo: 'Índice unificado', tipo: 'select', ancho: 170, opciones: OPC_IU, valor: (x) => x.ins.iu, cambiar: (x, v) => set(x.gi, (i) => (i.iu = String(v))) },
           { clave: 'pe', titulo: 'Peso kg', tipo: 'numero', ancho: 74, decimales: 2, valor: (x) => x.ins.pesoKg ?? null, cambiar: (x, v) => set(x.gi, (i) => (i.pesoKg = v as number | null)) },
           { clave: 'pc', titulo: 'Compra (d)', tipo: 'numero', ancho: 78, decimales: 0, valor: (x) => x.ins.plazoCompraDias ?? null, cambiar: (x, v) => set(x.gi, (i) => (i.plazoCompraDias = v as number | null)), placeholder: String(p.meta.plazoCompraDefecto) },
@@ -214,6 +225,38 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
       />
       {deBanco === 'precios' && <ActualizarPrecios ctx={ctx} alCerrar={() => setDeBanco(null)} />}
       {deBanco === 'insumos' && <AgregarInsumosBanco ctx={ctx} alCerrar={() => setDeBanco(null)} />}
+      {verTc && <TiposCambio ctx={ctx} alCerrar={() => setVerTc(false)} />}
     </div>
+  );
+}
+
+/** Tipos de cambio por fecha: 1 unidad de la moneda = valor en la moneda del proyecto. Se usa el último no posterior a la fecha base. */
+function TiposCambio({ ctx, alCerrar }: { ctx: Contexto; alCerrar: () => void }) {
+  const p = ctx.proyecto;
+  const lista = (p.meta.tiposCambio ?? []).map((t, gi) => ({ t, gi }));
+  const set = (gi: number, f: (t: NonNullable<typeof p.meta.tiposCambio>[number]) => void) => ctx.actualizar((d) => f(d.meta.tiposCambio![gi]), 'Tipos de cambio');
+  const enUso = [...new Set(p.insumos.map((i) => i.moneda).filter((m): m is string => !!m && m !== p.meta.moneda))];
+  return (
+    <Modal titulo="Tipos de cambio" alCerrar={alCerrar}>
+      <p className="pequeno" style={{ marginTop: 0 }}>Para insumos con precio en otra moneda. El análisis usa el tipo de cambio vigente a la fecha base del presupuesto ({p.meta.fechaBase}); el precio convertido a {p.meta.moneda} entra al Excel, al PDF y a la fórmula polinómica.</p>
+      <TablaEditable
+        etiqueta="Tipos de cambio"
+        filas={lista}
+        clave={(x) => String(x.gi)}
+        alEliminar={(x) => ctx.actualizar((d) => { d.meta.tiposCambio!.splice(x.gi, 1); }, 'Tipos de cambio')}
+        vacio={<div className="vacio"><p>Sin tipos de cambio.</p></div>}
+        columnas={[
+          { clave: 'm', titulo: 'Moneda', tipo: 'texto', ancho: 80, valor: (x) => x.t.moneda, cambiar: (x, v) => set(x.gi, (t) => { t.moneda = String(v).trim(); }) },
+          { clave: 'f', titulo: 'Fecha', tipo: 'fecha', ancho: 140, valor: (x) => x.t.fecha, cambiar: (x, v) => set(x.gi, (t) => { if (v) t.fecha = String(v); }) },
+          { clave: 'v', titulo: `Valor en ${p.meta.moneda}`, tipo: 'numero', ancho: 110, decimales: 4, valor: (x) => x.t.valor, cambiar: (x, v) => set(x.gi, (t) => { t.valor = Number(v) || 0; }) },
+          { clave: 'u', titulo: 'Vigente a la fecha base', ancho: 150, valor: (x) => (tipoCambio(p, x.t.moneda) === x.t.valor ? 'Sí' : '') },
+        ]}
+      />
+      <div className="fila-flex" style={{ marginTop: 10 }}>
+        {[...new Set(['US$', 'EUR', ...enUso])].map((m) => (
+          <button key={m} className="boton chico" onClick={() => ctx.actualizar((d) => { (d.meta.tiposCambio ??= []).push({ moneda: m, fecha: p.meta.fechaBase, valor: m === 'US$' ? 3.75 : 4.05 }); }, 'Tipos de cambio')}>Agregar {m}</button>
+        ))}
+      </div>
+    </Modal>
   );
 }

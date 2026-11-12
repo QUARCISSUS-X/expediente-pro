@@ -24,24 +24,67 @@ export function metradosPorPartida(p: Proyecto): Record<string, number> {
   return out;
 }
 
+/** Tipo de cambio de `moneda` a la del proyecto: el último no posterior a la fecha (o el más antiguo si todos son posteriores). */
+export function tipoCambio(p: Proyecto, moneda: string, fecha = p.meta.fechaBase): number | null {
+  if (!moneda || moneda === p.meta.moneda) return 1;
+  const l = (p.meta.tiposCambio ?? []).filter((t) => t.moneda === moneda && num(t.valor) > 0).sort((a, b) => a.fecha.localeCompare(b.fecha));
+  if (!l.length) return null;
+  return num([...l].reverse().find((t) => t.fecha <= fecha)?.valor ?? l[0].valor);
+}
+
+/** Insumos por código, con el precio llevado a la moneda del proyecto (4 decimales) si el insumo está en otra moneda. */
 export function mapaInsumos(p: Proyecto): Map<string, Insumo> {
   const m = new Map<string, Insumo>();
-  for (const i of p.insumos) m.set(i.codigo, i);
+  for (const i of p.insumos) {
+    const tc = i.moneda && i.moneda !== p.meta.moneda ? tipoCambio(p, i.moneda) : 1;
+    m.set(i.codigo, tc === 1 || tc === null ? i : { ...i, precio: redondear(num(i.precio) * tc, 4) });
+  }
   return m;
 }
 
+/** Insumos en otra moneda sin tipo de cambio registrado (su precio se toma tal cual). */
+export function insumosSinTipoCambio(p: Proyecto): string[] {
+  return p.insumos.filter((i) => i.moneda && i.moneda !== p.meta.moneda && tipoCambio(p, i.moneda) === null).map((i) => i.codigo);
+}
+
+/** Análisis de una subpartida por su código (null si no existe); lo arma calcularTodo. */
+export type ResolverSubpartida = (codigo: string) => ApuCalc | null;
+
 const VACIO: Record<TipoInsumo, number> = { MO: 0, MAT: 0, EQ: 0, SC: 0 };
 
-export function calcularApu(partidaId: string, apu: Apu | undefined, insumos: Map<string, Insumo>, jornada: number): ApuCalc {
+export function calcularApu(partidaId: string, apu: Apu | undefined, insumos: Map<string, Insumo>, jornada: number, subpartida?: ResolverSubpartida): ApuCalc {
   const j = apu && apu.jornada !== null && apu.jornada !== undefined && num(apu.jornada) > 0 ? num(apu.jornada) : jornada;
   const res: ApuCalc = { partidaId, rendimiento: num(apu?.rendimiento), jornada: j, items: [], subtotales: { ...VACIO }, pu: 0, faltantes: [] };
   if (!apu) return res;
   const rend = num(apu.rendimiento);
   const pendientes: { item: ApuItemCalc }[] = [];
+  const propio = { MO: 0, MAT: 0 }; // base de los % de MO y MAT: solo los recursos propios (no los de subpartidas)
   for (const [origen, it] of apu.items.entries()) {
     const ins = insumos.get(it.insumo);
     if (!ins) {
-      res.faltantes.push(it.insumo);
+      // subpartida: se desglosa en sus recursos, multiplicados por la cantidad
+      const sp = subpartida?.(it.insumo);
+      if (!sp) {
+        res.faltantes.push(it.insumo);
+        continue;
+      }
+      const q = num(it.cantidad);
+      for (const s of sp.items) {
+        const calc: ApuItemCalc = {
+          origen,
+          insumo: s.insumo,
+          cuadrilla: null,
+          cantidad: s.porcentaje !== null ? s.cantidad : redondear(q * s.cantidad, 4),
+          precio: s.precio,
+          parcial: 0,
+          porcentaje: s.porcentaje,
+          subpartida: it.insumo,
+        };
+        calc.parcial = s.porcentaje !== null ? redondear(q * s.parcial, 2) : redondear(calc.cantidad * num(s.precio), 2);
+        res.items.push(calc);
+        res.subtotales[s.insumo.tipo] = redondear(res.subtotales[s.insumo.tipo] + calc.parcial, 2);
+      }
+      for (const f of sp.faltantes) if (!res.faltantes.includes(f)) res.faltantes.push(f);
       continue;
     }
     const esPorc = ins.unidad.toLowerCase().startsWith('%') || (it.porcentaje !== null && it.porcentaje !== undefined && (it.porcentaje as unknown) !== '');
@@ -66,11 +109,14 @@ export function calcularApu(partidaId: string, apu: Apu | undefined, insumos: Ma
     };
     res.items.push(calc);
     if (esPorc) pendientes.push({ item: calc });
-    else res.subtotales[ins.tipo] = redondear(res.subtotales[ins.tipo] + calc.parcial, 2);
+    else {
+      res.subtotales[ins.tipo] = redondear(res.subtotales[ins.tipo] + calc.parcial, 2);
+      if (ins.tipo === 'MO' || ins.tipo === 'MAT') propio[ins.tipo] = redondear(propio[ins.tipo] + calc.parcial, 2);
+    }
   }
-  // rubros porcentuales (herramientas manuales = % de mano de obra)
+  // rubros porcentuales (herramientas manuales = % de mano de obra propia del análisis)
   for (const { item } of pendientes) {
-    const base = item.insumo.unidad.toLowerCase().includes('mat') ? res.subtotales.MAT : res.subtotales.MO;
+    const base = item.insumo.unidad.toLowerCase().includes('mat') ? propio.MAT : propio.MO;
     item.parcial = redondear((item.cantidad / 100) * base, 2);
     res.subtotales[item.insumo.tipo] = redondear(res.subtotales[item.insumo.tipo] + item.parcial, 2);
   }

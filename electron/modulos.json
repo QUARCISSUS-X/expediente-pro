@@ -8,6 +8,7 @@
   ] },
   { "grupo": "Costos", "items": [
     {"id": "presupuesto", "texto": "Presupuesto, APU y metrados", "menu": "Presupuesto, APU y metrados", "atajo": "CmdOrCtrl+4", "reglas": [1, 2, 3, 12]},
+    {"id": "versiones", "texto": "Versiones del presupuesto", "menu": "Versiones del presupuesto (comparar y vigente)", "atajo": "CmdOrCtrl+Shift+V", "reglas": []},
     {"id": "insumos", "texto": "Relación de insumos", "menu": "Relación de insumos", "atajo": "CmdOrCtrl+5", "reglas": [4, 5]},
     {"id": "gg", "texto": "Gastos generales", "menu": "Gastos generales", "atajo": "CmdOrCtrl+6", "reglas": [7, 11]},
     {"id": "polinomica", "texto": "Fórmula polinómica", "menu": "Fórmula polinómica", "atajo": "CmdOrCtrl+7", "reglas": [10]},

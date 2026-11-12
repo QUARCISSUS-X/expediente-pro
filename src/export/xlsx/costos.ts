@@ -1,7 +1,8 @@
 // Excel del expediente: insumos, metrados, resumen de metrados, APU, presupuesto y resumen de costos.
 import type { Resultados, TipoInsumo } from '../../engine/types';
 import { isoAFecha, num, redondear } from '../../engine/util';
-import { AZUL, GRIS, GRIS2, F_MONEDA, F_CANT, F_MET, F_PCT, F_FECHA, Hoja, Ctx, finMembrete, membrete, configurarImpresion } from './comun';
+import { AZUL, AZUL_INPUT, GRIS, GRIS2, F_MONEDA, F_CANT, F_MET, F_PCT, F_FECHA, Hoja, Ctx, finMembrete, membrete, configurarImpresion } from './comun';
+import { formulaExcel } from '../../engine/expresion';
 
 export const TIPOS: { t: TipoInsumo; n: string }[] = [
   { t: 'MO', n: 'MANO DE OBRA' },
@@ -121,7 +122,10 @@ export function hojaMetrados(ctx: Ctx, h: Hoja) {
       h.dato(f, 4, m.referencia ?? '', { borde: 'hair', tam: 7.5 });
       (['veces', 'cantidad', 'factor', 'largo', 'ancho', 'alto', 'area', 'volumen'] as const).forEach((k, i) => {
         const val = m[k];
-        h.dato(f, 5 + i, val === null || val === undefined || (val as unknown) === '' ? null : num(val), { fmt: '#,##0.00##', borde: 'hair' });
+        const formula = m.formulas?.[k];
+        // un campo con fórmula («2*(3.5+4.2)») va como fórmula de Excel con su resultado
+        if (formula && val !== null && val !== undefined) h.fx(f, 5 + i, `=${formulaExcel(formula)}`, num(val), { fmt: '#,##0.00##', borde: 'hair', color: AZUL_INPUT });
+        else h.dato(f, 5 + i, val === null || val === undefined || (val as unknown) === '' ? null : num(val), { fmt: '#,##0.00##', borde: 'hair' });
       });
       const llenos = (['veces', 'cantidad', 'factor', 'largo', 'ancho', 'alto', 'area', 'volumen'] as const).map((k) => m[k]).filter((x) => x !== null && x !== undefined && (x as unknown) !== '');
       const parcial = llenos.length ? llenos.reduce<number>((a, b) => a * num(b), 1) : 0;
@@ -192,7 +196,7 @@ export function hojaApu(ctx: Ctx, h: Hoja, hPpto: Hoja, filaPptoDe: Map<string, 
     for (const { t, n } of grupos) {
       const fG = g++;
       const items = a.items.filter((x) => x.insumo.tipo === t).map((it) => ({ it, fila: g++ }));
-      for (const x of items) if (x.it.porcentaje === null) noPct[t].push(x.fila);
+      for (const x of items) if (x.it.porcentaje === null && !x.it.subpartida) noPct[t].push(x.fila); // base de los %: solo recursos propios
       plan.push({ t, n, fila: fG, items });
     }
     const subt: string[] = [];
@@ -201,13 +205,21 @@ export function hojaApu(ctx: Ctx, h: Hoja, hPpto: Hoja, filaPptoDe: Map<string, 
       for (const { it, fila: fr } of grp.items) {
         const fi = ctx.insumoFila.get(it.insumo.codigo);
         const pct = it.porcentaje !== null;
-        h.v(fr, 1, it.insumo.codigo, { borde: 'hair' });
+        h.v(fr, 1, it.subpartida ? `${it.insumo.codigo} (${it.subpartida})` : it.insumo.codigo, { borde: 'hair' });
         h.link(fr, 2, fi ? `='Insumos'!$B$${fi}` : `="${it.insumo.descripcion.replace(/"/g, '""')}"`, it.insumo.descripcion, { borde: 'hair', color: 'FF20262A' });
         h.v(fr, 3, it.insumo.unidad, { h: 'center', borde: 'hair' });
-        if (pct) {
+        if (pct && it.subpartida) {
+          // % de una subpartida desglosada: monto fijo (cantidad de la subpartida × su parcial)
+          h.v(fr, 4, null, { borde: 'hair' });
+          h.v(fr, 5, it.cantidad, { fmt: '0.00"%"', borde: 'hair' });
+          h.v(fr, 6, null, { borde: 'hair' });
+          h.dato(fr, 7, it.parcial, { fmt: F_MONEDA, borde: 'hair' });
+          h.v(fr, 8, null);
+          h.fx(fr, 9, `=G${fr}*${metRef}`, it.parcial * fp.metrado, { fmt: F_MONEDA });
+        } else if (pct) {
           const deMat = it.insumo.unidad.toLowerCase().includes('mat');
           const base = noPct[deMat ? 'MAT' : 'MO'];
-          const baseVal = a.items.filter((x) => x.porcentaje === null && x.insumo.tipo === (deMat ? 'MAT' : 'MO')).reduce((acc, x) => acc + x.parcial, 0);
+          const baseVal = a.items.filter((x) => x.porcentaje === null && !x.subpartida && x.insumo.tipo === (deMat ? 'MAT' : 'MO')).reduce((acc, x) => acc + x.parcial, 0);
           h.v(fr, 4, null, { borde: 'hair' });
           h.dato(fr, 5, it.cantidad, { fmt: '0.00"%"', borde: 'hair' });
           h.fx(fr, 6, base.length ? `=${base.map((x) => `G${x}`).join('+')}` : '=0', redondear(baseVal, 2), { fmt: F_MONEDA, borde: 'hair' });

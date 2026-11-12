@@ -1,5 +1,6 @@
 // Adicionales, deductivos, ampliaciones y matriz de riesgos.
 // Parte del motor de control (src/engine/control.ts reexporta todo).
+import { escenarioContractual } from '../escenarios';
 import { type Resultados } from '../types';
 import { num, redondear } from '../util';
 import { type Control, type Riesgo } from './modelo';
@@ -8,6 +9,7 @@ import { type Control, type Riesgo } from './modelo';
 
 export interface ResumenCambios {
   contractual: number;
+  origenContractual: 'version' | 'lineaBase' | 'presupuesto'; // de dónde sale el monto contractual
   plazoContractual: number;
   adicionales: number;
   deductivos: number;
@@ -20,9 +22,14 @@ export interface ResumenCambios {
   alerta: string | null;
 }
 
+/**
+ * Presupuesto vigente = contractual + adicionales − deductivos aprobados. El contractual es la versión del presupuesto
+ * marcada como «contractual»; si no hay, la línea base; si tampoco, el presupuesto actual.
+ */
 export function resumirCambios(r: Resultados, c: Control): ResumenCambios {
-  const contractual = c.lineaBase?.subtotal ?? r.pie.subtotal;
-  const plazo = c.lineaBase?.plazoDias ?? r.programa.plazoDias;
+  const version = escenarioContractual(r.proyecto)?.resumen;
+  const contractual = version?.subtotal ?? c.lineaBase?.subtotal ?? r.pie.subtotal;
+  const plazo = version?.plazoDias ?? c.lineaBase?.plazoDias ?? r.programa.plazoDias;
   const ap = c.cambios.filter((x) => x.estado === 'aprobado');
   const adicionales = ap.filter((x) => x.tipo === 'adicional').reduce((s, x) => s + num(x.monto), 0);
   const deductivos = ap.filter((x) => x.tipo === 'deductivo').reduce((s, x) => s + Math.abs(num(x.monto)), 0);
@@ -31,6 +38,7 @@ export function resumirCambios(r: Resultados, c: Control): ResumenCambios {
   const incAd = contractual > 0 ? (adicionales / contractual) * 100 : 0;
   return {
     contractual,
+    origenContractual: version ? 'version' : c.lineaBase ? 'lineaBase' : 'presupuesto',
     plazoContractual: plazo,
     adicionales: redondear(adicionales),
     deductivos: redondear(deductivos),

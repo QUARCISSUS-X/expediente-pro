@@ -535,3 +535,9 @@ kbd { font-family: inherit; font-size: 12px; background: var(--hoja-2); border: 
 .lista-alertas { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
 .tabla tr.clic { cursor: pointer; }
 .tabla tr.clic:hover td { background: var(--patina-tinte); }
+
+/* 2.9: casillas con fórmula (metrados) y fórmula no válida */
+input.con-formula { color: #0000cc; font-style: italic; }
+input.con-error { outline: 2px solid var(--sello); outline-offset: -2px; }
+
+td.otra-moneda select { color: #a9731a; font-weight: 600; }

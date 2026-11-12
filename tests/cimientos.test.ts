@@ -24,7 +24,7 @@ describe('esquema versionado y migraciones', () => {
     expect(MIGRACIONES.map((m) => m.desde)).toEqual(MIGRACIONES.map((_, i) => i + 1));
     const archivos = readdirSync(new URL('../src/io/migraciones', import.meta.url)).filter((f) => /^\d\d-/.test(f)).sort();
     expect(archivos.map((f) => +f.slice(0, 2))).toEqual(MIGRACIONES.map((m) => m.desde));
-    expect(ESQUEMA_ACTUAL).toBe(3);
+    expect(ESQUEMA_ACTUAL).toBe(4);
   });
   it('un proyecto de 2.0 a 2.6 abre igual y queda en el esquema actual', () => {
     const viejo = clonar(proyectoEjemplo()) as unknown as Record<string, unknown>;

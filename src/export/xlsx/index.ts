@@ -9,6 +9,7 @@ import { planInsumos, hojaInsumos, hojaMetrados, hojaResumenMetrados, hojaApu, h
 import { hojaGG, hojaPolinomica } from './gg';
 import { hojaPrograma, Bloque, planPeriodos, apuPeriodos, insumosAnticipacion, hojaDistribucion, filasValorizado, hojaValorizado, hojaCalendario, hojaDesembolsos } from './programa';
 import { hojaFlete, hojaControles, hojaCumplimiento } from './controles';
+import { crearHojasSubpresupuestos, hojasSubpresupuestos } from './subpresupuestos';
 
 export async function generarXlsx(r: Resultados): Promise<Uint8Array> {
   const wb = new ExcelJS.Workbook();
@@ -44,6 +45,7 @@ export async function generarXlsx(r: Resultados): Promise<Uint8Array> {
   // orden de pestañas
   hojaDatos(ctx);
   const hRes = new Hoja(wb, 'Resumen');
+  const hSub = crearHojasSubpresupuestos(wb, r); // subpresupuestos y consolidado, junto al Resumen
   const hPpto = new Hoja(wb, 'Presupuesto');
   const hApu = new Hoja(wb, 'APU');
   const hIns = new Hoja(wb, 'Insumos');
@@ -80,6 +82,7 @@ export async function generarXlsx(r: Resultados): Promise<Uint8Array> {
   completarGGPresupuesto(ctx, hPpto);
   hojaResumenMetrados(ctx, hResMet);
   hojaResumen(ctx, hRes, filaPptoDe);
+  if (hSub) hojasSubpresupuestos(ctx, hSub, filaPptoDe);
   hojaPolinomica(ctx, hPol);
   if (hFle) hojaFlete(ctx, hFle);
   hojaPrograma(ctx, hProg);

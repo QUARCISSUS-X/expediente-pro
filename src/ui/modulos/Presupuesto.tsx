@@ -8,6 +8,8 @@ import { AreaTexto, Campo, EntradaNumero, EntradaTexto, Espaciador, IconoMas, In
 import type { Contexto } from '../estado';
 import { Icono } from '../iconos';
 import { accionesPartida } from '../acciones';
+import { CampoSubpresupuesto, filasDeSubpresupuesto, GestionPresupuesto, guardarComoSubpartida, PiesSubpresupuestos, SeccionSubpartidas, SelectorSubpresupuesto } from './PresupuestoAvanzado';
+import { prefijoSubpartida } from '../../engine/types';
 
 const TIPOS: { t: TipoInsumo; n: string }[] = [
   { t: 'MO', n: 'Mano de obra' },
@@ -24,10 +26,18 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
     for (const v of r.validacion) for (const h of v.hallazgos) if (h.referencia && (m.get(h.referencia) !== 'error')) m.set(h.referencia, h.severidad);
     return m;
   }, [r.validacion]);
+  // subpresupuesto que se muestra (null = todos)
+  const [verSub, setVerSub] = useState<string | null>(null);
+  const [gestion, setGestion] = useState(false);
+  const filas = useMemo(() => {
+    if (verSub === null || !(p.subpresupuestos ?? []).length) return r.filas;
+    const ids = filasDeSubpresupuesto(ctx, verSub);
+    return r.filas.filter((f) => ids.has(f.partida.id));
+  }, [verSub, r.filas, p.subpresupuestos]); // eslint-disable-line react-hooks/exhaustive-deps
   // más de 300 filas: solo se dibujan las visibles; al elegir con flechas o desde otro módulo, la fila se lleva a la vista
-  const v = useFilasVirtuales(r.filas.length);
+  const v = useFilasVirtuales(filas.length);
   useEffect(() => {
-    if (partidaSel) v.irA(r.filas.findIndex((f) => f.partida.id === partidaSel));
+    if (partidaSel) v.irA(filas.findIndex((f) => f.partida.id === partidaSel));
   }, [partidaSel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -39,6 +49,8 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
         </div>
         <div className="herramientas">
           <span className="pequeno">{r.hojas.length} partidas · {r.filas.length - r.hojas.length} títulos</span>
+          <SelectorSubpresupuesto ctx={ctx} valor={verSub} alCambiar={setVerSub} />
+          <button className="boton chico" onClick={() => setGestion(true)} title="Subpresupuestos con su propio pie y subpartidas reutilizables">Subpresupuestos y subpartidas</button>
         </div>
       </div>
 
@@ -67,7 +79,7 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
                 </thead>
                 <tbody>
                   <Espaciador alto={v.arriba} columnas={6} />
-                  {r.filas.slice(v.desde, v.hasta).map((f) => {
+                  {filas.slice(v.desde, v.hasta).map((f) => {
                     const obs = observadas.get(f.partida.codigo);
                     return (
                       <tr
@@ -101,6 +113,7 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
             </div>
           )}
           <PieResumen ctx={ctx} />
+          <PiesSubpresupuestos ctx={ctx} />
         </div>
 
         <div className="pegajoso" style={{ top: 0 }}>
@@ -113,6 +126,7 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
           )}
         </div>
       </div>
+      {gestion && <GestionPresupuesto ctx={ctx} alCerrar={() => setGestion(false)} editor={(pt) => <EditorApu ctx={ctx} pt={pt} />} />}
     </div>
   );
 }
@@ -161,6 +175,7 @@ function DetalleTitulo({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
           <div><span>Partidas</span><strong>{n}</strong></div>
           <div><span>Incidencia en el costo directo</span><strong>{r.pie.costoDirecto ? fmt(((f?.parcial ?? 0) / r.pie.costoDirecto) * 100) : '0.00'} %</strong></div>
         </div>
+        <CampoSubpresupuesto ctx={ctx} pt={pt} />
         <p className="pequeno">Use Partida o Biblioteca en la barra de herramientas para agregar partidas dentro de este título; Nivel + y Nivel − lo mueven en el árbol.</p>
       </div>
     </div>
@@ -217,14 +232,22 @@ function DetallePartida({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
 function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
   const { proyecto: p, resultados: r, actualizar } = ctx;
   const apu = p.apus[pt.id] ?? { rendimiento: 0, items: [] };
-  const calc = r.apus[pt.id];
+  const calc = r.apus[pt.id] ?? (pt.id.startsWith(prefijoSubpartida) ? r.subpartidas[pt.id.slice(prefijoSubpartida.length)] : undefined);
+  const esSubpartida = pt.id.startsWith(prefijoSubpartida);
+  const subs = useMemo(() => new Map((p.subpartidas ?? []).map((s) => [s.codigo, s])), [p.subpartidas]);
   const [nuevo, setNuevo] = useState('');
   const ins = useMemo(() => new Map(p.insumos.map((i) => [i.codigo, i])), [p.insumos]);
   const setItem = (i: number, f: (x: ApuItem) => void) => actualizar((d) => { const a = d.apus[pt.id]; if (a) f(a.items[i] as ApuItem); }, `Análisis de ${pt.codigo}`);
   const agregar = () => {
     const codigo = nuevo.split(' — ')[0].trim();
+    if (subs.has(codigo)) {
+      if (pt.id === prefijoSubpartida + codigo) { ctx.avisar('Una subpartida no puede usarse dentro de sí misma.', true); return; }
+      actualizar((d) => { (d.apus[pt.id] ?? (d.apus[pt.id] = { rendimiento: 1, items: [] })).items.push({ insumo: codigo, cantidad: 1 }); }, `Análisis de ${pt.codigo}`);
+      setNuevo('');
+      return;
+    }
     const i = ins.get(codigo);
-    if (!i) { ctx.avisar(`No existe el insumo "${codigo}" en el catálogo.`, true); return; }
+    if (!i) { ctx.avisar(`No existe el insumo ni la subpartida "${codigo}".`, true); return; }
     actualizar((d) => {
       const a = d.apus[pt.id] ?? (d.apus[pt.id] = { rendimiento: 1, items: [] });
       a.items.push(i.unidad.startsWith('%') ? { insumo: codigo, porcentaje: 3 } : i.tipo === 'MO' || i.tipo === 'EQ' ? { insumo: codigo, cuadrilla: 1 } : { insumo: codigo, cantidad: 1 });
@@ -232,7 +255,7 @@ function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
     setNuevo('');
   };
   const filas = calc ? [...calc.items] : [];
-  const faltantes = apu.items.map((it, i) => ({ it, i })).filter(({ it }) => !ins.has(it.insumo));
+  const faltantes = apu.items.map((it, i) => ({ it, i })).filter(({ it }) => !ins.has(it.insumo) && !subs.has(it.insumo));
   return (
     <div>
       <div className="rejilla" style={{ gridTemplateColumns: '150px 110px 1fr', alignItems: 'end' }}>
@@ -266,9 +289,10 @@ function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
               etiqueta={n}
               filas={its}
               clave={(x) => String(x.origen)}
-              alEliminar={(x) => actualizar((d) => { d.apus[pt.id]?.items.splice(x.origen, 1); }, `Análisis de ${pt.codigo}`)}
+              alEliminar={(x) => { if (x.subpartida) return ctx.avisar(`Este recurso viene de la subpartida ${x.subpartida}: quítela en la sección Subpartidas.`, true); actualizar((d) => { d.apus[pt.id]?.items.splice(x.origen, 1); }, `Análisis de ${pt.codigo}`); }}
+              claseFila={(x) => (x.subpartida ? 'apagado' : undefined)}
               columnas={[
-                { clave: 'c', titulo: 'Código', ancho: 66, valor: (x) => x.insumo.codigo },
+                { clave: 'c', titulo: 'Código', ancho: 66, valor: (x) => x.insumo.codigo, formato: (x) => (x.subpartida ? <span title={`De la subpartida ${x.subpartida}`}>{x.insumo.codigo} <small>de {x.subpartida}</small></span> : x.insumo.codigo) },
                 { clave: 'd', titulo: 'Insumo', valor: (x) => x.insumo.descripcion },
                 { clave: 'u', titulo: 'Und', ancho: 44, valor: (x) => x.insumo.unidad },
                 ...(t === 'MO' || t === 'EQ'
@@ -279,7 +303,7 @@ function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
                       ancho: 76,
                       decimales: 2,
                       valor: (x: (typeof its)[number]) => x.cuadrilla,
-                      cambiar: (x: (typeof its)[number], v: unknown) => setItem(x.origen, (it) => { it.cuadrilla = v as number | null; }),
+                      cambiar: (x: (typeof its)[number], v: unknown) => { if (!x.subpartida) setItem(x.origen, (it) => { it.cuadrilla = v as number | null; }); },
                     }]
                   : []),
                 {
@@ -290,7 +314,7 @@ function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
                   decimales: 4,
                   valor: (x) => x.cantidad,
                   cambiar: (x, v) =>
-                    setItem(x.origen, (it) => {
+                    x.subpartida ? ctx.avisar(`Las cantidades de ${x.subpartida} se cambian en su análisis o en la cantidad de la subpartida.`, true) : setItem(x.origen, (it) => {
                       if (x.porcentaje !== null) it.porcentaje = v as number | null;
                       else { it.cantidad = v as number | null; it.cuadrilla = null; }
                     }),
@@ -306,9 +330,12 @@ function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
         <input className="entrada" style={{ flex: 1 }} list="catalogo-insumos" placeholder="Buscar insumo por código o nombre…" value={nuevo} onChange={(e) => setNuevo(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && agregar()} aria-label="Insumo a agregar" />
         <datalist id="catalogo-insumos">
           {p.insumos.map((i) => <option key={i.codigo} value={`${i.codigo} — ${i.descripcion} (${i.unidad})`} />)}
+          {[...subs.values()].map((s) => <option key={s.codigo} value={`${s.codigo} — Subpartida: ${s.descripcion} (${s.unidad})`} />)}
         </datalist>
         <button className="boton" onClick={agregar}><IconoMas /> Agregar insumo</button>
+        {!esSubpartida && <button className="boton chico" onClick={() => guardarComoSubpartida(ctx, pt)} title="Copia este análisis como subpartida para usarlo dentro de otros análisis">Guardar como subpartida</button>}
       </div>
+      <SeccionSubpartidas ctx={ctx} pt={pt} calc={calc} />
       <div className="cifras" style={{ borderBottom: 0, borderTop: '1px solid var(--linea-2)', marginTop: 14, marginBottom: 0 }}>
         <div><span>Costo unitario directo</span><strong className="cifra-grande">{fmt(calc?.pu ?? 0)}</strong></div>
         <div><span>Por</span><strong>{pt.unidad}</strong></div>
@@ -340,10 +367,17 @@ function EditorMetrados({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
     decimales: 2,
     valor: (x: { m: MetradoFila }) => x.m[k] ?? null,
     cambiar: (x: { gi: number }, v: unknown) => set(x.gi, (m) => { m[k] = v as number | null; }),
+    // admite fórmulas («2*(3.5+4.2)»): se guarda el resultado y la fórmula (que va al Excel como fórmula)
+    formula: (x: { m: MetradoFila }) => x.m.formulas?.[k],
+    cambiarFormula: (x: { gi: number }, v: number | null, fo: string | undefined) => set(x.gi, (m) => {
+      m[k] = v;
+      if (fo) m.formulas = { ...(m.formulas ?? {}), [k]: fo };
+      else if (m.formulas?.[k]) { const { [k]: _q, ...resto } = m.formulas; m.formulas = Object.keys(resto).length ? resto : undefined; }
+    }),
   });
   return (
     <div>
-      <p className="pequeno" style={{ marginTop: 0 }}>Parcial = producto de las casillas llenas (N.º veces × cantidad × factor × largo × ancho × alto × área × volumen). Las vacías no cuentan. Indique el plano que sustenta cada línea; el área y el volumen sirven para valores tomados del CAD.</p>
+      <p className="pequeno" style={{ marginTop: 0 }}>Parcial = producto de las casillas llenas (N.º veces × cantidad × factor × largo × ancho × alto × área × volumen). Las vacías no cuentan. Cada casilla acepta fórmulas, por ejemplo 2*(3.5+4.2); se guarda la fórmula y pasa al Excel como fórmula. Indique el plano que sustenta cada línea; el área y el volumen sirven para valores tomados del CAD.</p>
       <TablaEditable
         etiqueta="Metrados"
         filas={filas}

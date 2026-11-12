@@ -2,6 +2,7 @@
 // crear `NN-nombre.ts` con `nombre` y `aplicar(datos)`, sumarla a MIGRACIONES y subir ESQUEMA_ACTUAL.
 import * as m01 from './01-entidades';
 import * as m02 from './02-bitacora';
+import * as m03 from './03-presupuesto-avanzado';
 
 type Datos = Record<string, unknown>;
 export interface Migracion {
@@ -13,9 +14,10 @@ export interface Migracion {
 export const MIGRACIONES: Migracion[] = [
   { desde: 1, ...m01 },
   { desde: 2, ...m02 },
+  { desde: 3, ...m03 },
 ];
 
-/** Esquema que escribe esta versión del programa (2.7 → 3). */
+/** Esquema que escribe esta versión del programa (2.7 → 3, 2.9 → 4). */
 export const ESQUEMA_ACTUAL = MIGRACIONES.length + 1;
 
 /** Esquema de un archivo leído: el declarado, o 1 (versión 1.x) / 2 (versiones 2.0 a 2.6). */
