@@ -35,5 +35,6 @@ entregables de una cotización o de un expediente técnico. Sin IA y sin conexi�
 ## Documentación
 - `CLAUDE.md`: reglas para modificar el programa con poco contexto (léalo antes de pedir cambios a una IA).
 - `docs/MAPA.md`: qué hace cada archivo y en qué línea está cada función.
+- `docs/PLAN_V3.md`: plan por etapas hacia la versión 3.0.
 - `docs/HISTORIAL.md`: novedades de cada versión (actual: 2.6).
 - `docs/guia.html`: guía de uso (F1 en la app de escritorio).

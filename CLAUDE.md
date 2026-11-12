@@ -84,5 +84,6 @@ en una máquina Windows; en cada PR deja el instalador como artefacto y, al unir
 - Subir `version` en `package.json` y `package-lock.json`, y agregar la sección de la versión en `docs/HISTORIAL.md` (arriba).
 - Al unir el PR a `main`, GitHub crea la etiqueta `vX.Y.Z` y el release con el instalador, el portable y el ZIP (unos 10 minutos).
 
-## Próxima etapa (no hacer sin pedido)
-VDC / BIM: visor IFC, 5D y 4D.
+## Próximas etapas (no hacer sin pedido)
+Plan de la versión 3.0 por etapas en `docs/PLAN_V3.md` (banco de datos, integración de apartados, reportes de obra, plataformas; BIM en 3.1).
+Leer solo la etapa que se pida.
