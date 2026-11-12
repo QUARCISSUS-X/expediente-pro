@@ -235,8 +235,17 @@ export interface OrigenImportacion {
   observaciones: ObservacionOrigen[];
 }
 
+/** Un cambio con etiqueta («Metrado de 02.03», «Precio de cemento»); se guardan los últimos 500. */
+export interface EntradaBitacora {
+  fecha: string; // ISO con hora
+  texto: string;
+  veces?: number; // ediciones seguidas con la misma etiqueta
+}
+
 export interface Proyecto {
   version: 2;
+  esquema?: number; // ver src/io/migraciones (2.7 escribe 3)
+  bitacora?: EntradaBitacora[];
   meta: Meta;
   entidades: { proyectista: Entidad; cliente: Entidad; propietario: Entidad };
   responsables: { elaboro: Responsable; reviso: Responsable; aprobo: Responsable };

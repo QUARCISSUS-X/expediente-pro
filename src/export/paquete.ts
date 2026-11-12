@@ -1,4 +1,4 @@
-// Genera todos los archivos del expediente y el ZIP. El render del PDF se inyecta (navegador o Node).
+// Funciones que generan cada archivo del expediente y el ZIP. El render del PDF se inyecta (navegador o Node).
 import JSZip from 'jszip';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { cartaPresentacion, especificacionesTecnicas, informeObservaciones, matrizCumplimiento, memoriaDescriptiva, reporteConsistencia } from '../engine/documentos';
@@ -8,6 +8,7 @@ import { generarMsProject } from './msproject';
 import { definicionPdfEjecutivo, generarXlsxGerencial } from './gerencial';
 import { definicionPdf } from './pdfdoc';
 import { generarXlsx } from './xlsx';
+import { conEsquema } from '../io/migrar';
 
 export type RenderPdf = (def: TDocumentDefinitions) => Promise<Uint8Array>;
 
@@ -74,34 +75,10 @@ export async function archivoGerencial(r: Resultados): Promise<Archivo> {
   return { nombre: `${nombreBase(r)}_Reporte_gerencial.xlsx`, tipo: MIME.xlsx, datos: await generarXlsxGerencial(r) };
 }
 export function archivoProyecto(r: Resultados): Archivo {
-  return { nombre: `${nombreBase(r)}.expediente.json`, tipo: MIME.json, datos: texto(JSON.stringify(r.proyecto, null, 2)) };
+  return { nombre: `${nombreBase(r)}.expediente.json`, tipo: MIME.json, datos: texto(JSON.stringify(conEsquema(r.proyecto), null, 2)) };
 }
 
-export async function generarTodos(r: Resultados, render: RenderPdf, progreso?: (paso: string) => void): Promise<Archivo[]> {
-  const out: Archivo[] = [];
-  const paso = async (nombre: string, f: () => Promise<Archivo> | Archivo) => {
-    progreso?.(nombre);
-    out.push(await f());
-  };
-  await paso('Excel', () => archivoExcel(r));
-  await paso('Especificaciones técnicas', () => archivoEett(r));
-  await paso('Memoria descriptiva', () => archivoMemoria(r));
-  if (r.proyecto.meta.modo === 'privado') await paso('Carta de presentación', () => archivoCarta(r));
-  await paso('Matriz del TdR', () => archivoMatriz(r));
-  await paso('Reporte de consistencia', () => archivoConsistencia(r));
-  if (r.proyecto.origen) {
-    progreso?.('Informe de revisión');
-    const a = await archivoObservaciones(r);
-    if (a) out.push(a);
-  }
-  await paso('MS Project', () => archivoMsProject(r));
-  await paso('PDF consolidado', () => archivoPdf(r, render));
-  await paso('Informe ejecutivo', () => archivoEjecutivo(r, render));
-  await paso('Reporte gerencial', () => archivoGerencial(r));
-  await paso('Proyecto', () => archivoProyecto(r));
-  return out;
-}
-
+// La lista de entregables del ZIP está en registro.ts (generarTodos).
 export async function empaquetarZip(archivos: Archivo[], carpeta: string): Promise<Uint8Array> {
   const zip = new JSZip();
   const dir = zip.folder(carpeta)!;

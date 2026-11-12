@@ -2,7 +2,9 @@
 import { produce, type Draft } from 'immer';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { recalcular } from '../engine/index';
+import { anotarBitacora } from '../engine/bitacora';
 import type { Proyecto, Resultados } from '../engine/types';
+import { esSoloLectura } from '../io/migrar';
 import { alGuardarEnOtraPestana, avisarGuardado, guardarProyecto, recordarUltimo } from './almacen';
 
 interface Historia {
@@ -12,24 +14,33 @@ interface Historia {
   futuro: Proyecto[];
 }
 
-export type Actualizar = (fn: (d: Draft<Proyecto>) => void) => void;
+/** Edita el proyecto abierto. Con `etiqueta` («Metrado de 02.03») el cambio queda en la bitácora. */
+export type Actualizar = (fn: (d: Draft<Proyecto>) => void, etiqueta?: string) => void;
 
 export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
   const [h, setH] = useState<Historia>(() => ({ id: inicial.id, actual: inicial.proyecto, pasado: [], futuro: [] }));
   const [guardadoLocal, setGuardadoLocal] = useState<'guardado' | 'pendiente' | 'error'>('guardado');
   const [version, setVersion] = useState(0); // cambia cuando se guarda (para refrescar el panel de proyectos)
+  // un proyecto guardado por una versión más nueva del programa se abre solo para leer
+  const soloLectura = esSoloLectura(h.actual);
+  const [intentoBloqueado, setIntentoBloqueado] = useState(0);
 
-  const actualizar: Actualizar = useCallback((fn) => {
+  const actualRef = useRef(h.actual);
+  actualRef.current = h.actual;
+
+  const actualizar: Actualizar = useCallback((fn, etiqueta) => {
+    if (esSoloLectura(actualRef.current)) return setIntentoBloqueado((x) => x + 1);
     setH((s) => {
-      const n = produce(s.actual, fn);
+      let n = produce(s.actual, fn);
       if (n === s.actual) return s;
+      if (etiqueta) n = produce(n, (d) => anotarBitacora(d, etiqueta));
       return { ...s, actual: n, pasado: [...s.pasado.slice(-79), s.actual], futuro: [] };
     });
   }, []);
 
   /** Reemplaza el contenido del proyecto abierto (queda en el historial). */
-  const reemplazar = useCallback((p: Proyecto) => {
-    setH((s) => ({ ...s, actual: p, pasado: [...s.pasado.slice(-79), s.actual], futuro: [] }));
+  const reemplazar = useCallback((p: Proyecto, etiqueta?: string) => {
+    setH((s) => ({ ...s, actual: etiqueta ? produce(p, (d) => anotarBitacora(d, etiqueta)) : p, pasado: [...s.pasado.slice(-79), s.actual], futuro: [] }));
   }, []);
 
   /** Abre otro proyecto del almacén (historial nuevo). */
@@ -69,7 +80,7 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
     }
   }, []);
   useEffect(() => {
-    if (omitir.current) {
+    if (omitir.current || esSoloLectura(h.actual)) {
       omitir.current = false;
       recordarUltimo(h.id);
       return;
@@ -120,6 +131,8 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
     guardarAhora,
     version,
     editadoFuera,
+    soloLectura,
+    intentoBloqueado,
   };
 }
 

@@ -136,7 +136,23 @@ export function pasadasCpm(red: RedCpm, dur: ArrayLike<number>, sal?: PasadasCpm
   return o;
 }
 
-export function calcularPrograma(p: Proyecto, filas: FilaPresupuesto[], apus: Record<string, ApuCalc>): Programa {
+// Cronograma incremental: la red CPM, sus pasadas y las fechas se reutilizan mientras no cambien las duraciones,
+// las precedencias (p.programa, por referencia) ni el calendario. Solo lo usa recalcular() (ver engine/index.ts).
+interface CpmEnCache {
+  firma: string;
+  cal: string;
+  erroresRed: string[];
+  es: Float64Array;
+  ef: Float64Array;
+  lf: Float64Array;
+  fin: number;
+  fechas: { inicio: string; fin: string }[];
+  diaFecha: string[];
+  periodos: Periodo[];
+}
+const cacheCpm = new WeakMap<Proyecto['programa'], CpmEnCache>();
+
+export function calcularPrograma(p: Proyecto, filas: FilaPresupuesto[], apus: Record<string, ApuCalc>, incremental = false): Programa {
   const errores: string[] = [];
   const hojas = filas.filter((f) => !f.esTitulo && f.metrado > 0);
   const ids = new Set(hojas.map((h) => h.partida.id));
@@ -184,30 +200,39 @@ export function calcularPrograma(p: Proyecto, filas: FilaPresupuesto[], apus: Re
 
   // red CPM (orden topológico + pasadas hacia adelante y atrás), compartida con Monte Carlo y cadena crítica
   const lista = [...act.values()];
-  const red = construirRed(lista.map((a) => ({ id: a.partidaId, codigo: a.codigo, predecesoras: a.predecesoras })), errores);
-  const res = pasadasCpm(red, lista.map((a) => a.duracion));
-  const orden = red.orden.map((i) => lista[i]);
+  const firma = lista.map((a) => `${a.partidaId}:${a.duracion}`).join('|');
+  const claveCal = `${p.meta.fechaInicio}|${p.meta.diasLaborables.join(',')}|${p.meta.feriados.join(',')}|${p.meta.periodo}`;
+  let c = incremental ? cacheCpm.get(p.programa) : undefined;
+  if (!c || c.firma !== firma || c.cal !== claveCal) {
+    const erroresRed: string[] = [];
+    const red = construirRed(lista.map((a) => ({ id: a.partidaId, codigo: a.codigo, predecesoras: a.predecesoras })), erroresRed);
+    const res = pasadasCpm(red, lista.map((a) => a.duracion));
+    const cal = new Calendario(p.meta.fechaInicio, p.meta.diasLaborables, p.meta.feriados);
+    const fechas = lista.map((a, i) => ({ inicio: cal.fecha(res.es[i]), fin: cal.fecha(res.ef[i] - 1) }));
+    const diaFecha: string[] = [];
+    for (let i = 0; i < res.fin; i++) diaFecha.push(cal.fecha(i));
+    const fechaFin = res.fin > 0 ? cal.fecha(res.fin - 1) : p.meta.fechaInicio;
+    c = { firma, cal: claveCal, erroresRed, es: res.es, ef: res.ef, lf: res.lf, fin: res.fin, fechas, diaFecha, periodos: construirPeriodos(p, p.meta.fechaInicio, fechaFin, cal) };
+    if (incremental) cacheCpm.set(p.programa, c);
+  }
+  errores.push(...c.erroresRed);
   lista.forEach((a, i) => {
-    a.es = res.es[i];
-    a.ef = res.ef[i];
-    a.lf = res.lf[i];
-  });
-  const fin = res.fin;
-  const cal = new Calendario(p.meta.fechaInicio, p.meta.diasLaborables, p.meta.feriados);
-  for (const a of orden) {
+    a.es = c.es[i];
+    a.ef = c.ef[i];
+    a.lf = c.lf[i];
     a.ls = a.lf - a.duracion;
     a.holgura = a.ls - a.es;
     a.critica = a.holgura <= 0;
-    a.inicio = cal.fecha(a.es);
-    a.fin = cal.fecha(a.ef - 1);
-  }
+    a.inicio = c.fechas[i].inicio;
+    a.fin = c.fechas[i].fin;
+  });
+  const fin = c.fin;
   const actividades = hojas.map((h) => act.get(h.partida.id)!).filter(Boolean);
-  const diaFecha: string[] = [];
-  for (let i = 0; i < fin; i++) diaFecha.push(cal.fecha(i));
+  const diaFecha = [...c.diaFecha];
   const inicio = p.meta.fechaInicio;
-  const fechaFin = fin > 0 ? cal.fecha(fin - 1) : inicio;
+  const fechaFin = fin > 0 ? c.diaFecha[fin - 1] : inicio;
   const plazoDias = fin > 0 ? difDias(inicio, fechaFin) + 1 : 0;
-  const periodos = construirPeriodos(p, inicio, fechaFin, cal);
+  const periodos = c.periodos.map((x) => ({ ...x }));
   return {
     actividades,
     diasLaborables: fin,

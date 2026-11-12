@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { datosCabecera } from '../../engine/cabecera';
 import type { DocKey } from '../../engine/types';
 import { SECCIONES_PDF } from '../../export/pdfdoc';
-import type { TipoExport } from '../acciones';
+import { EXPORTADORES, type Exportador, type TipoExport } from '../../export/registro';
 import type { Contexto } from '../estado';
 import { Icono } from '../iconos';
 
@@ -49,18 +49,7 @@ export function ModExportar({ ctx }: { ctx: Contexto }) {
         </div>
       )}
       <div className="salidas">
-        {tarjeta('excel', 'Presupuesto, APU y cronogramas', 'Libro editable con fórmulas vinculadas: datos, metrados, APU, relación de insumos, presupuesto, resumen de costos, gastos generales, fórmula polinómica, cronograma, valorizado, calendarios y controles. Al cambiar un metrado, rendimiento, precio o porcentaje se recalcula todo.', 'Excel .xlsx', 'xlsx')}
-        {tarjeta('word', 'Especificaciones técnicas', `Carátula, control del documento, aviso, tabla de contenido, especificaciones generales y una especificación por partida (${r.eett.length}) con el orden y la codificación del presupuesto.`, 'Word .docx', 'eett')}
-        {tarjeta('word', 'Memoria descriptiva', 'Generalidades, ubicación, alcance, componentes, metas, presupuesto, plazo, fórmula polinómica y firmas.', 'Word .docx', 'memoria')}
-        {p.meta.modo === 'privado' && tarjeta('word', 'Carta de presentación', 'Monto en letras, plazo, validez y condiciones de la oferta, del proyectista al cliente.', 'Word .docx', 'carta')}
-        {tarjeta('word', 'Matriz de cumplimiento del TdR', 'Cada entregable exigido y el documento que lo cubre.', 'Word .docx', 'matriz')}
-        {tarjeta('word', 'Reporte de consistencia', 'Resultado de las 15 reglas con sus observaciones.', 'Word .docx', 'consistencia')}
-        {tarjeta('pdf', 'Informe ejecutivo', 'Resumen para la gerencia o el cliente: indicadores, costo por título, composición, clasificación ABC de partidas e insumos, curva S y estado de consistencia, con gráficos.', 'PDF', 'ejecutivo')}
-        {tarjeta('excel', 'Reporte gerencial', 'Las mismas tablas del informe ejecutivo en hojas de Excel, con el detalle completo de la clasificación ABC.', 'Excel .xlsx', 'gerencial')}
-        {tarjeta('msproject', 'Cronograma de ejecución', 'Actividades con la codificación del presupuesto, duraciones, predecesoras y calendario para abrir en MS Project.', 'MS Project .xml', 'msp')}
-        {tarjeta('guardar', 'Proyecto', 'Archivo de trabajo para volver a abrirlo en este programa o en otra computadora.', 'Expediente Pro .json', 'json')}
-        {tarjeta('importar', 'Plantilla de carga', 'Este proyecto en hojas de Excel simples (partidas, metrados, APU, insumos, GG, TdR) para editarlo fuera y cargarlo de nuevo.', 'Excel .xlsx', 'plantilla')}
-        {tarjeta('importar', 'Formato compacto', 'Todo el proyecto en un texto corto (partidas con su APU, metrados, insumos, GG, TdR y textos). Se edita con cualquier editor y se vuelve a abrir con Importar.', 'Texto .exp.txt', 'compacto')}
+        {(EXPORTADORES as readonly Exportador[]).filter((e) => e.descripcion && (!e.disponible || e.disponible(r))).map((e) => tarjeta(e.icono, e.titulo ?? e.nombre, e.descripcion!(r), e.formato, e.tipo as TipoExport))}
       </div>
 
       <h2>Expediente consolidado en PDF</h2>

@@ -1,5 +1,6 @@
-// Versiones del proyecto abierto: puntos de restauración automáticos (uno por día de trabajo) y manuales.
-import { useEffect, useState } from 'react';
+// Versiones del proyecto abierto: puntos de restauración automáticos (uno por día de trabajo) y manuales, y bitácora de cambios.
+import { useEffect, useMemo, useState } from 'react';
+import { bitacoraEntre, MAX_BITACORA } from '../engine/bitacora';
 import { fmt } from '../engine/util';
 import { type CopiaProyecto, crearCopia, eliminarCopia, listarCopias, modoAlmacen, resumir } from './almacen';
 import { Insignia, Modal } from './componentes';
@@ -12,6 +13,7 @@ export function Copias({ ctx, alCerrar }: { ctx: Contexto; alCerrar: () => void 
   const [nota, setNota] = useState('');
   const [disponible, setDisponible] = useState(true);
   const cargar = () => listarCopias(ctx.id).then(setLista);
+  const bitacora = useMemo(() => bitacoraEntre(ctx.proyecto), [ctx.proyecto]);
   useEffect(() => {
     void modoAlmacen().then((m) => setDisponible(m === 'indexeddb'));
     void cargar();
@@ -27,7 +29,7 @@ export function Copias({ ctx, alCerrar }: { ctx: Contexto; alCerrar: () => void 
   };
   const restaurar = (c: CopiaProyecto) => {
     if (!window.confirm(`Se reemplazará el contenido actual por la versión del ${fechaHora(c.fecha)}. Puede deshacerlo con Ctrl+Z. ¿Continuar?`)) return;
-    ctx.reemplazar(c.proyecto);
+    ctx.reemplazar(c.proyecto, `Versión restaurada: ${c.nota} (${fechaHora(c.fecha)})`);
     ctx.avisar(`Versión del ${fechaHora(c.fecha)} restaurada (Ctrl+Z para deshacer).`);
     alCerrar();
   };
@@ -58,6 +60,20 @@ export function Copias({ ctx, alCerrar }: { ctx: Contexto; alCerrar: () => void 
                     <button className="boton chico peligro" onClick={() => { if (window.confirm('¿Eliminar esta versión?')) void eliminarCopia(c.id).then(cargar); }}>Eliminar</button>
                   </td>
                 </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <h3 style={{ margin: '16px 0 6px' }}>Bitácora de cambios</h3>
+      <p className="pequeno" style={{ marginTop: 0 }}>Los últimos {MAX_BITACORA} cambios con nombre (metrados, precios, análisis, partidas, versiones restauradas). Viaja con el archivo del proyecto y alimenta los informes.</p>
+      {bitacora.length === 0 ? <div className="vacio"><p>Todavía no hay cambios anotados.</p></div> : (
+        <div className="tabla-marco" style={{ maxHeight: 260 }}>
+          <table className="tabla" aria-label="Bitácora de cambios">
+            <thead><tr><th style={{ width: 130 }}>Fecha</th><th>Cambio</th></tr></thead>
+            <tbody>
+              {bitacora.map((e, i) => (
+                <tr key={`${e.fecha}-${i}`}><td>{fechaHora(e.fecha)}</td><td>{e.texto}{e.veces && e.veces > 1 ? <span className="pequeno"> ({e.veces} ediciones)</span> : null}</td></tr>
               ))}
             </tbody>
           </table>

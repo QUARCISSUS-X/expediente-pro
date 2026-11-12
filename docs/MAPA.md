@@ -8,6 +8,10 @@ Generado con `npm run mapa` (no editar a mano). Cada símbolo indica su línea: 
 Análisis gerencial del expediente: costo por título, composición, clasificación ABC, curva S, índices y alertas.
 ClaseAbcᵗ:6 · ItemAbcᵗ:8 · Abcᵗ:21 · ParteCostoᵗ:27 · Analisisᵗ:34 · clasificarAbc:66 · analizar:88
 
+### `src/engine/bitacora.ts` · 26 líneas
+Bitácora de cambios del proyecto: cada edición con etiqueta queda con su fecha (se guardan las últimas 500).
+MAX_BITACORA:4 · anotarBitacora:8 · bitacoraEntre:23
+
 ### `src/engine/cabecera.ts` · 119 líneas
 Datos generales que se repiten en carátulas, encabezados y pies de todos los entregables.
 Cabeceraᵗ:5 · nombreEntidad:31 · ubicacionCorta:35 · ubicacionLarga:40 · datosCabecera:51 · variablesProyecto:89 · textoProyecto:101 · logoBytes:106 · encajar:115
@@ -55,13 +59,13 @@ calcularPolinomica:15
 Riesgo de plazo y costo: simulación Monte Carlo sobre la red CPM del cronograma (PERT-Beta o triangular).
 Distribucionᵗ:9 · ModoCostoᵗ:10 · EstimacionActividadᵗ:13 · ResumenRiesgoᵗ:22 · ConfigRiesgoᵗ:39 · configRiesgoVacia:54 · normalizarConfigRiesgo:71 · generador:93 · muestraTriangular:128 · muestraPert:136 · mediaPert:145 · mediaTriangular:146 · Estadisticaᵗ:150 · percentil:165 · estadistica:174 · EntradaActividadᵗ:200 · EntradaSimulacionᵗ:215 · entradaSimulacion:235 · ResultadoRiesgoᵗ:283 · Simulacion:297 · simularRiesgo:387 · resumirRiesgo:393
 
-### `src/engine/schedule.ts` · 380 líneas
+### `src/engine/schedule.ts` · 405 líneas
 Programación: calendario, CPM, periodos y cronogramas derivados.
-Calendario:9 · RedCpmᵗ:62 · construirRed:69 · redDePrograma:93 · PasadasCpmᵗ:97 · pasadasCpm:106 · calcularPrograma:139 · periodoDeFecha:253 · calcularValorizado:273 · distribuirInsumos:312 · calcularDesembolsos:361
+Calendario:9 · RedCpmᵗ:62 · construirRed:69 · redDePrograma:93 · PasadasCpmᵗ:97 · pasadasCpm:106 · calcularPrograma:155 · periodoDeFecha:278 · calcularValorizado:298 · distribuirInsumos:337 · calcularDesembolsos:386
 
-### `src/engine/types.ts` · 468 líneas
+### `src/engine/types.ts` · 477 líneas
 Modelo de datos del expediente. Todo el programa se alimenta de un único objeto Proyecto.
-TipoInsumoᵗ:3 · Modoᵗ:4 · TipoPredᵗ:5 · Severidadᵗ:6 · Insumoᵗ:8 · Partidaᵗ:21 · MetradoFilaᵗ:31 · ApuItemᵗ:47 · Apuᵗ:54 · GGItemᵗ:60 · GrupoGGᵗ:73 · Predᵗ:75 · Actividadᵗ:81 · DocKeyᵗ:87 · EntregableTdRᵗ:110 · SeccionesEettᵗ:118 · PlantillaEettᵗ:129 · Logoᵗ:135 · Entidadᵗ:141 · Responsableᵗ:152 · ConfigDocumentoᵗ:159 · TextosEettᵗ:170 · Metaᵗ:178 · TextosMemoriaᵗ:213 · ObservacionOrigenᵗ:222 · OrigenImportacionᵗ:230 · Proyectoᵗ:238 · ApuItemCalcᵗ:260 · ApuCalcᵗ:270 · FilaPresupuestoᵗ:280 · Pieᵗ:290 · InsumoTotalᵗ:303 · RelacionInsumosᵗ:310 · GGCalcᵗ:318 · Monomioᵗ:326 · Polinomicaᵗ:333 · ActividadCalcᵗ:341 · Periodoᵗ:362 · Programaᵗ:370 · FilaCronogramaᵗ:382 · Valorizadoᵗ:392 · Desembolsoᵗ:405 · FleteCalcᵗ:415 · Hallazgoᵗ:422 · ReglaResultadoᵗ:430 · EettPartidaᵗ:438 · Resultadosᵗ:445
+TipoInsumoᵗ:3 · Modoᵗ:4 · TipoPredᵗ:5 · Severidadᵗ:6 · Insumoᵗ:8 · Partidaᵗ:21 · MetradoFilaᵗ:31 · ApuItemᵗ:47 · Apuᵗ:54 · GGItemᵗ:60 · GrupoGGᵗ:73 · Predᵗ:75 · Actividadᵗ:81 · DocKeyᵗ:87 · EntregableTdRᵗ:110 · SeccionesEettᵗ:118 · PlantillaEettᵗ:129 · Logoᵗ:135 · Entidadᵗ:141 · Responsableᵗ:152 · ConfigDocumentoᵗ:159 · TextosEettᵗ:170 · Metaᵗ:178 · TextosMemoriaᵗ:213 · ObservacionOrigenᵗ:222 · OrigenImportacionᵗ:230 · EntradaBitacoraᵗ:239 · Proyectoᵗ:245 · ApuItemCalcᵗ:269 · ApuCalcᵗ:279 · FilaPresupuestoᵗ:289 · Pieᵗ:299 · InsumoTotalᵗ:312 · RelacionInsumosᵗ:319 · GGCalcᵗ:327 · Monomioᵗ:335 · Polinomicaᵗ:342 · ActividadCalcᵗ:350 · Periodoᵗ:371 · Programaᵗ:379 · FilaCronogramaᵗ:391 · Valorizadoᵗ:401 · Desembolsoᵗ:414 · FleteCalcᵗ:424 · Hallazgoᵗ:431 · ReglaResultadoᵗ:439 · EettPartidaᵗ:447 · Resultadosᵗ:454
 
 ### `src/engine/util.ts` · 224 líneas
 Utilidades: redondeo, formato, fechas, número a letras.
@@ -151,13 +155,17 @@ riesgoActual:26 · tablaRiesgo:33 · tablaCriticidad:74 · tablaCcpm:85 · tabla
 Exportación del programa de obra a MS Project (formato XML MSPDI).
 generarMsProject:7
 
-### `src/export/paquete.ts` · 111 líneas
-Genera todos los archivos del expediente y el ZIP. El render del PDF se inyecta (navegador o Node).
-RenderPdfᵗ:12 · Archivoᵗ:14 · MIME:20 · nombreBase:31 · archivoExcel:35 · archivoEett:38 · archivoMemoria:42 · archivoCarta:46 · archivoMatriz:50 · archivoConsistencia:54 · archivoObservaciones:58 · archivoMsProject:64 · archivoPdf:67 · archivoEjecutivo:70 · archivoGerencial:73 · archivoProyecto:76 · generarTodos:80 · empaquetarZip:105
+### `src/export/paquete.ts` · 88 líneas
+Funciones que generan cada archivo del expediente y el ZIP. El render del PDF se inyecta (navegador o Node).
+RenderPdfᵗ:13 · Archivoᵗ:15 · MIME:21 · nombreBase:32 · archivoExcel:36 · archivoEett:39 · archivoMemoria:43 · archivoCarta:47 · archivoMatriz:51 · archivoConsistencia:55 · archivoObservaciones:59 · archivoMsProject:65 · archivoPdf:68 · archivoEjecutivo:71 · archivoGerencial:74 · archivoProyecto:77 · empaquetarZip:82
 
 ### `src/export/pdfdoc.ts` · 610 líneas
 Definición del PDF consolidado (pdfmake): carátula, control del documento, aviso, índice,
 SECCIONES_PDF:24 · curvaS:310 · OpcionesPdfᵗ:475 · definicionPdf:479 · definicionPdfTablas:594
+
+### `src/export/registro.ts` · 138 líneas
+Registro único de entregables: cada archivo de salida se declara una sola vez aquí y de esta lista salen el ZIP,
+OpcionesExportᵗ:12 · Exportadorᵗ:18 · EXPORTADORES:35 · TipoExportᵗ:112 · exportador:114 · NOMBRE_EXPORT:116 · generarExport:119 · generarTodos:128
 
 ### `src/export/render-browser.ts` · 16 líneas
 Render del PDF en el navegador.
@@ -171,15 +179,52 @@ renderPdfNode:21
 Tablas de reportes con el formato estándar de expediente técnico (S10 / PowerCost).
 Celdaᵗ:8 · EstiloFilaᵗ:9 · Filaᵗ:10 · Tablaᵗ:17 · TIPOS_INSUMO:33 · subtituloProyecto:40 · lineaSon:44 · tablaResumen:78 · tablaDetallado:107 · tablaApu:128 · tablaInsumos:181 · tablaGG:210 · tablaMetrados:273 · tablaPolinomica:319 · tablaFlete:351 · textoPredecesoras:369 · tablaPrograma:374 · tablaValorizado:400 · tablaAdquisiciones:454 · tablaEquipos:460 · tablaPersonal:467 · tablaDesembolsos:475 · todasLasTablas:489
 
-### `src/export/xlsx.ts` · 1532 líneas
-Exportación a Excel (.xlsx) totalmente editable: las hojas están vinculadas con fórmulas.
-generarXlsx:1393
+### `src/export/trabajador.ts` · 47 líneas
+Trabajo en segundo plano (web worker): genera entregables y corre la simulación Monte Carlo sin congelar la pantalla.
+MensajeTrabajoᵗ:10 · RespuestaTrabajoᵗ:14
+
+### `src/export/xlsx.ts` · 3 líneas
+Exportación a Excel (.xlsx) del expediente, con hojas vinculadas por fórmulas. El código está dividido por hoja en src/export/xlsx/.
+
+## Exportador: Excel del expediente (una hoja o grupo de hojas por archivo) — `src/export/xlsx/`
+
+### `src/export/xlsx/comun.ts` · 263 líneas
+Excel del expediente: estilos, la clase Hoja, el contexto compartido, fórmulas de días laborables y membretes.
+AZUL:9 · AZUL_INPUT:10 · VERDE_LINK:11 · GRIS:12 · GRIS2:13 · BORDE_FINO:14 · BORDE_HAIR:15 · FUENTE:16 · F_MONEDA:18 · F_CANT:19 · F_MET:20 · F_PCT:21 · F_FECHA:22 · Valorᵗ:24 · Estiloᵗ:25 · COL:39 · Hoja:49 · Ctxᵗ:118 · NDL:145 · WDL:147 · DIAS:149 · hojaCalendarioLaboral:151 · CRON:173 · serieCuadrada:176 · cron:183 · diasEnVentana:186 · tituloHoja:196 · finMembrete:218 · membrete:222 · configurarImpresion:244
+
+### `src/export/xlsx/controles.ts` · 99 líneas
+Excel del expediente: flete, controles de consistencia y cumplimiento del TdR.
+hojaFlete:7 · hojaControles:33 · hojaCumplimiento:82
+
+### `src/export/xlsx/costos.ts` · 401 líneas
+Excel del expediente: insumos, metrados, resumen de metrados, APU, presupuesto y resumen de costos.
+TIPOS:6 · insumosUsados:13 · planInsumos:21 · hojaInsumos:32 · hojaMetrados:91 · hojaResumenMetrados:139 · hojaApu:160 · filaUltimoDescendiente:254 · hojaPresupuesto:261 · completarGGPresupuesto:337 · hojaResumen:344
+
+### `src/export/xlsx/datos.ts` · 95 líneas
+Excel del expediente: hoja Datos (parámetros con nombre que usan las fórmulas de las demás hojas).
+hojaDatos:7
+
+### `src/export/xlsx/gg.ts` · 172 líneas
+Excel del expediente: gastos generales y fórmula polinómica.
+hojaGG:6 · hojaPolinomica:89
+
+### `src/export/xlsx/index.ts` · 152 líneas
+Exportación a Excel (.xlsx) totalmente editable: arma el libro con las hojas vinculadas por fórmulas (ver comun.ts).
+generarXlsx:13
+
+### `src/export/xlsx/programa.ts` · 384 líneas
+Excel del expediente: cronograma, distribución por periodos, valorizado, calendarios y desembolsos.
+hojaPrograma:7 · Bloqueᵗ:147 · planPeriodos:156 · apuPeriodos:165 · insumosAnticipacion:193 · hojaDistribucion:204 · filasValorizado:253 · hojaValorizado:259 · hojaCalendario:311 · hojaDesembolsos:348
 
 ## Importación y formatos — `src/io/`
 
 ### `src/io/compacto.ts` · 455 líneas
 Formato de carga compacto (.exp.txt): un archivo de texto corto, legible y fácil de escribir a mano
 ResultadoCompactoᵗ:21 · leerCompacto:107 · escribirCompacto:369 · catalogoCompacto:446
+
+### `src/io/estructura.ts` · 59 líneas
+Revisión de la forma mínima de un archivo de proyecto antes de migrarlo: un archivo ajeno, truncado o
+ErrorEstructura:4 · revisarEstructura:21 · exigirEstructura:43 · leerJson:49
 
 ### `src/io/importarEett.ts` · 183 líneas
 Lee las especificaciones técnicas de un expediente en Word (.docx) para conservar su redacción:
@@ -189,13 +234,27 @@ EspecificacionLeidaᵗ:10 · EettLeidasᵗ:11 · leerEettDocx:61 · aplicarEett:
 Importa un expediente existente hecho en S10, Delphin, PowerCost o Excel:
 Observacionᵗ:18 · ControlImportacionᵗ:20 · ResultadoImportacionᵗ:28 · ArchivoEntradaᵗ:36 · codigoItem:100 · leerMsProjectXml:389 · importarExpediente:424
 
-### `src/io/migrar.ts` · 65 líneas
-Normaliza un proyecto leído de archivo: versiones anteriores, campos faltantes y plantillas nuevas.
-migrarProyecto:10
+### `src/io/migrar.ts` · 70 líneas
+Normaliza un proyecto leído de archivo: revisa su forma, aplica las migraciones numeradas
+migrarProyecto:15 · esSoloLectura:62 · conEsquema:67
 
 ### `src/io/plantilla.ts` · 327 líneas
 Plantilla de carga en Excel: exporta un proyecto a hojas editables y lo vuelve a importar.
 textoPreds:106 · parsearPreds:111 · exportarPlantilla:130 · ResultadoImportacionᵗ:216 · importarPlantilla:221
+
+## Migraciones numeradas del archivo de proyecto — `src/io/migraciones/`
+
+### `src/io/migraciones/01-entidades.ts` · 30 líneas
+Migración 1 → 2 (versión 1.x): cliente, empresa y elaborador pasan de meta a entidades y responsables.
+nombre:6 · aplicar:8
+
+### `src/io/migraciones/02-bitacora.ts` · 9 líneas
+Migración 2 → 3 (versiones 2.0 a 2.6 → 2.7): número de esquema y bitácora de cambios vacía.
+nombre:4 · aplicar:6
+
+### `src/io/migraciones/index.ts` · 39 líneas
+Migraciones numeradas del archivo de proyecto: cada una lleva el esquema N al N + 1. Para agregar una:
+Migracionᵗ:7 · MIGRACIONES:13 · ESQUEMA_ACTUAL:19 · esquemaDe:22 · migrar:28
 
 ## Datos base — `src/data/`
 
@@ -224,8 +283,8 @@ metaPorDefecto:10 · entidadVacia:47 · responsableVacio:51 · AVISO_DEFECTO:55 
 
 ## Interfaz — `src/ui/`
 
-### `src/ui/App.tsx` · 433 líneas
-esPlantillaDeCarga:19 · App:38 · Aplicacion:81
+### `src/ui/App.tsx` · 442 líneas
+esPlantillaDeCarga:20 · App:39 · Aplicacion:82
 
 ### `src/ui/Barrera.tsx` · 31 líneas
 Barrera de errores: si un módulo falla, el resto del programa sigue y el trabajo no se pierde.
@@ -235,9 +294,9 @@ Barrera:6
 Barra de herramientas tipo cinta (como S10, PowerCost o Delphin Express): Archivo, Edición, Partidas, Herramientas y Reportes.
 Grupo:17 · B:26 · Menu:36 · Cinta:80
 
-### `src/ui/Copias.tsx` · 69 líneas
-Versiones del proyecto abierto: puntos de restauración automáticos (uno por día de trabajo) y manuales.
-Copias:10
+### `src/ui/Copias.tsx` · 85 líneas
+Versiones del proyecto abierto: puntos de restauración automáticos (uno por día de trabajo) y manuales, y bitácora de cambios.
+Copias:11
 
 ### `src/ui/Dialogos.tsx` · 312 líneas
 Ventanas de la barra de herramientas: biblioteca, búsqueda, calculadoras, nuevo proyecto y atajos.
@@ -247,20 +306,20 @@ Dialogos:11 · Biblioteca:26 · Buscar:68 · CalculadoraHH:121 · CalculadoraCua
 Muestra en pantalla las mismas tablas que van a Excel y PDF.
 VistaTabla:6 · VistaDocumento:43 · BloqueVista:51
 
-### `src/ui/acciones.ts` · 125 líneas
+### `src/ui/acciones.ts` · 87 líneas
 Acciones compartidas por la barra de herramientas, los menús y los módulos.
-TipoExportᵗ:13 · NOMBRE_EXPORT:15 · generarArchivo:33 · accionesPartida:64
+generarArchivo:16 · accionesPartida:26
 
-### `src/ui/almacen.ts` · 327 líneas
+### `src/ui/almacen.ts` · 353 líneas
 Almacén local de proyectos (IndexedDB del navegador, con respaldo en localStorage).
-ResumenProyectoᵗ:6 · RegistroProyectoᵗ:21 · Respaldoᵗ:30 · nuevoId:45 · resumir:47 · modoAlmacen:117 · listarProyectos:121 · leerProyecto:127 · guardarRegistro:143 · guardarProyecto:152 · crearProyecto:183 · duplicarProyecto:187 · archivarProyecto:198 · eliminarProyecto:204 · ultimoAbierto:212 · recordarUltimo:220 · proyectoV1:230 · olvidarV1:239 · respaldoCompleto:247 · restaurarRespaldo:254 · CopiaProyectoᵗ:269 · listarCopias:284 · crearCopia:291 · eliminarCopia:303 · avisarGuardado:315 · alGuardarEnOtraPestana:320
+ResumenProyectoᵗ:6 · RegistroProyectoᵗ:21 · DIAS_PAPELERA:31 · Respaldoᵗ:33 · nuevoId:48 · resumir:50 · modoAlmacen:120 · listarProyectos:130 · leerProyecto:135 · guardarRegistro:141 · guardarProyecto:150 · crearProyecto:182 · duplicarProyecto:186 · archivarProyecto:197 · eliminarProyecto:204 · listarPapelera:211 · diasEnPapelera:221 · restaurarDePapelera:223 · eliminarDefinitivo:231 · ultimoAbierto:239 · recordarUltimo:247 · proyectoV1:257 · olvidarV1:266 · respaldoCompleto:274 · restaurarRespaldo:280 · CopiaProyectoᵗ:295 · listarCopias:310 · crearCopia:317 · eliminarCopia:329 · avisarGuardado:341 · alGuardarEnOtraPestana:346
 
 ### `src/ui/arbol.ts` · 165 líneas
 Operaciones sobre el árbol de partidas (títulos y partidas) con códigos jerárquicos.
 hijos:11 · descendientes:15 · siguienteCodigo:19 · cambiarPrefijo:40 · agregarTitulo:47 · ultimaHojaAntes:59 · agregarPartida:64 · eliminar:85 · mover:98 · renumerar:115 · duplicar:129 · aumentarNivel:142 · disminuirNivel:154
 
-### `src/ui/componentes.tsx` · 343 líneas
-parsearNumero:6 · EntradaNumero:29 · EntradaTexto:79 · AreaTexto:111 · Campo:132 · Pestanas:142 · Insignia:154 · Modal:158 · Columnaᵗ:182 · TablaEditable:211 · IconoCerrar:321 · IconoQuitar:324 · IconoMas:327 · IconoArriba:330 · IconoAbajo:333 · Marca:336
+### `src/ui/componentes.tsx` · 417 líneas
+parsearNumero:6 · EntradaNumero:29 · EntradaTexto:79 · AreaTexto:111 · Campo:132 · Pestanas:142 · Insignia:154 · Modal:158 · UMBRAL_VIRTUAL:183 · useFilasVirtuales:190 · Espaciador:233 · Columnaᵗ:244 · TablaEditable:273 · IconoCerrar:395 · IconoQuitar:398 · IconoMas:401 · IconoArriba:404 · IconoAbajo:407 · Marca:410
 
 ### `src/ui/control.ts` · 37 líneas
 Ayudas comunes de los módulos de control de ejecución.
@@ -270,9 +329,9 @@ useControl:8 · opcionesPartidas:18 · opcionesFrentes:22 · opciones:26 · pct:
 Puente con la app de escritorio (Electron, carpeta electron/). En el navegador no existe y nada cambia.
 ComandoEscritorioᵗ:5 · InfoPestanaᵗ:15 · escritorio:33 · parametrosInicio:37 · ApiPaginaᵗ:48 · publicarApiPagina:55
 
-### `src/ui/estado.ts` · 233 líneas
+### `src/ui/estado.ts` · 246 líneas
 Estado del proyecto abierto: edición inmutable (immer), deshacer/rehacer y autoguardado en el almacén local.
-Actualizarᵗ:15 · useProyecto:17 · Dialogoᵗ:126 · Contextoᵗ:128 · ModuloIdᵗ:147 · descargar:171 · elegirArchivos:183 · elegirArchivo:194 · leerLogo:205
+Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:160 · descargar:184 · elegirArchivos:196 · elegirArchivo:207 · leerLogo:218
 
 ### `src/ui/graficos.tsx` · 467 líneas
 Gráficos SVG livianos para los módulos de control (sin librerías externas).
@@ -281,6 +340,10 @@ COLOR:5 · Serieᵗ:17 · GraficoLineas:27 · GraficoBarras:82 · GraficoPareto:
 ### `src/ui/iconos.tsx` · 49 líneas
 Iconos de la barra de herramientas (trazo propio, 20 × 20).
 Icono:42
+
+### `src/ui/trabajo.ts` · 57 líneas
+Lanza trabajos pesados (exportar, Monte Carlo) en un web worker para que la pantalla no se congele.
+Trabajoᵗ:15 · enSegundoPlano:21
 
 ## Interfaz: módulos (una pantalla por archivo) — `src/ui/modulos/`
 
@@ -306,7 +369,7 @@ ModDocumentos:11
 Ejecución con Lean Construction: frentes de trabajo, control de rendimientos, cartas balance, pérdidas e inspecciones 5S.
 ModEjecucion:17 · Frentes:49 · Rendimientos:128 · Cartas:222 · Perdidas:299 · Inspecciones:352
 
-### `src/ui/modulos/Exportar.tsx` · 92 líneas
+### `src/ui/modulos/Exportar.tsx` · 81 líneas
 ModExportar:9
 
 ### `src/ui/modulos/GastosGenerales.tsx` · 103 líneas
@@ -326,8 +389,8 @@ ModLps:17 · Maestro:54 · Fases:109 · inicioVentana:179 · Lookahead:186 · Re
 ### `src/ui/modulos/Polinomica.tsx` · 67 líneas
 ModPolinomica:5
 
-### `src/ui/modulos/Presupuesto.tsx` · 453 líneas
-ModPresupuesto:19 · PieResumen:112 · DetalleTitulo:138 · DetallePartida:162 · EditorApu:209 · EditorMetrados:323 · EditorPrograma:365 · EditorEett:410
+### `src/ui/modulos/Presupuesto.tsx` · 461 líneas
+ModPresupuesto:19 · PieResumen:120 · DetalleTitulo:146 · DetallePartida:170 · EditorApu:217 · EditorMetrados:331 · EditorPrograma:373 · EditorEett:418
 
 ### `src/ui/modulos/Programa.tsx` · 164 líneas
 Gantt:9 · ModPrograma:70
@@ -336,17 +399,17 @@ Gantt:9 · ModPrograma:70
 Configuración general del proyecto: datos que se copian solos a carátulas, encabezados, pies y formatos.
 ModProyecto:14 · SelectorLogo:209 · FichaEntidad:241 · FichaResponsable:269 · FichaDocumento:285 · FichaTextos:321 · VistaPrevia:349
 
-### `src/ui/modulos/Proyectos.tsx` · 181 líneas
+### `src/ui/modulos/Proyectos.tsx` · 231 líneas
 Panel de proyectos: crear, abrir, duplicar, archivar, restaurar, eliminar, exportar y respaldar.
-ModProyectos:15
+ModProyectos:18 · Papelera:190
 
 ### `src/ui/modulos/Resumen.tsx` · 124 líneas
 Resumen del proyecto: indicadores, gráficos y puntos de atención calculados con engine/analisis.ts.
 ModResumen:13
 
-### `src/ui/modulos/Riesgo.tsx` · 245 líneas
+### `src/ui/modulos/Riesgo.tsx` · 260 líneas
 Riesgo de plazo y costo: simulación Monte Carlo / PERT sobre la red CPM del cronograma.
-ModRiesgo:17 · Configuracion:43 · SimulacionVista:96 · Resultados:142 · Estimaciones:200
+ModRiesgo:18 · Configuracion:44 · SimulacionVista:97 · Resultados:157 · Estimaciones:215
 
 ### `src/ui/modulos/Sigma.tsx` · 339 líneas
 Six Sigma / Lean Six Sigma: cartas de control, capacidad de proceso, Pareto, Ishikawa y proyectos DMAIC.
@@ -368,7 +431,7 @@ ItemNavᵗ:32 · NAV:35 · MODULOS:37
 
 ## Línea de comandos — `cli/`
 
-### `cli/expediente.ts` · 286 líneas
+### `cli/expediente.ts` · 291 líneas
 Línea de comandos de Expediente Pro.
 
 ## App de escritorio — `electron/`
@@ -385,16 +448,22 @@ Puente de la barra de pestañas (pestanas.html) con la ventana.
 
 ## Herramientas — `scripts/`
 
+### `scripts/e2e.ts` · 157 líneas
+Pruebas de extremo a extremo con Playwright sobre dist/index.html (las corre `npm run verificar`).
+
 ### `scripts/extension.mjs` · 44 líneas
 Arma la extensión de Firefox y de Chrome/Edge a partir de la misma interfaz web.
 
-### `scripts/mapa.mjs` · 32 líneas
+### `scripts/mapa.mjs` · 33 líneas
 Genera docs/MAPA.md: qué hace cada archivo y en qué línea está cada función exportada.
 
-### `scripts/probar-modulo.cjs` · 59 líneas
+### `scripts/probar-modulo.cjs` · 60 líneas
 Prueba en el navegador UN solo módulo (o varios) sin recorrer todo el programa.
 
 ## Pruebas — `tests/`
+
+### `tests/cimientos.test.ts` · 147 líneas
+Versión 2.7 (etapa 1 del plan 3.0): esquema y migraciones, estructura del archivo, bitácora, cronograma incremental y registro de exportadores.
 
 ### `tests/control.test.ts` · 191 líneas
 

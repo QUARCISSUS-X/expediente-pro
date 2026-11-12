@@ -16,12 +16,14 @@ import { proyectoEjemplo, proyectoEnBlanco } from '../src/data/proyectos';
 import { calcularTodo } from '../src/engine/index';
 import type { Proyecto } from '../src/engine/types';
 import { fmt } from '../src/engine/util';
-import { archivoEjecutivo, archivoGerencial, empaquetarZip, generarTodos, nombreBase } from '../src/export/paquete';
+import { archivoEjecutivo, archivoGerencial, empaquetarZip, nombreBase } from '../src/export/paquete';
+import { generarTodos } from '../src/export/registro';
 import { analizar } from '../src/engine/analisis';
 import { repararIntegridad, resumenIntegridad, revisarIntegridad } from '../src/engine/integridad';
 import { renderPdfNode } from '../src/export/render-node';
 import { exportarPlantilla, importarPlantilla } from '../src/io/plantilla';
-import { migrarProyecto } from '../src/io/migrar';
+import { conEsquema, esSoloLectura, migrarProyecto } from '../src/io/migrar';
+import { leerJson } from '../src/io/estructura';
 import { importarExpediente } from '../src/io/importarExpediente';
 import { catalogoCompacto, escribirCompacto, leerCompacto } from '../src/io/compacto';
 import type { Logo } from '../src/engine/types';
@@ -57,7 +59,9 @@ async function cargar(ruta: string): Promise<Proyecto> {
     for (const a of avisos) console.warn('  aviso:', a);
     return proyecto;
   }
-  return migrarProyecto(JSON.parse(datos.toString('utf8')));
+  const p = migrarProyecto(leerJson(datos.toString('utf8'), basename(ruta)));
+  if (esSoloLectura(p)) console.warn(`  aviso: ${basename(ruta)} lo guardó una versión más nueva del programa (esquema ${p.esquema}); se lee, pero conviene actualizar.`);
+  return p;
 }
 
 function imprimirResumen(p: Proyecto) {
@@ -74,6 +78,7 @@ function imprimirResumen(p: Proyecto) {
   console.log(`  Plazo: ${r.programa.plazoDias} días calendario (${r.programa.inicio} → ${r.programa.fin})`);
   console.log(`  ${r.polinomica.formula}`);
   console.log(`  Validación: ${r.resumenValidacion.ok} conformes · ${r.resumenValidacion.advertencias} advertencias · ${r.resumenValidacion.errores} errores`);
+  if (p.bitacora?.length) console.log(`  Bitácora: ${p.bitacora.length} cambio(s); último ${p.bitacora[p.bitacora.length - 1].fecha.slice(0, 10)}: ${p.bitacora[p.bitacora.length - 1].texto}`);
   return r;
 }
 
@@ -181,7 +186,7 @@ async function main() {
       if (flag('--reparar') && s.reparables) {
         const rep = repararIntegridad(p);
         const ruta = resolve(opt('--salida') ?? args[1].replace(/(\.expediente)?\.\w+$/, '') + '_reparado.expediente.json');
-        writeFileSync(ruta, JSON.stringify(rep.proyecto, null, 2));
+        writeFileSync(ruta, JSON.stringify(conEsquema(rep.proyecto), null, 2));
         console.log(`Reparado: ${ruta} (quedan ${rep.pendientes.length} problemas por corregir a mano)`);
       }
       process.exit(s.errores ? 2 : 0);
@@ -208,7 +213,7 @@ async function main() {
       console.log(`  Observaciones del expediente original: ${res.observaciones.length}`);
       const ruta = resolve(opt('--salida') ?? `${nombreBase(r)}.expediente.json`);
       mkdirSync(dirname(ruta), { recursive: true });
-      writeFileSync(ruta, JSON.stringify(p, null, 2));
+      writeFileSync(ruta, JSON.stringify(conEsquema(p), null, 2));
       console.log(`  Proyecto: ${ruta}`);
       if (opt('--generar')) {
         const salida = resolve(opt('--generar')!);
@@ -227,7 +232,7 @@ async function main() {
       const r = imprimirResumen(p);
       const ruta = resolve(opt('--salida') ?? args[1].replace(/(\.exp)?\.txt$|\.exp$/i, '') + '.expediente.json');
       mkdirSync(dirname(ruta), { recursive: true });
-      writeFileSync(ruta, JSON.stringify(p, null, 2));
+      writeFileSync(ruta, JSON.stringify(conEsquema(p), null, 2));
       console.log(`  Proyecto: ${ruta}`);
       if (r.resumenValidacion.errores > 0) imprimirValidacion(p);
       if (opt('--generar')) {
@@ -253,7 +258,7 @@ async function main() {
       break;
     case 'ejemplo': {
       const ruta = resolve(opt('--salida') ?? 'Proyecto_ejemplo.expediente.json');
-      writeFileSync(ruta, JSON.stringify(proyectoEjemplo(), null, 2));
+      writeFileSync(ruta, JSON.stringify(conEsquema(proyectoEjemplo()), null, 2));
       console.log(`Proyecto de ejemplo: ${ruta}`);
       break;
     }
