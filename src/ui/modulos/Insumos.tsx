@@ -5,6 +5,7 @@ import type { Insumo, TipoInsumo } from '../../engine/types';
 import { fmt, num } from '../../engine/util';
 import { IconoMas, Insignia, Pestanas, TablaEditable } from '../componentes';
 import { descargar, elegirArchivo, type Contexto } from '../estado';
+import { ActualizarPrecios, AgregarInsumosBanco } from '../BancoDialogos';
 
 const OPC_TIPO = [
   { valor: 'MO', texto: 'MO' },
@@ -52,6 +53,7 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
     if (ctx.consultaInsumo) { setQ(ctx.consultaInsumo); ctx.setConsultaInsumo(''); }
   }, [ctx.consultaInsumo, ctx]);
   const [soloUsados, setSoloUsados] = useState(false);
+  const [deBanco, setDeBanco] = useState<'precios' | 'insumos' | null>(null);
   const uso = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of Object.values(p.apus)) for (const it of a.items) m.set(it.insumo, (m.get(it.insumo) ?? 0) + 1);
@@ -138,6 +140,8 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
         <div className="herramientas">
           <button className="boton" onClick={exportar}>Exportar catálogo</button>
           <button className="boton" onClick={importar} title="Excel o CSV con columnas Código, Descripción, Unidad, Precio (Tipo e IU opcionales)">Importar precios</button>
+          <button className="boton" onClick={() => setDeBanco('precios')} title="Compara los precios del proyecto con el banco a una fecha y lugar, y aplica los elegidos">Actualizar precios desde el banco</button>
+          <button className="boton" onClick={() => setDeBanco('insumos')}>Agregar del banco</button>
           <button
             className="boton primario"
             onClick={() => {
@@ -208,6 +212,8 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
           },
         ]}
       />
+      {deBanco === 'precios' && <ActualizarPrecios ctx={ctx} alCerrar={() => setDeBanco(null)} />}
+      {deBanco === 'insumos' && <AgregarInsumosBanco ctx={ctx} alCerrar={() => setDeBanco(null)} />}
     </div>
   );
 }

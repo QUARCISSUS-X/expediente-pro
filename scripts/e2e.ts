@@ -64,6 +64,25 @@ prueba('abre el ejemplo y muestra el presupuesto', async (pg) => {
   exigir((await pg.locator('table[aria-label="Presupuesto"] tbody tr[data-v]').count()) > 10, 'el presupuesto no tiene filas');
 });
 
+prueba('banco: importar una lista con revisión de fusión y actualizar los precios del proyecto', async (pg) => {
+  const ruta = join(tmp, 'lista-precios.csv');
+  writeFileSync(ruta, ['Código;Descripción;Und;Precio;Fecha', 'MA01;Cemento portland tipo I (42.5 kg);bls;31.40;2026-11-05', 'MA02;Arena gruesa;m3;61.00;2026-11-05', ''].join('\n'));
+  await ir(pg, 'Banco de datos');
+  await pg.getByRole('tab', { name: /^Insumos \(\d+\)/ }).waitFor();
+  await pg.getByRole('button', { name: 'Importar…' }).click();
+  const [selector] = await Promise.all([pg.waitForEvent('filechooser'), pg.getByRole('button', { name: 'Elegir archivos' }).click()]);
+  await selector.setFiles(ruta);
+  await pg.getByText('2 nuevos').waitFor({ timeout: 8000 });
+  await pg.getByRole('button', { name: 'Escribir en el banco' }).click();
+  await pg.getByText(/Banco actualizado: 2 registro/).waitFor({ timeout: 8000 });
+  await ir(pg, 'Relación de insumos');
+  await pg.getByRole('button', { name: 'Actualizar precios desde el banco' }).click();
+  await pg.locator('.modal input[type="date"]').fill('2026-12-31');
+  await pg.locator('.modal select').selectOption('');
+  await pg.getByRole('button', { name: 'Aplicar 2 precio(s)' }).click({ timeout: 8000 });
+  await pg.getByText(/Se actualizaron 2 precio/).waitFor({ timeout: 5000 });
+});
+
 prueba('exportar el ZIP no congela la pantalla', async (pg) => {
   await ir(pg, 'Exportar');
   // latido cada 50 ms: mide el mayor tiempo que la página quedó sin responder

@@ -1,6 +1,8 @@
 // Ventanas de la barra de herramientas: biblioteca, búsqueda, calculadoras, nuevo proyecto y atajos.
-import { useMemo, useState } from 'react';
-import { BIBLIOTECA, type PartidaTipo } from '../data/biblioteca';
+import { useEffect, useMemo, useState } from 'react';
+import type { AnalisisBanco, Banco } from '../engine/banco';
+import { agregarAnalisis } from './BancoDialogos';
+import { leerBanco } from './bancoAlmacen';
 import { PARAMETROS_MO_2026, tarifasMO, type ParametrosMO } from '../data/manoObra';
 import { fmt, redondear } from '../engine/util';
 import { agregarPartida } from './arbol';
@@ -23,34 +25,33 @@ export function Dialogos({ ctx, alNuevo }: { ctx: Contexto; alNuevo: (tipo: 'bla
 
 // ------------------------------------------------------------ biblioteca
 
+/** Partidas con su análisis de referencia, tomadas del banco de datos (la biblioteca del programa es su contenido inicial). */
 function Biblioteca({ ctx, alCerrar }: { ctx: Contexto; alCerrar: () => void }) {
   const [q, setQ] = useState('');
+  const [banco, setBanco] = useState<Banco | null>(null);
+  useEffect(() => { void leerBanco().then(setBanco); }, []);
   const destino = ctx.proyecto.partidas.find((x) => x.id === ctx.partidaSel) ?? null;
-  const lista = BIBLIOTECA.filter((b) => (b.descripcion + ' ' + b.grupo).toLowerCase().includes(q.toLowerCase()));
-  const grupos = [...new Set(lista.map((b) => b.grupo))];
-  const elegir = (t: PartidaTipo) => {
-    let nuevo: string | null = null;
-    ctx.actualizar((d) => { nuevo = agregarPartida(d, destino, t); });
-    if (nuevo) ctx.ir('presupuesto', nuevo);
-    ctx.avisar(`Partida agregada: ${t.descripcion}`);
-  };
+  const lista = (banco?.analisis ?? []).filter((b) => (b.descripcion + ' ' + b.especialidad).toLowerCase().includes(q.toLowerCase()));
+  const grupos = [...new Set(lista.map((b) => b.especialidad))];
+  const elegir = (a: AnalisisBanco) => banco && agregarAnalisis(ctx, banco, a);
   return (
     <Modal titulo="Biblioteca de partidas" alCerrar={alCerrar}>
       <p className="pequeno" style={{ marginTop: 0 }}>
-        Cada partida trae su APU de referencia (rendimiento y cuadrilla usuales). Se agrega {destino ? (destino.titulo ? `dentro de ${destino.codigo} ${destino.descripcion}` : `después de ${destino.codigo}`) : 'al final del presupuesto'}. Ajuste rendimientos y precios a su obra.
+        Partidas del banco de datos con su análisis (rendimiento y cuadrilla). Se agrega {destino ? (destino.titulo ? `dentro de ${destino.codigo} ${destino.descripcion}` : `después de ${destino.codigo}`) : 'al final del presupuesto'}; los insumos que falten se toman del banco con su precio vigente. Ajuste rendimientos y precios a su obra.
       </p>
       <input className="entrada" style={{ width: '100%', marginBottom: 12 }} placeholder="Buscar partida…" value={q} onChange={(e) => setQ(e.target.value)} autoFocus aria-label="Buscar partida" />
+      {!banco && <p>Leyendo el banco…</p>}
       {grupos.map((g) => (
         <div key={g}>
           <h3>{g}</h3>
           <div className="tabla-marco">
             <table className="tabla">
               <tbody>
-                {lista.filter((b) => b.grupo === g).map((b) => (
-                  <tr key={b.clave}>
+                {lista.filter((b) => b.especialidad === g).map((b) => (
+                  <tr key={b.codigo}>
                     <td>{b.descripcion}</td>
                     <td style={{ width: 50 }}>{b.unidad}</td>
-                    <td style={{ width: 110 }} className="pequeno">{b.apu.rendimiento} {b.unidad}/día</td>
+                    <td style={{ width: 110 }} className="pequeno">{b.rendimiento} {b.unidad}/día</td>
                     <td style={{ width: 92 }}><button className="boton chico" onClick={() => elegir(b)}>Agregar</button></td>
                   </tr>
                 ))}

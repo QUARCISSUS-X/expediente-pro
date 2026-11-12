@@ -6,6 +6,7 @@
 import type { ComponentType } from 'react';
 import navegacion from '../../../electron/modulos.json';
 import type { Contexto, ModuloId } from '../estado';
+import { ModBanco } from './Banco';
 import { ModCalidad } from './Calidad';
 import { ModCcpm } from './Ccpm';
 import { ModControl } from './Control';
@@ -39,6 +40,7 @@ export const MODULOS: Record<ModuloId, ComponentType<{ ctx: Contexto }>> = {
   resumen: ModResumen,
   proyecto: ModProyecto,
   tdr: ModTdr,
+  banco: ModBanco,
   presupuesto: ModPresupuesto,
   insumos: ModInsumos,
   gg: ModGG,

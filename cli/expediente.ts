@@ -9,6 +9,7 @@
 //   expediente cargar <proyecto.exp.txt> [--salida proyecto.json] [--generar carpeta] [--zip]   (formato compacto)
 //   expediente compacto <proyecto.json | .xlsx> [--salida proyecto.exp.txt]
 //   expediente catalogo [--desde proyecto]
+//   expediente banco resumen|inicial|importar|exportar|enviar|actualizar-precios   (ver cli/banco.ts)
 // expediente importar <ppto.xlsx> [metrados.xlsx] [cronograma.xml] [eett.docx] [--config datos.json] [--salida proyecto.json] [--generar carpeta]
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -24,6 +25,7 @@ import { renderPdfNode } from '../src/export/render-node';
 import { exportarPlantilla, importarPlantilla } from '../src/io/plantilla';
 import { conEsquema, esSoloLectura, migrarProyecto } from '../src/io/migrar';
 import { leerJson } from '../src/io/estructura';
+import { AYUDA_BANCO, comandoBanco } from './banco';
 import { importarExpediente } from '../src/io/importarExpediente';
 import { catalogoCompacto, escribirCompacto, leerCompacto } from '../src/io/compacto';
 import type { Logo } from '../src/engine/types';
@@ -130,6 +132,8 @@ function aplicarConfig(p: Proyecto, conf: Record<string, unknown>, base: string)
 
 async function main() {
   switch (cmd) {
+    case 'banco':
+      return comandoBanco(args, opt, flag, cargar);
     case 'generar': {
       if (!args[1]) throw new Error('Indique el archivo del proyecto (.json o .xlsx).');
       const p = await cargar(args[1]);
@@ -276,10 +280,8 @@ Uso:
   expediente cargar <proyecto.exp.txt> [--config datos.json] [--salida proyecto.json] [--generar carpeta] [--zip] [--forzar]
   expediente compacto <proyecto.json | plantilla.xlsx> [--salida proyecto.exp.txt]
   expediente catalogo [--desde proyecto]
-  expediente cargar <proyecto.exp.txt> [--config datos.json] [--salida proyecto.json] [--generar carpeta] [--zip] [--forzar]
-  expediente compacto <proyecto.json | plantilla.xlsx> [--salida proyecto.exp.txt]
-  expediente catalogo [--desde proyecto]
-  expediente importar <ppto.xlsx> [metrados.xlsx] [cronograma.xml] [eett.docx] [--config datos.json] [--salida proyecto.json] [--generar carpeta] [--zip]`);
+  expediente importar <ppto.xlsx> [metrados.xlsx] [cronograma.xml] [eett.docx] [--config datos.json] [--salida proyecto.json] [--generar carpeta] [--zip]
+${AYUDA_BANCO}`);
       void basename;
   }
 }
