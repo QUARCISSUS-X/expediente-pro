@@ -153,19 +153,33 @@ Va después de la 3.0 porque es la única etapa que necesita una dependencia pes
 
 ---
 
-## 3. Decisiones que necesito de ti antes de empezar
+## 3. Decisiones tomadas (11-nov-2026)
 
-1. **Numeración.** Propongo 2.7 a 2.12 como etapas y 3.0 como cierre. La alternativa es llamarlas 3.0-etapa 1 a 7 y publicar solo al final.
-2. **BIM dentro o fuera de la 3.0.** Lo dejé como 3.1. Si lo quieres dentro, la 3.0 se retrasa dos o tres etapas.
-3. **Subpresupuestos.** Es el cambio de modelo más grande. Si tus expedientes siempre van en un solo presupuesto, se puede dejar fuera y ahorrar una etapa.
-4. **Fuentes del banco.** ¿De qué programas tienes bases reales para importar (S10, Delphin, PowerCost, Excel propios)? Con un archivo de muestra de cada uno el importador se prueba contra datos reales.
-5. **Web pública.** Publicar en GitHub Pages hace el programa accesible a cualquiera con el enlace (tus datos siguen solo en tu navegador). ¿Lo quieres público o solo para ti?
-6. **Tiendas.** Chrome Web Store cobra un registro único de desarrollador; la tienda pública de Firefox pasa por revisión humana.
+1. **Numeración:** cada etapa se publica como versión (2.7 a 2.12) y la 3.0 es el cierre.
+2. **BIM:** queda para la 3.1, después de la 3.0.
+3. **Subpresupuestos:** sí, en la etapa 3.
+4. **Web pública y tiendas:** por ahora no. La etapa 6 no publica en GitHub Pages, Chrome Web Store ni en la tienda pública de Firefox; sí deja la web instalable (PWA) y la extensión firmada en el release como hasta ahora.
+5. **Fuentes del banco:** se prueba con datos de ejemplo. Si el usuario adjunta bases reales (S10, Delphin, PowerCost, Excel), se agregan como pruebas.
+
+Cada etapa sigue estas decisiones sin volver a preguntarlas. Si una etapa encuentra algo que obliga a cambiarlas, lo dice antes de cambiar el alcance.
 
 ## 4. Cómo pedir cada etapa
 
-En un chat nuevo con el repositorio:
+Un chat nuevo por etapa, en orden (1 → 7). Antes de empezar una etapa, unir el PR de la anterior. Texto para pegar:
 
-> Expediente Pro: desarrolla la **etapa N** de `docs/PLAN_V3.md`. Sigue `CLAUDE.md`, ubica el código con `docs/MAPA.md`, y al terminar sube la versión, anota `docs/HISTORIAL.md` y abre el PR.
+> Expediente Pro (repositorio QUARCISSUS-X/expediente-pro): desarrolla la **etapa N** de `docs/PLAN_V3.md` con las decisiones de su sección 3. Sigue `CLAUDE.md` y ubica el código con `docs/MAPA.md`. Al terminar: `npm run verificar`, sube la versión, anota `docs/HISTORIAL.md`, marca la etapa como hecha en la tabla de estado del plan y abre el PR.
 
 Al unir el PR a `main`, el release con el instalador, el portable, el ZIP y las extensiones se publica solo.
+
+## 5. Estado
+
+| Etapa | Versión | Estado | PR |
+|---|---|---|---|
+| 1 · Cimientos | 2.7 | pendiente | — |
+| 2 · Banco de datos | 2.8 | pendiente | — |
+| 3 · Presupuesto avanzado | 2.9 | pendiente | — |
+| 4 · Integración de apartados | 2.10 | pendiente | — |
+| 5 · Reportes de obra y portafolio | 2.11 | pendiente | — |
+| 6 · Plataformas | 2.12 | pendiente | — |
+| 7 · Cierre | 3.0 | pendiente | — |
+| 8 · VDC/BIM | 3.1 | después de la 3.0 | — |
