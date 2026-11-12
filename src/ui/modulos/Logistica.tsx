@@ -1,5 +1,5 @@
 // Kanban de materiales: tablero por estados, stock mínimo y punto de pedido, alertas y enlace con Last Planner.
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { hoyIso } from '../../engine/control';
 import {
   alertaTarjeta, analisisMateriales, eliminarTarjeta, enlazarRestriccion, ESTADOS_KANBAN, type EstadoKanban, generarTarjetas, moverTarjeta,
@@ -10,9 +10,12 @@ import { fechaAnalisis } from '../../export/metodologias';
 import { Campo, EntradaNumero, EntradaTexto, Insignia, Pestanas, TablaEditable } from '../componentes';
 import { fc, fechaCortaDM, opcionesPartidas, pct, useControl } from '../control';
 import type { Contexto } from '../estado';
+import type { ProveedorBanco } from '../../engine/banco';
+import { requerimientoMateriales } from '../../engine/integracion';
+import { leerBanco } from '../bancoAlmacen';
 import { Indicador } from '../graficos';
 
-type Pest = 'tablero' | 'materiales' | 'lista';
+type Pest = 'tablero' | 'materiales' | 'lista' | 'requerimiento';
 
 const TEXTO_ALERTA = { quiebre: 'Quiebre', pedir: 'Pedir ya', proxima: 'Próxima', ok: '' };
 const ESTADO_ALERTA = { quiebre: 'error', pedir: 'advertencia', proxima: 'neutra', ok: 'ok' } as const;
@@ -61,9 +64,10 @@ export function ModLogistica({ ctx }: { ctx: Contexto }) {
           { id: 'tablero', texto: 'Tablero', extra: s.quiebres ? <Insignia estado="error">{s.quiebres}</Insignia> : undefined },
           { id: 'materiales', texto: 'Stock y punto de pedido' },
           { id: 'lista', texto: 'Lista de tarjetas' },
+          { id: 'requerimiento', texto: 'Requerimiento semanal' },
         ]}
       />
-      {!c.kanban.tarjetas.length ? (
+      {pest === 'requerimiento' ? <Requerimiento ctx={ctx} /> : !c.kanban.tarjetas.length ? (
         <div className="vacio">
           <p><strong>El tablero está vacío.</strong></p>
           <p>Genere las tarjetas desde la relación de insumos y el cronograma: una por material y actividad.</p>
@@ -190,6 +194,7 @@ function Materiales({ ctx, fecha }: { ctx: Contexto; fecha: string }) {
 }
 
 function Lista({ ctx, fecha }: { ctx: Contexto; fecha: string }) {
+  const proveedores = useProveedores();
   const { c, mut } = useControl(ctx);
   const r = ctx.resultados;
   const set = (t: TarjetaKanban, campo: keyof TarjetaKanban, v: unknown) =>
@@ -228,7 +233,7 @@ function Lista({ ctx, fecha }: { ctx: Contexto; fecha: string }) {
         { clave: 'fp', titulo: 'Pedir el', ancho: 130, tipo: 'fecha', valor: (t) => t.fechaPedido, cambiar: (t, v) => set(t, 'fechaPedido', v) },
         { clave: 'fn', titulo: 'En obra el', ancho: 130, tipo: 'fecha', valor: (t) => t.fechaNecesaria, cambiar: (t, v) => set(t, 'fechaNecesaria', v) },
         { clave: 'e', titulo: 'Estado', ancho: 150, tipo: 'select', opciones: ESTADOS_KANBAN.map((e) => ({ valor: e.id, texto: e.texto })), valor: (t) => t.estado, cambiar: (t, v) => set(t, 'estado', v) },
-        { clave: 'pr', titulo: 'Proveedor', ancho: 140, tipo: 'texto', valor: (t) => t.proveedor, cambiar: (t, v) => set(t, 'proveedor', v) },
+        { clave: 'pr', titulo: 'Proveedor', ancho: 160, tipo: 'texto', lista: 'proveedores-banco', valor: (t) => t.proveedor, cambiar: (t, v) => { const pv = proveedores.find((x) => `${x.razonSocial} (${x.ruc})` === v || x.ruc === v); mut((d) => { const y = d.kanban.tarjetas.find((z) => z.id === t.id); if (y) { y.proveedor = pv ? pv.razonSocial : String(v); y.proveedorRuc = pv?.ruc; } }); } },
         { clave: 'oc', titulo: 'O/C', ancho: 90, tipo: 'texto', valor: (t) => t.ordenCompra, cambiar: (t, v) => set(t, 'ordenCompra', v) },
         {
           clave: 'r', titulo: 'Last Planner', ancho: 120, valor: (t) => t.restriccionId,
@@ -243,3 +248,44 @@ function Lista({ ctx, fecha }: { ctx: Contexto; fecha: string }) {
   );
 }
 
+
+/** Proveedores del banco de datos (para elegir el de cada pedido). */
+function useProveedores(): ProveedorBanco[] {
+  const [l, setL] = useState<ProveedorBanco[]>([]);
+  useEffect(() => { void leerBanco().then((b) => setL(b.proveedores)); }, []);
+  return l;
+}
+
+/** Cronograma + insumos → requerimiento por semana (con los metrados vigentes: incluye adicionales y deductivos aprobados). */
+function Requerimiento({ ctx }: { ctx: Contexto }) {
+  const { c } = useControl(ctx);
+  const r = ctx.resultados;
+  const req = useMemo(() => requerimientoMateriales(r, c), [r, c]);
+  const semanas = useMemo(() => [...new Set(req.flatMap((x) => x.semanas.map((s) => s.lunes)))].sort(), [req]);
+  const proveedores = useProveedores();
+  if (!req.length) return <div className="vacio"><p>El cronograma todavía no tiene actividades con materiales.</p></div>;
+  return (
+    <>
+      <p className="pequeno">Cantidad del APU × metrado vigente de cada partida, repartida en sus días del cronograma; la fecha de necesidad es el primer día de uso en la semana. Al aprobar un adicional con partidas, el requerimiento cambia solo.</p>
+      <div className="tabla-marco" style={{ maxHeight: 'calc(100vh - 380px)' }}>
+        <table className="tabla" aria-label="Requerimiento semanal de materiales">
+          <thead><tr><th>Material</th><th>Und.</th><th className="num">Total</th>{semanas.map((l) => <th key={l} className="num" title={`Semana del ${l}`}>{fechaCortaDM(l)}</th>)}</tr></thead>
+          <tbody>
+            {req.map((x) => {
+              const m = new Map(x.semanas.map((s) => [s.lunes, s]));
+              return (
+                <tr key={x.codigo}>
+                  <td style={{ whiteSpace: 'normal' }}>{x.codigo} {x.descripcion}</td>
+                  <td>{x.unidad}</td>
+                  <td className="num"><strong>{fmt(x.total)}</strong></td>
+                  {semanas.map((l) => { const s = m.get(l); return <td key={l} className="num" title={s ? `Necesario desde ${s.fechaNecesidad}` : undefined}>{s ? fmt(s.cantidad) : ''}</td>; })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <datalist id="proveedores-banco">{proveedores.map((p) => <option key={p.ruc} value={`${p.razonSocial} (${p.ruc})`} />)}</datalist>
+    </>
+  );
+}

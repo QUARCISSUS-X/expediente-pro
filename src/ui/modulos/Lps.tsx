@@ -9,6 +9,7 @@ import { tablaPpc } from '../../export/control';
 import { Campo, EntradaTexto, IconoMas, Insignia, Pestanas, TablaEditable } from '../componentes';
 import { fc, fechaCortaDM, opciones, opcionesFrentes, opcionesPartidas, pct, useControl } from '../control';
 import type { Contexto } from '../estado';
+import { restriccionesAutomaticas } from '../../engine/integracion';
 import { COLOR, GraficoBarras, GraficoPareto, Indicador } from '../graficos';
 import { VistaTabla } from '../VistaTabla';
 
@@ -292,6 +293,41 @@ function Restricciones({ ctx }: { ctx: Contexto }) {
           { clave: 'fl', titulo: 'Liberada el', ancho: 132, tipo: 'fecha', valor: (x) => x.fechaLiberacion, cambiar: (x, v) => set(x, 'fechaLiberacion', v) },
         ]}
       />
+      <RestriccionesAutomaticas ctx={ctx} />
+    </>
+  );
+}
+
+/** Restricciones que nacen solas del kanban, de la calidad y de las consultas, y se levantan solas al resolverse su origen. */
+function RestriccionesAutomaticas({ ctx }: { ctx: Contexto }) {
+  const { c } = useControl(ctx);
+  const r = ctx.resultados;
+  const hoy = hoyIso();
+  const lista = useMemo(() => restriccionesAutomaticas(r, c, hoy), [r, c, hoy]);
+  const codigo = new Map(r.hojas.map((h) => [h.partida.id, `${h.partida.codigo} ${h.partida.descripcion}`]));
+  const ir = { kanban: 'logistica', calidad: 'calidad', rfi: 'control' } as const;
+  return (
+    <>
+      <div className="seccion-titulo">Restricciones automáticas ({lista.length})</div>
+      <p className="pequeno" style={{ marginTop: 0 }}>Nacen solas de un material no recibido que se necesita en las próximas 3 semanas (kanban), de un protocolo de punto de parada sin liberar en una actividad previa (calidad) y de una consulta (RFI) abierta asignada a la partida. Bloquean la actividad en el lookahead y se levantan solas al resolverse su origen.</p>
+      {lista.length === 0 ? <div className="vacio"><p>No hay restricciones automáticas abiertas.</p></div> : (
+        <div className="tabla-marco" style={{ maxHeight: 320 }}>
+          <table className="tabla" aria-label="Restricciones automáticas">
+            <thead><tr><th>Origen</th><th>Actividad</th><th>Restricción</th><th>Responsable</th><th>Requerida para</th></tr></thead>
+            <tbody>
+              {lista.map((x) => (
+                <tr key={x.id} className={x.fechaRequerida && x.fechaRequerida < hoy ? 'lista-no' : undefined}>
+                  <td><button className="boton chico" onClick={() => ctx.ir(ir[x.origen])}>{{ kanban: 'Kanban', calidad: 'Calidad', rfi: 'Consulta' }[x.origen]}</button></td>
+                  <td style={{ whiteSpace: 'normal' }}>{codigo.get(x.partidaId) ?? '—'}</td>
+                  <td style={{ whiteSpace: 'normal' }}>{x.descripcion}</td>
+                  <td>{x.responsable}</td>
+                  <td>{x.fechaRequerida}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </>
   );
 }

@@ -322,6 +322,8 @@ export function aplicarPrecios(d: Proyecto, cambios: DiferenciaPrecio[]): number
     i.precio = c.banco;
     i.fuente = nombreFuente(c.precio);
     i.fechaPrecio = c.precio.fecha;
+    if (c.precio.proveedorRuc) i.proveedorRuc = c.precio.proveedorRuc;
+    else delete i.proveedorRuc;
     n++;
   }
   return n;

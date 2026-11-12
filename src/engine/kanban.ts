@@ -1,6 +1,7 @@
 // Kanban de materiales: tarjetas desde la relación de insumos y el cronograma, stock mínimo, punto de pedido,
 // alertas de quiebre y enlace con las restricciones de Last Planner (un material no recibido bloquea la actividad).
 import type { Control, Restriccion } from './control';
+import { metradosVigentes } from './integracion';
 import type { Resultados } from './types';
 import { num, redondear, sumarDias, uid } from './util';
 
@@ -27,6 +28,7 @@ export interface TarjetaKanban {
   fechaPedido: string; // fecha necesaria − anticipación de compra
   estado: EstadoKanban;
   proveedor: string;
+  proveedorRuc?: string; // proveedor del banco de datos
   ordenCompra: string;
   nota: string;
   restriccionId: string; // restricción de Last Planner enlazada ('' = ninguna)
@@ -68,14 +70,15 @@ const anticipacion = (r: Resultados, codigo: string) => {
 };
 
 /** Una tarjeta por material y actividad: cantidad del APU × metrado, necesaria al inicio de la actividad. */
-export function tarjetasDesdeCronograma(r: Resultados): TarjetaKanban[] {
+export function tarjetasDesdeCronograma(r: Resultados, vigentes?: Record<string, number>): TarjetaKanban[] {
   const res: TarjetaKanban[] = [];
   for (const a of r.programa.actividades) {
+    const metrado = vigentes?.[a.partidaId] ?? a.metrado;
     const apu = r.apus[a.partidaId];
     if (!apu || !a.inicio) continue;
     for (const it of apu.items) {
       if (it.insumo.tipo !== 'MAT' || it.porcentaje !== null) continue;
-      const cantidad = redondear(a.metrado * it.cantidad, 2);
+      const cantidad = redondear(metrado * it.cantidad, 2);
       if (cantidad <= 0) continue;
       res.push({
         id: uid('kbn'),
@@ -115,7 +118,7 @@ function restriccionDe(t: TarjetaKanban, hoy: string): Restriccion {
 export function generarTarjetas(r: Resultados, c: Control, crearRestricciones: boolean, hoy: string): number {
   const existe = new Set(c.kanban.tarjetas.map((t) => `${t.insumo}|${t.partidaId}`));
   let n = 0;
-  for (const t of tarjetasDesdeCronograma(r)) {
+  for (const t of tarjetasDesdeCronograma(r, metradosVigentes(r, c))) {
     if (existe.has(`${t.insumo}|${t.partidaId}`)) continue;
     if (crearRestricciones) enlazarRestriccion(c, t, hoy);
     c.kanban.tarjetas.push(t);

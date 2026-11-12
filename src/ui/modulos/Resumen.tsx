@@ -5,12 +5,36 @@ import { resumenIntegridad, revisarIntegridad } from '../../engine/integridad';
 import { fmt } from '../../engine/util';
 import { Insignia, Pestanas } from '../componentes';
 import type { Contexto } from '../estado';
+import { TableroObra } from './Control';
 import { BarraApilada, COLOR, GraficoBarras, GraficoLineas, GraficoPareto, Indicador } from '../graficos';
 
 const PALETA = [COLOR.plan, COLOR.real, COLOR.ocre, COLOR.costo, COLOR.gris];
 const corto = (t: string, n = 16) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
 
+/**
+ * Tablero único: en la etapa de expediente muestra el resumen del presupuesto; con línea base de control, el tablero de
+ * obra (valor ganado, plazo, Last Planner, calidad, materiales…), y se puede pasar de uno a otro.
+ */
 export function ModResumen({ ctx }: { ctx: Contexto }) {
+  const conObra = !!ctx.proyecto.control?.lineaBase;
+  const [etapa, setEtapa] = useState<'expediente' | 'obra'>(conObra ? 'obra' : 'expediente');
+  if (!conObra) return <ResumenExpediente ctx={ctx} />;
+  return (
+    <>
+      <div style={{ padding: '14px 24px 0' }}>
+        <Pestanas valor={etapa} alCambiar={setEtapa} opciones={[{ id: 'expediente', texto: 'Etapa de expediente: presupuesto' }, { id: 'obra', texto: 'Etapa de obra: control' }]} />
+      </div>
+      {etapa === 'obra' ? (
+        <div className="modulo">
+          <div className="modulo-cabecera"><div><h1>Tablero del proyecto</h1><p className="proposito">El proyecto está en ejecución: indicadores de valor ganado, plazo, Last Planner, calidad y materiales en una sola vista. El presupuesto sigue en la otra pestaña.</p></div></div>
+          <TableroObra ctx={ctx} />
+        </div>
+      ) : <ResumenExpediente ctx={ctx} />}
+    </>
+  );
+}
+
+function ResumenExpediente({ ctx }: { ctx: Contexto }) {
   const { resultados: r, proyecto: p, ir, exportar, ocupado } = ctx;
   // el análisis solo depende del cálculo: no se repite al editar datos del control de obra
   const a = useMemo(() => analizar(r), [r.filas, r.insumos, r.programa, r.pie, r.validacion]); // eslint-disable-line react-hooks/exhaustive-deps

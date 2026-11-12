@@ -1,5 +1,21 @@
 # Historial de versiones
 
+## Versión 2.10 – integración de apartados
+Cuarta etapa del plan 3.0: un dato se registra una vez y los demás módulos lo leen.
+- **Cambios aprobados → presupuesto vigente, EAC y materiales:** cada adicional o deductivo puede llevar sus partidas y metrados (Control › Cambios, con «Calcular el monto»: metrado × P.U. más GG y utilidad). Al aprobarlo cambian solos el presupuesto vigente, el EAC y el requerimiento de materiales (metrado vigente); el presupuesto no se toca.
+- **Cronograma + insumos → requerimiento semanal** (Kanban › Requerimiento semanal): cantidad por material y semana con su fecha de necesidad, con los metrados vigentes; las tarjetas nuevas también usan el metrado vigente.
+- **Kanban, calidad y consultas → restricciones de Last Planner** que nacen y se levantan solas: material no recibido que se necesita en 3 semanas, protocolo de un punto de parada (H) sin liberar en una actividad previa, y consulta (RFI) abierta asignada a una partida (nuevo campo «Partida» en el cuaderno). Bloquean la actividad en el lookahead y en los compromisos sugeridos.
+- **Calidad → valorización:** valorizar todo marcando como «observado» lo que no tiene protocolo liberado (por defecto; los montos no cambian) o valorizar solo lo liberado (lo demás queda retenido hasta liberarse). Solo cuentan las partidas con puntos de inspección.
+- **Riesgo → gastos generales y cadena crítica:** la contingencia del Monte Carlo (P80 de costo − costo directo) se lleva a gastos generales con un clic, y P80 − P50 de plazo se puede fijar como colchón del proyecto en la cadena crítica.
+- **Ingeniería de valor → versiones:** «Como versión» guarda la alternativa como versión del presupuesto (sin cambiarlo) y abre la comparación.
+- **Lean → banco de datos:** «Proponer los rendimientos reales al banco» lleva el rendimiento medido en obra a los análisis del banco, con la pantalla de fusión.
+- **Proveedores del banco → kanban y precios:** el proveedor de cada pedido se elige de los del banco (guarda su RUC) y al actualizar precios el insumo guarda el proveedor de la cotización.
+- **Ficha de partida:** un panel con metrado (y vigente), análisis, especificación, actividad, avance, valorizado, cambios, restricciones, calidad y materiales; se abre desde el presupuesto, el centro de pendientes y la búsqueda global.
+- **Búsqueda global (Ctrl+K):** partidas (abre su ficha), insumos, módulos y acciones en una sola caja.
+- **Centro de pendientes** (grupo Expediente, Ctrl+Shift+P en la app): una lista con reglas de consistencia, restricciones (también automáticas), materiales atrasados o por pedir, protocolos sin firmar, productos no conformes, consultas vencidas, cambios por aprobar y riesgos críticos.
+- **Tablero único:** con línea base de control, el Resumen del proyecto muestra el tablero de obra y se pasa al resumen del presupuesto con una pestaña.
+- Código: `src/engine/integracion.ts` (metrado vigente, requerimiento, restricciones automáticas, liberación, contingencia, pendientes); pantallas `ui/FichaPartida.tsx`, `ui/BusquedaGlobal.tsx`, `ui/modulos/Pendientes.tsx`. Pruebas en `tests/integracion.test.ts` (incluye el criterio de la etapa con la demostración) y una prueba de extremo a extremo de Ctrl+K.
+
 ## Versión 2.9 – presupuesto avanzado
 Tercera etapa del plan 3.0. Los totales de los proyectos existentes no cambian (probado).
 - **Subpresupuestos** (Presupuesto › «Subpresupuestos y subpartidas»): estructuras, arquitectura, instalaciones… Cada título de primer nivel se asigna a uno y sus partidas lo heredan. Cada subpresupuesto tiene su pie (costo directo de sus títulos; gastos generales, utilidad e IGV prorrateados por costo directo) y la suma es exactamente el pie consolidado. En pantalla se filtra el árbol por subpresupuesto y se ve la tabla de pies; el **Excel lleva una hoja por subpresupuesto** (partidas vinculadas al Presupuesto y su pie con fórmulas) y la hoja **Consolidado**, con un control de diferencia 0.

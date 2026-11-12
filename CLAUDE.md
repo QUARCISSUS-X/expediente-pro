@@ -22,6 +22,7 @@ archivos grandes completos:
 | Presupuesto, APU, metrados, insumos, GG | `engine/compute.ts` (orquesta en `engine/index.ts`: `calcularTodo`) | `ui/modulos/{Presupuesto,Insumos,GastosGenerales}.tsx` | — (entregables en `export/xlsx/`) | `motor.test.ts` |
 | **Presupuesto avanzado:** subpresupuestos, subpartidas, monedas y fórmulas en metrados | `engine/index.ts` (`piesSubpresupuestos`, subpartidas), `engine/compute.ts` (`tipoCambio`, `mapaInsumos`), `engine/expresion.ts` | `ui/modulos/PresupuestoAvanzado.tsx` (+ Presupuesto e Insumos) | — (Excel: `export/xlsx/subpresupuestos.ts`) | `presupuesto.test.ts` |
 | **Versiones del presupuesto y vigente** | `engine/escenarios.ts`; vigente en `control/cambios.ts` y `control/evm.ts` (`bacVigente`) | `ui/modulos/Versiones.tsx` | — | `"versiones del presupuesto"`, `"presupuesto vigente"` |
+| **Integración de apartados** (metrado vigente, requerimiento semanal, restricciones automáticas, liberación para valorizar, contingencia, pendientes) | `engine/integracion.ts` | `ui/FichaPartida.tsx`, `ui/BusquedaGlobal.tsx` (Ctrl+K), `ui/modulos/Pendientes.tsx`; enlaces en Control, Lps, Logistica, Riesgo, Valor y Ejecucion | — | `integracion.test.ts` |
 | Fórmula polinómica | `engine/polinomica.ts` | `ui/modulos/Polinomica.tsx` | — | `motor.test.ts` |
 | Validación (15 reglas), EETT y documentos | `engine/{validate,eett,documentos}.ts` | `ui/modulos/{Validacion,Documentos}.tsx` | — | `"las reglas detectan errores sembrados"` |
 | Cronograma CPM (red compartida) | `engine/schedule.ts` (`construirRed`, `pasadasCpm`, `calcularPrograma`) | `ui/modulos/Programa.tsx` | — | `"programación CPM"` |
@@ -58,6 +59,8 @@ Piezas comunes (solo si la mejora las necesita):
 - Comandos de consola: `cli/expediente.ts` (switch de `main` y texto de ayuda); los del banco en `cli/banco.ts`.
 - `data/catalogo.ts` y `data/biblioteca.ts` son el contenido inicial del banco (`bancoInicial`); la biblioteca de partidas de la interfaz lee el banco.
 - Si una pantalla falla, `ui/Barrera.tsx` la aísla; el resto del programa sigue.
+- Regla de integración: un dato se registra una vez. Lo que un módulo deriva de otro (restricciones automáticas, metrado vigente,
+  requerimiento) se calcula en `engine/integracion.ts` y no se guarda; `ctx.abrirFicha(partidaId)` abre la ficha desde cualquier pantalla.
 
 ## Cómo agregar una función nueva (receta)
 1. Motor puro en `src/engine/<funcion>.ts` (sin React). Reutilizar `schedule.ts`, `compute.ts` y `Resultados`; no recalcular cronograma ni presupuesto.
