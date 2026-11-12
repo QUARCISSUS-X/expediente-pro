@@ -3,7 +3,8 @@
     {"id": "proyectos", "texto": "Panel de proyectos", "menu": "Panel de proyectos", "atajo": "CmdOrCtrl+1", "reglas": []},
     {"id": "resumen", "texto": "Resumen del proyecto", "menu": "Resumen del proyecto (gráficos e indicadores)", "atajo": "Alt+9", "reglas": []},
     {"id": "proyecto", "texto": "Configuración general", "menu": "Configuración general", "atajo": "CmdOrCtrl+2", "reglas": []},
-    {"id": "tdr", "texto": "Términos de referencia", "menu": "Términos de referencia", "atajo": "CmdOrCtrl+3", "reglas": [15]}
+    {"id": "tdr", "texto": "Términos de referencia", "menu": "Términos de referencia", "atajo": "CmdOrCtrl+3", "reglas": [15]},
+    {"id": "banco", "texto": "Banco de datos", "menu": "Banco de datos (insumos, precios y análisis)", "atajo": "CmdOrCtrl+B", "reglas": []}
   ] },
   { "grupo": "Costos", "items": [
     {"id": "presupuesto", "texto": "Presupuesto, APU y metrados", "menu": "Presupuesto, APU y metrados", "atajo": "CmdOrCtrl+4", "reglas": [1, 2, 3, 12]},

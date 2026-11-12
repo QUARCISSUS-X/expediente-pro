@@ -8,6 +8,10 @@ Generado con `npm run mapa` (no editar a mano). Cada símbolo indica su línea: 
 Análisis gerencial del expediente: costo por título, composición, clasificación ABC, curva S, índices y alertas.
 ClaseAbcᵗ:6 · ItemAbcᵗ:8 · Abcᵗ:21 · ParteCostoᵗ:27 · Analisisᵗ:34 · clasificarAbc:66 · analizar:88
 
+### `src/engine/banco.ts` · 408 líneas
+Banco de datos propio (fuera de los proyectos): insumos, precios con fecha y fuente, análisis, cuadrillas, plantillas y
+FuentePrecioᵗ:12 · FUENTES_PRECIO:13 · InsumoBancoᵗ:21 · PrecioBancoᵗ:33 · AnalisisBancoᵗ:45 · CuadrillaBancoᵗ:57 · TipoPlantillaᵗ:64 · PlantillaBancoᵗ:65 · ProveedorBancoᵗ:73 · Bancoᵗ:84 · Tablaᵗ:93 · TABLAS:94 · bancoVacio:103 · claveFila:106 · normalizarBanco:124 · resumenBanco:148 · canonico:153 · sumaComprobacion:163 · ordenarBanco:173 · bancoInicial:184 · EstadoFilaᵗ:203 · Decisionᵗ:204 · FilaComparadaᵗ:206 · Comparacionᵗ:215 · compararBancos:224 · fusionarBancos:257 · historialPrecio:278 · precioVigente:284 · DiferenciaPrecioᵗ:289 · compararPrecios:302 · aplicarPrecios:317 · clavePartida:333 · OpcionesEnvioᵗ:338 · bancoDesdeProyecto:347 · insumoDesdeBanco:369 · completarInsumos:384 · partidaTipoDe:396 · nuevoCodigoBanco:401
+
 ### `src/engine/bitacora.ts` · 26 líneas
 Bitácora de cambios del proyecto: cada edición con etiqueta queda con su fecha (se guardan las últimas 500).
 MAX_BITACORA:4 · anotarBitacora:8 · bitacoraEntre:23
@@ -218,6 +222,10 @@ hojaPrograma:7 · Bloqueᵗ:147 · planPeriodos:156 · apuPeriodos:165 · insumo
 
 ## Importación y formatos — `src/io/`
 
+### `src/io/banco.ts` · 389 líneas
+Formatos del banco de datos: .epdb (ZIP con un JSON por tabla y un manifiesto con suma de comprobación), Excel editable y
+FORMATO_EPDB:16 · Manifiestoᵗ:18 · ContenidoEpdbᵗ:30 · escribirEpdb:38 · leerEpdb:56 · textoRenglones:95 · leerRenglones:98 · COLUMNAS:116 · exportarBancoXlsx:149 · textoCelda:171 · filasHoja:184 · exportarBancoCsv:226 · leerCsv:235 · OpcionesImportacionᵗ:269 · bancoDeListaPrecios:292 · ArchivoBancoᵗ:325 · ResultadoBancoᵗ:330 · leerArchivoBanco:345
+
 ### `src/io/compacto.ts` · 455 líneas
 Formato de carga compacto (.exp.txt): un archivo de texto corto, legible y fácil de escribir a mano
 ResultadoCompactoᵗ:21 · leerCompacto:107 · escribirCompacto:369 · catalogoCompacto:446
@@ -286,6 +294,10 @@ metaPorDefecto:10 · entidadVacia:47 · responsableVacio:51 · AVISO_DEFECTO:55 
 ### `src/ui/App.tsx` · 442 líneas
 esPlantillaDeCarga:20 · App:39 · Aplicacion:82
 
+### `src/ui/BancoDialogos.tsx` · 268 líneas
+Ventanas del banco de datos: importar con revisión de fusión, actualizar precios del proyecto, agregar insumos y partidas del banco.
+resumenFila:20 · Fusion:31 · ImportarAlBanco:111 · ActualizarPrecios:156 · AgregarInsumosBanco:215 · agregarAnalisis:257
+
 ### `src/ui/Barrera.tsx` · 31 líneas
 Barrera de errores: si un módulo falla, el resto del programa sigue y el trabajo no se pierde.
 Barrera:6
@@ -298,9 +310,9 @@ Grupo:17 · B:26 · Menu:36 · Cinta:80
 Versiones del proyecto abierto: puntos de restauración automáticos (uno por día de trabajo) y manuales, y bitácora de cambios.
 Copias:11
 
-### `src/ui/Dialogos.tsx` · 312 líneas
+### `src/ui/Dialogos.tsx` · 313 líneas
 Ventanas de la barra de herramientas: biblioteca, búsqueda, calculadoras, nuevo proyecto y atajos.
-Dialogos:11 · Biblioteca:26 · Buscar:68 · CalculadoraHH:121 · CalculadoraCuadrilla:181 · NuevoProyecto:255 · Atajos:280
+Dialogos:13 · Biblioteca:29 · Buscar:69 · CalculadoraHH:122 · CalculadoraCuadrilla:182 · NuevoProyecto:256 · Atajos:281
 
 ### `src/ui/VistaTabla.tsx` · 99 líneas
 Muestra en pantalla las mismas tablas que van a Excel y PDF.
@@ -310,13 +322,17 @@ VistaTabla:6 · VistaDocumento:43 · BloqueVista:51
 Acciones compartidas por la barra de herramientas, los menús y los módulos.
 generarArchivo:16 · accionesPartida:26
 
-### `src/ui/almacen.ts` · 353 líneas
+### `src/ui/almacen.ts` · 371 líneas
 Almacén local de proyectos (IndexedDB del navegador, con respaldo en localStorage).
-ResumenProyectoᵗ:6 · RegistroProyectoᵗ:21 · DIAS_PAPELERA:31 · Respaldoᵗ:33 · nuevoId:48 · resumir:50 · modoAlmacen:120 · listarProyectos:130 · leerProyecto:135 · guardarRegistro:141 · guardarProyecto:150 · crearProyecto:182 · duplicarProyecto:186 · archivarProyecto:197 · eliminarProyecto:204 · listarPapelera:211 · diasEnPapelera:221 · restaurarDePapelera:223 · eliminarDefinitivo:231 · ultimoAbierto:239 · recordarUltimo:247 · proyectoV1:257 · olvidarV1:266 · respaldoCompleto:274 · restaurarRespaldo:280 · CopiaProyectoᵗ:295 · listarCopias:310 · crearCopia:317 · eliminarCopia:329 · avisarGuardado:341 · alGuardarEnOtraPestana:346
+ResumenProyectoᵗ:6 · RegistroProyectoᵗ:21 · DIAS_PAPELERA:31 · Respaldoᵗ:33 · nuevoId:48 · resumir:50 · abrirDb:71 · tx:99 · modoAlmacen:127 · listarProyectos:137 · leerProyecto:142 · guardarRegistro:148 · guardarProyecto:157 · crearProyecto:189 · duplicarProyecto:193 · archivarProyecto:204 · eliminarProyecto:211 · listarPapelera:218 · diasEnPapelera:228 · restaurarDePapelera:230 · eliminarDefinitivo:238 · ultimoAbierto:246 · recordarUltimo:254 · proyectoV1:264 · olvidarV1:273 · respaldoCompleto:281 · restaurarRespaldo:287 · todasLasCopias:305 · CopiaProyectoᵗ:313 · listarCopias:328 · crearCopia:335 · eliminarCopia:347 · avisarGuardado:359 · alGuardarEnOtraPestana:364
 
 ### `src/ui/arbol.ts` · 165 líneas
 Operaciones sobre el árbol de partidas (títulos y partidas) con códigos jerárquicos.
 hijos:11 · descendientes:15 · siguienteCodigo:19 · cambiarPrefijo:40 · agregarTitulo:47 · ultimaHojaAntes:59 · agregarPartida:64 · eliminar:85 · mover:98 · renumerar:115 · duplicar:129 · aumentarNivel:142 · disminuirNivel:154
+
+### `src/ui/bancoAlmacen.ts` · 67 líneas
+Almacén del banco de datos en el navegador (IndexedDB, almacén `banco`, fuera de los proyectos) con puntos de restauración.
+PuntoBancoᵗ:9 · leerBanco:20 · guardarBanco:33 · alCambiarBanco:43 · listarPuntos:56 · restaurarPunto:64
 
 ### `src/ui/componentes.tsx` · 417 líneas
 parsearNumero:6 · EntradaNumero:29 · EntradaTexto:79 · AreaTexto:111 · Campo:132 · Pestanas:142 · Insignia:154 · Modal:158 · UMBRAL_VIRTUAL:183 · useFilasVirtuales:190 · Espaciador:233 · Columnaᵗ:244 · TablaEditable:273 · IconoCerrar:395 · IconoQuitar:398 · IconoMas:401 · IconoArriba:404 · IconoAbajo:407 · Marca:410
@@ -329,9 +345,9 @@ useControl:8 · opcionesPartidas:18 · opcionesFrentes:22 · opciones:26 · pct:
 Puente con la app de escritorio (Electron, carpeta electron/). En el navegador no existe y nada cambia.
 ComandoEscritorioᵗ:5 · InfoPestanaᵗ:15 · escritorio:33 · parametrosInicio:37 · ApiPaginaᵗ:48 · publicarApiPagina:55
 
-### `src/ui/estado.ts` · 246 líneas
+### `src/ui/estado.ts` · 247 líneas
 Estado del proyecto abierto: edición inmutable (immer), deshacer/rehacer y autoguardado en el almacén local.
-Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:160 · descargar:184 · elegirArchivos:196 · elegirArchivo:207 · leerLogo:218
+Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:160 · descargar:185 · elegirArchivos:197 · elegirArchivo:208 · leerLogo:219
 
 ### `src/ui/graficos.tsx` · 467 líneas
 Gráficos SVG livianos para los módulos de control (sin librerías externas).
@@ -346,6 +362,10 @@ Lanza trabajos pesados (exportar, Monte Carlo) en un web worker para que la pant
 Trabajoᵗ:15 · enSegundoPlano:21
 
 ## Interfaz: módulos (una pantalla por archivo) — `src/ui/modulos/`
+
+### `src/ui/modulos/Banco.tsx` · 341 líneas
+Banco de datos (fuera de los proyectos): insumos, precios con fecha y fuente, análisis, cuadrillas, plantillas y proveedores;
+useBanco:24 · ModBanco:39 · Insumos:104 · Historial:132 · Precios:155 · Analisis:196 · Cuadrillas:217 · Plantillas:235 · Proveedores:272 · Puntos:304
 
 ### `src/ui/modulos/Calidad.tsx` · 363 líneas
 Plan de calidad ISO 9001: puntos de inspección por partida, protocolos con firma de liberación, productos no conformes
@@ -375,8 +395,8 @@ ModExportar:9
 ### `src/ui/modulos/GastosGenerales.tsx` · 103 líneas
 ModGG:7
 
-### `src/ui/modulos/Insumos.tsx` · 214 líneas
-celda:17 · leerListaPrecios:29 · ModInsumos:47
+### `src/ui/modulos/Insumos.tsx` · 220 líneas
+celda:18 · leerListaPrecios:30 · ModInsumos:48
 
 ### `src/ui/modulos/Logistica.tsx` · 246 líneas
 Kanban de materiales: tablero por estados, stock mínimo y punto de pedido, alertas y enlace con Last Planner.
@@ -399,9 +419,9 @@ Gantt:9 · ModPrograma:70
 Configuración general del proyecto: datos que se copian solos a carátulas, encabezados, pies y formatos.
 ModProyecto:14 · SelectorLogo:209 · FichaEntidad:241 · FichaResponsable:269 · FichaDocumento:285 · FichaTextos:321 · VistaPrevia:349
 
-### `src/ui/modulos/Proyectos.tsx` · 231 líneas
+### `src/ui/modulos/Proyectos.tsx` · 245 líneas
 Panel de proyectos: crear, abrir, duplicar, archivar, restaurar, eliminar, exportar y respaldar.
-ModProyectos:18 · Papelera:190
+ModProyectos:21 · Papelera:204
 
 ### `src/ui/modulos/Resumen.tsx` · 124 líneas
 Resumen del proyecto: indicadores, gráficos y puntos de atención calculados con engine/analisis.ts.
@@ -425,13 +445,17 @@ ModValidacion:30 · ObservacionesOrigen:90 · Integridad:146
 Ingeniería de valor y Target Value Design: costo meta por título, alternativas con índice de valor, matriz de
 ModValor:25 · Metas:62 · opcionesAmbito:153 · Alternativas:157 · Matriz:285
 
-### `src/ui/modulos/registro.ts` · 61 líneas
+### `src/ui/modulos/registro.ts` · 63 líneas
 Registro único de módulos. Para agregar uno:
-ItemNavᵗ:32 · NAV:35 · MODULOS:37
+ItemNavᵗ:33 · NAV:36 · MODULOS:38
 
 ## Línea de comandos — `cli/`
 
-### `cli/expediente.ts` · 291 líneas
+### `cli/banco.ts` · 131 líneas
+Comandos de consola del banco de datos: expediente banco resumen|inicial|importar|exportar|enviar|actualizar-precios.
+AYUDA_BANCO:17 · comandoBanco:58
+
+### `cli/expediente.ts` · 293 líneas
 Línea de comandos de Expediente Pro.
 
 ## App de escritorio — `electron/`
@@ -448,7 +472,7 @@ Puente de la barra de pestañas (pestanas.html) con la ventana.
 
 ## Herramientas — `scripts/`
 
-### `scripts/e2e.ts` · 157 líneas
+### `scripts/e2e.ts` · 176 líneas
 Pruebas de extremo a extremo con Playwright sobre dist/index.html (las corre `npm run verificar`).
 
 ### `scripts/extension.mjs` · 44 líneas
@@ -461,6 +485,9 @@ Genera docs/MAPA.md: qué hace cada archivo y en qué línea está cada función
 Prueba en el navegador UN solo módulo (o varios) sin recorrer todo el programa.
 
 ## Pruebas — `tests/`
+
+### `tests/banco.test.ts` · 144 líneas
+Versión 2.8 (etapa 2 del plan 3.0): banco de datos, sus formatos de intercambio, la fusión y el uso desde el proyecto.
 
 ### `tests/cimientos.test.ts` · 147 líneas
 Versión 2.7 (etapa 1 del plan 3.0): esquema y migraciones, estructura del archivo, bitácora, cronograma incremental y registro de exportadores.

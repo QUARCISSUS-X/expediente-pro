@@ -68,20 +68,27 @@ export function resumir(p: Proyecto, r?: Resultados): ResumenProyecto {
 
 let dbPromesa: Promise<IDBDatabase | null> | null = null;
 
-function abrirDb(): Promise<IDBDatabase | null> {
+export function abrirDb(): Promise<IDBDatabase | null> {
   if (dbPromesa) return dbPromesa;
   dbPromesa = new Promise((resolve) => {
     try {
       if (typeof indexedDB === 'undefined') return resolve(null);
-      const req = indexedDB.open(DB, 2);
+      const req = indexedDB.open(DB, 3);
       req.onupgradeneeded = () => {
         const db = req.result;
         if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
         if (!db.objectStoreNames.contains(COPIAS)) db.createObjectStore(COPIAS, { keyPath: 'id' }).createIndex('proyectoId', 'proyectoId');
+        // 2.8: banco de datos (fuera de los proyectos) y sus puntos de restauración
+        for (const a of ['banco', 'banco-puntos']) if (!db.objectStoreNames.contains(a)) db.createObjectStore(a, { keyPath: 'id' });
       };
-      req.onsuccess = () => resolve(req.result);
+      req.onsuccess = () => {
+        // si otra pestaña abre una versión más nueva del programa, esta suelta la base para que pueda actualizarse
+        req.result.onversionchange = () => req.result.close();
+        resolve(req.result);
+      };
       req.onerror = () => resolve(null);
-      req.onblocked = () => resolve(null);
+      // otra pestaña con una versión anterior todavía tiene la base abierta: se espera un poco antes de usar el respaldo
+      req.onblocked = () => window.setTimeout(() => resolve(null), 6000);
     } catch {
       resolve(null);
     }
@@ -89,7 +96,7 @@ function abrirDb(): Promise<IDBDatabase | null> {
   return dbPromesa;
 }
 
-function tx<T>(db: IDBDatabase, modo: IDBTransactionMode, f: (s: IDBObjectStore) => IDBRequest<T>, almacen = STORE): Promise<T> {
+export function tx<T>(db: IDBDatabase, modo: IDBTransactionMode, f: (s: IDBObjectStore) => IDBRequest<T>, almacen = STORE): Promise<T> {
   return new Promise((resolve, reject) => {
     const t = db.transaction(almacen, modo);
     const req = f(t.objectStore(almacen));
@@ -277,16 +284,27 @@ export async function respaldoCompleto(): Promise<Respaldo> {
 }
 
 /** Restaura un respaldo: los proyectos con un id ya existente se agregan como copia. */
-export async function restaurarRespaldo(r: Respaldo): Promise<number> {
+export async function restaurarRespaldo(r: Respaldo, copias: CopiaProyecto[] = []): Promise<number> {
   if (r?.formato !== 'expediente-pro-respaldo' || !Array.isArray(r.proyectos)) throw new Error('El archivo no es un respaldo de Expediente Pro.');
   const existentes = new Set((await todos()).map((x) => x.id));
+  const nuevoDe = new Map<string, string>();
   let n = 0;
   for (const reg of r.proyectos) {
     const id = existentes.has(reg.id) ? nuevoId() : reg.id;
+    nuevoDe.set(reg.id, id);
     await guardarRegistro({ ...reg, id, proyecto: migrarProyecto(reg.proyecto) });
     n++;
   }
+  // versiones de los proyectos restaurados (respaldo .epdb), con el identificador nuevo si cambió
+  const db = await abrirDb();
+  if (db) for (const c of copias) if (nuevoDe.has(c.proyectoId)) await tx(db, 'readwrite', (s) => s.put({ ...c, id: `${c.id}-r${Date.now().toString(36)}`, proyectoId: nuevoDe.get(c.proyectoId)! }), COPIAS);
   return n;
+}
+
+/** Todas las versiones guardadas (para el respaldo completo .epdb). */
+export async function todasLasCopias(): Promise<CopiaProyecto[]> {
+  const db = await abrirDb();
+  return db ? tx<CopiaProyecto[]>(db, 'readonly', (s) => s.getAll() as IDBRequest<CopiaProyecto[]>, COPIAS) : [];
 }
 
 // ------------------------------------------------------------ puntos de restauración

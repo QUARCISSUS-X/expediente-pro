@@ -36,6 +36,7 @@ archivos grandes completos:
 | **Resumen del proyecto** (indicadores, ABC, Pareto, curva S, alertas) | `engine/analisis.ts` | `ui/modulos/Resumen.tsx` | Informe ejecutivo PDF y Reporte gerencial Excel: `export/gerencial.ts` | `"análisis gerencial"` |
 | **Integridad de datos** (referencias rotas, repetidos, números no válidos) | `engine/integridad.ts` (`recorrer`) | `ui/modulos/Validacion.tsx` (sección Integridad) | Hoja Consistencia del reporte gerencial | `"integridad de datos"` |
 | Extensión de navegador (Firefox, Chrome/Edge) | — | misma interfaz; `extension/` (manifiesto base, fondo, íconos) y `scripts/extension.mjs` | — | `web-ext lint --source-dir dist-ext-firefox` |
+| **Banco de datos** (insumos, precios, análisis, cuadrillas, plantillas, proveedores; fusión e intercambio) | `engine/banco.ts` | `ui/modulos/Banco.tsx`, `ui/BancoDialogos.tsx` (fusión, actualizar precios, agregar del banco), almacén `ui/bancoAlmacen.ts`; formatos `io/banco.ts` (.epdb, Excel, CSV, listas externas); consola `cli/banco.ts` | — | `banco.test.ts` |
 | Versiones del proyecto, papelera y bitácora | `engine/bitacora.ts` | `ui/almacen.ts` (IndexedDB, copias, papelera, aviso entre pestañas), `ui/Copias.tsx`, `ui/modulos/Proyectos.tsx` | — | `cimientos.test.ts` |
 | Archivo de proyecto: esquema, migraciones y revisión al importar | `io/migrar.ts`, `io/migraciones/NN-*.ts`, `io/estructura.ts` | aviso de solo lectura en `ui/App.tsx` | — | `"esquema versionado"`, `"estructura del archivo"` |
 
@@ -52,7 +53,8 @@ Piezas comunes (solo si la mejora las necesita):
   Las funciones que arman cada archivo siguen en `export/paquete.ts`.
 - Trabajo pesado (exportar, Monte Carlo): `export/trabajador.ts` (web worker) y `ui/trabajo.ts` (`enSegundoPlano`, con respaldo en la página).
 - Tablas largas: `useFilasVirtuales` y `Espaciador` en `ui/componentes.tsx` (más de 300 filas: solo las visibles).
-- Comandos de consola: `cli/expediente.ts` (switch de `main` y texto de ayuda).
+- Comandos de consola: `cli/expediente.ts` (switch de `main` y texto de ayuda); los del banco en `cli/banco.ts`.
+- `data/catalogo.ts` y `data/biblioteca.ts` son el contenido inicial del banco (`bancoInicial`); la biblioteca de partidas de la interfaz lee el banco.
 - Si una pantalla falla, `ui/Barrera.tsx` la aísla; el resto del programa sigue.
 
 ## Cómo agregar una función nueva (receta)

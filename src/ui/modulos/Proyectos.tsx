@@ -3,10 +3,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { fechaCorta, fmt } from '../../engine/util';
 import { MIME } from '../../export/paquete';
 import { leerJson } from '../../io/estructura';
+import { escribirEpdb, leerEpdb, type ResultadoBanco } from '../../io/banco';
+import { Fusion } from '../BancoDialogos';
+import { leerBanco } from '../bancoAlmacen';
 import { conEsquema } from '../../io/migrar';
 import {
   archivarProyecto, DIAS_PAPELERA, diasEnPapelera, duplicarProyecto, eliminarDefinitivo, eliminarProyecto, leerProyecto, listarPapelera, listarProyectos, modoAlmacen,
-  respaldoCompleto, restaurarDePapelera, restaurarRespaldo, type RegistroProyecto,
+  respaldoCompleto, restaurarDePapelera, restaurarRespaldo, todasLasCopias, type CopiaProyecto, type RegistroProyecto,
 } from '../almacen';
 import { Insignia, Modal, Pestanas } from '../componentes';
 import { escritorio } from '../escritorio';
@@ -46,17 +49,27 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
     if (!r) return;
     descargar(`${(r.proyecto.meta.codigo || 'proyecto').replace(/[^\w.-]+/g, '_')}.expediente.json`, JSON.stringify(conEsquema(r.proyecto), null, 2), MIME.json);
   };
+  // respaldo completo: un .epdb con los proyectos, sus versiones y el banco de datos
   const respaldo = async () => {
     const r = await respaldoCompleto();
-    descargar(`Respaldo_Expediente_Pro_${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(r), MIME.json);
-    ctx.avisar(`Respaldo descargado con ${r.proyectos.length} proyecto(s).`);
+    const copias = (await todasLasCopias()).filter((c) => r.proyectos.some((x) => x.id === c.proyectoId));
+    descargar(`Respaldo_Expediente_Pro_${new Date().toISOString().slice(0, 10)}.epdb`, await escribirEpdb({ banco: await leerBanco(), proyectos: r.proyectos, copias }), 'application/zip');
+    ctx.avisar(`Respaldo descargado: ${r.proyectos.length} proyecto(s), ${copias.length} versión(es) y el banco de datos.`);
   };
+  const [bancoRespaldo, setBancoRespaldo] = useState<ResultadoBanco | null>(null);
   const restaurar = async () => {
-    const f = await elegirArchivo('.json');
+    const f = await elegirArchivo('.epdb,.json');
     if (!f) return;
     try {
-      const n = await restaurarRespaldo(leerJson(await f.text(), f.name) as never);
-      ctx.avisar(`Se restauraron ${n} proyecto(s).`);
+      if (/\.epdb$/i.test(f.name)) {
+        const c = await leerEpdb(new Uint8Array(await f.arrayBuffer()));
+        const n = c.proyectos ? await restaurarRespaldo({ formato: 'expediente-pro-respaldo', version: 1, fecha: c.manifiesto.fecha, proyectos: c.proyectos as RegistroProyecto[] }, (c.copias ?? []) as CopiaProyecto[]) : 0;
+        ctx.avisar(`Se restauraron ${n} proyecto(s). Revise ahora qué entra del banco de datos del respaldo.`);
+        setBancoRespaldo({ banco: c.banco, avisos: [], origen: `Banco del respaldo ${f.name}` });
+      } else {
+        const n = await restaurarRespaldo(leerJson(await f.text(), f.name) as never);
+        ctx.avisar(`Se restauraron ${n} proyecto(s).`);
+      }
       refrescar();
     } catch (e) {
       ctx.avisar((e as Error).message, true);
@@ -90,8 +103,8 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
         />
         <span className="separador" />
         <input className="entrada" style={{ width: 280 }} placeholder="Buscar por nombre, código o cliente…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Buscar proyecto" />
-        <button className="boton chico" onClick={respaldo} title="Descargar todos los proyectos en un archivo">Respaldo</button>
-        <button className="boton chico" onClick={restaurar} title="Agregar los proyectos de un archivo de respaldo">Restaurar respaldo</button>
+        <button className="boton chico" onClick={respaldo} title="Descargar un .epdb con todos los proyectos, sus versiones y el banco de datos">Respaldo</button>
+        <button className="boton chico" onClick={restaurar} title="Agregar los proyectos de un respaldo (.epdb o .json de versiones anteriores)">Restaurar respaldo</button>
       </div>
 
       {filtro === 'papelera' ? (
@@ -155,6 +168,7 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
         {lista?.length ?? 0} proyecto(s) · Almacenamiento: {modo === 'indexeddb' ? 'base de datos del navegador (IndexedDB)' : modo === 'localstorage' ? 'almacenamiento local limitado (localStorage); descargue respaldos con frecuencia' : '…'}. {escritorio ? 'Los proyectos de la app de escritorio son independientes de los del navegador: para pasarlos de uno a otro use Respaldo y Restaurar respaldo.' : 'Borrar los datos del navegador borra los proyectos: guarde respaldos.'}
       </p>
 
+      {bancoRespaldo && <Fusion ctx={ctx} entrante={bancoRespaldo} titulo="Banco de datos del respaldo" alCerrar={() => setBancoRespaldo(null)} />}
       {borrar && (
         <Modal
           titulo="Eliminar proyecto"

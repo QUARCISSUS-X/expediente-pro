@@ -162,6 +162,7 @@ export type ModuloId =
   | 'resumen'
   | 'proyecto'
   | 'tdr'
+  | 'banco'
   | 'presupuesto'
   | 'insumos'
   | 'gg'
