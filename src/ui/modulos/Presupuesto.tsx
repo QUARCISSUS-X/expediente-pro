@@ -191,7 +191,10 @@ function DetallePartida({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
   return (
     <div className="panel">
       <div className="panel-cabecera">
-        <div className="codigo">Partida {pt.codigo}</div>
+        <div className="fila-flex" style={{ justifyContent: 'space-between' }}>
+          <div className="codigo">Partida {pt.codigo}</div>
+          <button className="boton chico" onClick={() => ctx.abrirFicha(pt.id)} title="Todo lo de esta partida: avance, cambios, restricciones, calidad y materiales">Ficha de la partida</button>
+        </div>
         <div className="rejilla" style={{ gridTemplateColumns: '1fr 90px', marginTop: 4 }}>
           <Campo etiqueta="Descripción">
             <EntradaTexto valor={pt.descripcion} alCambiar={(v) => upd((x) => (x.descripcion = v))} />

@@ -177,8 +177,8 @@ Al unir el PR a `main`, el release con el instalador, el portable, el ZIP y las 
 |---|---|---|---|
 | 1 · Cimientos | 2.7 | hecha | #8 |
 | 2 · Banco de datos | 2.8 | hecha | #9 |
-| 3 · Presupuesto avanzado | 2.9 | hecha | etapa-3 |
-| 4 · Integración de apartados | 2.10 | pendiente | — |
+| 3 · Presupuesto avanzado | 2.9 | hecha | #10 |
+| 4 · Integración de apartados | 2.10 | hecha | etapa-4 |
 | 5 · Reportes de obra y portafolio | 2.11 | pendiente | — |
 | 6 · Plataformas | 2.12 | pendiente | — |
 | 7 · Cierre | 3.0 | pendiente | — |

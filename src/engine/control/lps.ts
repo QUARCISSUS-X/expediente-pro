@@ -1,5 +1,6 @@
 // Last Planner System: plan maestro, fases, lookahead, restricciones, plan semanal, PPC.
 // Parte del motor de control (src/engine/control.ts reexporta todo).
+import { todasLasRestricciones } from '../integracion';
 import { type Resultados } from '../types';
 import { num, redondear, sumarDias, uid } from '../util';
 import { calendarioDe, hoyIso, lunesDe, retrocederLaborables } from './fechas';
@@ -27,6 +28,7 @@ export function lookahead(r: Resultados, c: Control, desde: string, nSemanas: nu
   const finVentana = sumarDias(lunes[lunes.length - 1], 6);
   const prog = r.programa;
   const filas: FilaLookahead[] = [];
+  const todas = todasLasRestricciones(r, c, hoy); // registradas + automáticas (kanban, calidad, RFI)
   for (const a of prog.actividades) {
     if (!a.inicio || a.fin < lunes[0] || a.inicio > finVentana) continue;
     const semanas = lunes.map((l) => {
@@ -38,7 +40,7 @@ export function lookahead(r: Resultados, c: Control, desde: string, nSemanas: nu
       }
       return a.duracion > 0 ? redondear((a.metrado * dias) / a.duracion, 2) : 0;
     });
-    const rs = c.restricciones.filter((x) => x.partidaId === a.partidaId && !x.liberada);
+    const rs = todas.filter((x) => x.partidaId === a.partidaId && !x.liberada);
     filas.push({
       partidaId: a.partidaId,
       codigo: a.codigo,

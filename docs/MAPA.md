@@ -8,9 +8,9 @@ Generado con `npm run mapa` (no editar a mano). Cada símbolo indica su línea: 
 Análisis gerencial del expediente: costo por título, composición, clasificación ABC, curva S, índices y alertas.
 ClaseAbcᵗ:6 · ItemAbcᵗ:8 · Abcᵗ:21 · ParteCostoᵗ:27 · Analisisᵗ:34 · clasificarAbc:66 · analizar:88
 
-### `src/engine/banco.ts` · 408 líneas
+### `src/engine/banco.ts` · 410 líneas
 Banco de datos propio (fuera de los proyectos): insumos, precios con fecha y fuente, análisis, cuadrillas, plantillas y
-FuentePrecioᵗ:12 · FUENTES_PRECIO:13 · InsumoBancoᵗ:21 · PrecioBancoᵗ:33 · AnalisisBancoᵗ:45 · CuadrillaBancoᵗ:57 · TipoPlantillaᵗ:64 · PlantillaBancoᵗ:65 · ProveedorBancoᵗ:73 · Bancoᵗ:84 · Tablaᵗ:93 · TABLAS:94 · bancoVacio:103 · claveFila:106 · normalizarBanco:124 · resumenBanco:148 · canonico:153 · sumaComprobacion:163 · ordenarBanco:173 · bancoInicial:184 · EstadoFilaᵗ:203 · Decisionᵗ:204 · FilaComparadaᵗ:206 · Comparacionᵗ:215 · compararBancos:224 · fusionarBancos:257 · historialPrecio:278 · precioVigente:284 · DiferenciaPrecioᵗ:289 · compararPrecios:302 · aplicarPrecios:317 · clavePartida:333 · OpcionesEnvioᵗ:338 · bancoDesdeProyecto:347 · insumoDesdeBanco:369 · completarInsumos:384 · partidaTipoDe:396 · nuevoCodigoBanco:401
+FuentePrecioᵗ:12 · FUENTES_PRECIO:13 · InsumoBancoᵗ:21 · PrecioBancoᵗ:33 · AnalisisBancoᵗ:45 · CuadrillaBancoᵗ:57 · TipoPlantillaᵗ:64 · PlantillaBancoᵗ:65 · ProveedorBancoᵗ:73 · Bancoᵗ:84 · Tablaᵗ:93 · TABLAS:94 · bancoVacio:103 · claveFila:106 · normalizarBanco:124 · resumenBanco:148 · canonico:153 · sumaComprobacion:163 · ordenarBanco:173 · bancoInicial:184 · EstadoFilaᵗ:203 · Decisionᵗ:204 · FilaComparadaᵗ:206 · Comparacionᵗ:215 · compararBancos:224 · fusionarBancos:257 · historialPrecio:278 · precioVigente:284 · DiferenciaPrecioᵗ:289 · compararPrecios:302 · aplicarPrecios:317 · clavePartida:335 · OpcionesEnvioᵗ:340 · bancoDesdeProyecto:349 · insumoDesdeBanco:371 · completarInsumos:386 · partidaTipoDe:398 · nuevoCodigoBanco:403
 
 ### `src/engine/bitacora.ts` · 26 líneas
 Bitácora de cambios del proyecto: cada edición con etiqueta queda con su fecha (se guardan las últimas 500).
@@ -24,9 +24,9 @@ Cabeceraᵗ:5 · nombreEntidad:31 · ubicacionCorta:35 · ubicacionLarga:40 · d
 Plan de calidad (ISO 9001): plan de puntos de inspección por partida, protocolos con firma de liberación,
 TipoPuntoᵗ:8 · TIPOS_PUNTO:9 · PuntoInspeccionᵗ:16 · ResultadoProtocoloᵗ:30 · RESULTADOS_PROTOCOLO:31 · FirmaProtocoloᵗ:38 · Protocoloᵗ:45 · DisposicionPncᵗ:59 · DISPOSICIONES_PNC:60 · EstadoPncᵗ:68 · Pncᵗ:71 · Calidadᵗ:91 · calidadVacia:97 · normalizarCalidad:99 · firmasPorDefecto:109 · protocoloLiberado:116 · puntosSugeridos:124 · LiberacionFrenteᵗ:147 · liberacionPorFrente:159 · resumenCalidad:183 · dmaicDesdePnc:203 · siguienteNumero:226
 
-### `src/engine/ccpm.ts` · 226 líneas
+### `src/engine/ccpm.ts` · 227 líneas
 Cadena crítica (CCPM, Goldratt): duraciones agresivas, colchón del proyecto, colchones de alimentación y gráfico de fiebre.
-MetodoColchonᵗ:8 · ConfigCcpmᵗ:10 · configCcpmVacia:15 · normalizarConfigCcpm:16 · NodoCcpmᵗ:21 · ActividadCcpmᵗ:29 · ColchonAlimentacionᵗ:42 · Ccpmᵗ:51 · tamanoColchon:62 · duracionAgresiva:67 · calcularCcpm:79 · ccpmDePrograma:149 · ZonaFiebreᵗ:159 · limiteAmarillo:161 · limiteRojo:162 · zonaFiebre:163 · PuntoFiebreᵗ:169 · avancePlanCadena:181 · diaPlanParaAvance:190 · puntosFiebre:204
+MetodoColchonᵗ:8 · ConfigCcpmᵗ:10 · configCcpmVacia:16 · normalizarConfigCcpm:17 · NodoCcpmᵗ:22 · ActividadCcpmᵗ:30 · ColchonAlimentacionᵗ:43 · Ccpmᵗ:52 · tamanoColchon:63 · duracionAgresiva:68 · calcularCcpm:80 · ccpmDePrograma:150 · ZonaFiebreᵗ:160 · limiteAmarillo:162 · limiteRojo:163 · zonaFiebre:164 · PuntoFiebreᵗ:170 · avancePlanCadena:182 · diaPlanParaAvance:191 · puntosFiebre:205
 
 ### `src/engine/compute.ts` · 238 líneas
 Núcleo de costos: metrados, APU, presupuesto, gastos generales, pie e insumos.
@@ -55,13 +55,17 @@ ErrorExpresion:4 · evaluarExpresion:28 · esFormula:82 · formulaExcel:88
 Punto de entrada del motor: calcula todos los entregables a partir del Proyecto.
 calcularFlete:12 · piesSubpresupuestos:73 · mismoCalculo:111 · recalcular:120 · calcularTodo:125
 
+### `src/engine/integracion.ts` · 187 líneas
+Integración de apartados: un dato se registra una vez y los demás módulos lo leen. Metrado vigente (con los cambios
+metradosVigentes:14 · montoDeCambio:26 · RequerimientoMaterialᵗ:35 · requerimientoMateriales:47 · RestriccionAutoᵗ:81 · restriccionesAutomaticas:88 · todasLasRestricciones:120 · metradoLiberado:130 · contingenciaRiesgo:145 · Pendienteᵗ:154 · centroPendientes:164
+
 ### `src/engine/integridad.ts` · 192 líneas
 Integridad de los datos del proyecto: referencias rotas, identificadores repetidos y números no válidos.
 ProblemaIntegridadᵗ:7 · revisarIntegridad:171 · repararIntegridad:179 · resumenIntegridad:187
 
-### `src/engine/kanban.ts` · 246 líneas
+### `src/engine/kanban.ts` · 249 líneas
 Kanban de materiales: tarjetas desde la relación de insumos y el cronograma, stock mínimo, punto de pedido,
-EstadoKanbanᵗ:7 · ESTADOS_KANBAN:9 · recibido:17 · TarjetaKanbanᵗ:19 · ParametroMaterialᵗ:36 · Kanbanᵗ:41 · kanbanVacio:47 · normalizarKanban:49 · tarjetasDesdeCronograma:71 · generarTarjetas:115 · enlazarRestriccion:127 · moverTarjeta:135 · eliminarTarjeta:147 · AlertaTarjetaᵗ:153 · alertaTarjeta:156 · AnalisisMaterialᵗ:164 · analisisMateriales:181 · resumenKanban:233
+EstadoKanbanᵗ:8 · ESTADOS_KANBAN:10 · recibido:18 · TarjetaKanbanᵗ:20 · ParametroMaterialᵗ:38 · Kanbanᵗ:43 · kanbanVacio:49 · normalizarKanban:51 · tarjetasDesdeCronograma:73 · generarTarjetas:118 · enlazarRestriccion:130 · moverTarjeta:138 · eliminarTarjeta:150 · AlertaTarjetaᵗ:156 · alertaTarjeta:159 · AnalisisMaterialᵗ:167 · analisisMateriales:184 · resumenKanban:236
 
 ### `src/engine/polinomica.ts` · 89 líneas
 Fórmula polinómica según D.S. 011-79-VC:
@@ -75,9 +79,9 @@ Distribucionᵗ:9 · ModoCostoᵗ:10 · EstimacionActividadᵗ:13 · ResumenRies
 Programación: calendario, CPM, periodos y cronogramas derivados.
 Calendario:9 · RedCpmᵗ:62 · construirRed:69 · redDePrograma:93 · PasadasCpmᵗ:97 · pasadasCpm:106 · calcularPrograma:155 · periodoDeFecha:278 · calcularValorizado:298 · distribuirInsumos:337 · calcularDesembolsos:386
 
-### `src/engine/types.ts` · 529 líneas
+### `src/engine/types.ts` · 530 líneas
 Modelo de datos del expediente. Todo el programa se alimenta de un único objeto Proyecto.
-TipoInsumoᵗ:3 · Modoᵗ:4 · TipoPredᵗ:5 · Severidadᵗ:6 · Insumoᵗ:8 · Partidaᵗ:22 · Subpresupuestoᵗ:34 · Subpartidaᵗ:40 · prefijoSubpartida:45 · TipoCambioMonedaᵗ:48 · TipoEscenarioᵗ:54 · Escenarioᵗ:57 · MetradoFilaᵗ:67 · ApuItemᵗ:84 · Apuᵗ:91 · GGItemᵗ:97 · GrupoGGᵗ:110 · Predᵗ:112 · Actividadᵗ:118 · DocKeyᵗ:124 · EntregableTdRᵗ:147 · SeccionesEettᵗ:155 · PlantillaEettᵗ:166 · Logoᵗ:172 · Entidadᵗ:178 · Responsableᵗ:189 · ConfigDocumentoᵗ:196 · TextosEettᵗ:207 · Metaᵗ:215 · TextosMemoriaᵗ:251 · ObservacionOrigenᵗ:260 · OrigenImportacionᵗ:268 · EntradaBitacoraᵗ:277 · Proyectoᵗ:283 · ApuItemCalcᵗ:310 · ApuCalcᵗ:321 · FilaPresupuestoᵗ:331 · Pieᵗ:341 · InsumoTotalᵗ:354 · RelacionInsumosᵗ:361 · GGCalcᵗ:369 · Monomioᵗ:377 · Polinomicaᵗ:384 · ActividadCalcᵗ:392 · Periodoᵗ:413 · Programaᵗ:421 · FilaCronogramaᵗ:433 · Valorizadoᵗ:443 · Desembolsoᵗ:456 · FleteCalcᵗ:466 · Hallazgoᵗ:473 · ReglaResultadoᵗ:481 · EettPartidaᵗ:489 · Resultadosᵗ:496 · PieSubpresupuestoᵗ:523
+TipoInsumoᵗ:3 · Modoᵗ:4 · TipoPredᵗ:5 · Severidadᵗ:6 · Insumoᵗ:8 · Partidaᵗ:23 · Subpresupuestoᵗ:35 · Subpartidaᵗ:41 · prefijoSubpartida:46 · TipoCambioMonedaᵗ:49 · TipoEscenarioᵗ:55 · Escenarioᵗ:58 · MetradoFilaᵗ:68 · ApuItemᵗ:85 · Apuᵗ:92 · GGItemᵗ:98 · GrupoGGᵗ:111 · Predᵗ:113 · Actividadᵗ:119 · DocKeyᵗ:125 · EntregableTdRᵗ:148 · SeccionesEettᵗ:156 · PlantillaEettᵗ:167 · Logoᵗ:173 · Entidadᵗ:179 · Responsableᵗ:190 · ConfigDocumentoᵗ:197 · TextosEettᵗ:208 · Metaᵗ:216 · TextosMemoriaᵗ:252 · ObservacionOrigenᵗ:261 · OrigenImportacionᵗ:269 · EntradaBitacoraᵗ:278 · Proyectoᵗ:284 · ApuItemCalcᵗ:311 · ApuCalcᵗ:322 · FilaPresupuestoᵗ:332 · Pieᵗ:342 · InsumoTotalᵗ:355 · RelacionInsumosᵗ:362 · GGCalcᵗ:370 · Monomioᵗ:378 · Polinomicaᵗ:385 · ActividadCalcᵗ:393 · Periodoᵗ:414 · Programaᵗ:422 · FilaCronogramaᵗ:434 · Valorizadoᵗ:444 · Desembolsoᵗ:457 · FleteCalcᵗ:467 · Hallazgoᵗ:474 · ReglaResultadoᵗ:482 · EettPartidaᵗ:490 · Resultadosᵗ:497 · PieSubpresupuestoᵗ:524
 
 ### `src/engine/util.ts` · 224 líneas
 Utilidades: redondeo, formato, fechas, número a letras.
@@ -121,13 +125,13 @@ RendimientoMedicionᵗ:9 · RendimientoPartidaᵗ:18 · rendimientoMedicion:42 �
 Línea base congelada y cortes de avance.
 crearLineaBase:10
 
-### `src/engine/control/lps.ts` · 167 líneas
+### `src/engine/control/lps.ts` · 169 líneas
 Last Planner System: plan maestro, fases, lookahead, restricciones, plan semanal, PPC.
-FilaLookaheadᵗ:10 · lookahead:25 · compromisosSugeridos:60 · PpcSemanaᵗ:77 · calcularPpc:86 · ItemParetoᵗ:100 · pareto:107 · causasNoCumplimiento:119 · resumenRestricciones:125 · programarFase:137 · hitosDesdeCronograma:154
+FilaLookaheadᵗ:11 · lookahead:26 · compromisosSugeridos:62 · PpcSemanaᵗ:79 · calcularPpc:88 · ItemParetoᵗ:102 · pareto:109 · causasNoCumplimiento:121 · resumenRestricciones:127 · programarFase:139 · hitosDesdeCronograma:156
 
-### `src/engine/control/modelo.ts` · 411 líneas
+### `src/engine/control/modelo.ts` · 416 líneas
 Modelo de datos de Proyecto.control (línea base, cortes, cambios, riesgos, cuaderno, Last Planner, Lean, Six Sigma y v2.5), controlVacio y normalizarControl.
-PartidaBaseᵗ:12 · LineaBaseᵗ:27 · Corteᵗ:42 · TipoCambioᵗ:51 · EstadoCambioᵗ:52 · Cambioᵗ:53 · RespuestaRiesgoᵗ:65 · Riesgoᵗ:66 · TipoRegistroᵗ:79 · RegistroObraᵗ:80 · Hitoᵗ:97 · CompromisoFaseᵗ:107 · TIPOS_RESTRICCION:117 · Restriccionᵗ:118 · CAUSAS_NO_CUMPLIMIENTO:129 · Compromisoᵗ:144 · SemanaLpsᵗ:156 · Frenteᵗ:164 · Medicionᵗ:175 · GrupoTrabajoᵗ:186 · CATEGORIAS_CARTA:187 · CartaBalanceᵗ:203 · TIPOS_PERDIDA:214 · Perdidaᵗ:215 · ItemInspeccionᵗ:226 · Inspeccionᵗ:231 · PLANTILLAS_INSPECCION:241 · CATEGORIAS_6M:276 · Ishikawaᵗ:277 · FaseDmaicᵗ:284 · AccionDmaicᵗ:285 · ProyectoDmaicᵗ:292 · SerieCalidadᵗ:314 · Controlᵗ:324 · controlVacio:352 · normalizarControl:381
+PartidaBaseᵗ:12 · LineaBaseᵗ:27 · Corteᵗ:42 · TipoCambioᵗ:51 · EstadoCambioᵗ:52 · Cambioᵗ:53 · RespuestaRiesgoᵗ:66 · Riesgoᵗ:67 · TipoRegistroᵗ:80 · RegistroObraᵗ:81 · Hitoᵗ:99 · CompromisoFaseᵗ:109 · TIPOS_RESTRICCION:119 · Restriccionᵗ:120 · CAUSAS_NO_CUMPLIMIENTO:131 · Compromisoᵗ:146 · SemanaLpsᵗ:158 · Frenteᵗ:166 · Medicionᵗ:177 · GrupoTrabajoᵗ:188 · CATEGORIAS_CARTA:189 · CartaBalanceᵗ:205 · TIPOS_PERDIDA:216 · Perdidaᵗ:217 · ItemInspeccionᵗ:228 · Inspeccionᵗ:233 · PLANTILLAS_INSPECCION:243 · CATEGORIAS_6M:278 · Ishikawaᵗ:279 · FaseDmaicᵗ:286 · AccionDmaicᵗ:287 · ProyectoDmaicᵗ:294 · SerieCalidadᵗ:316 · Controlᵗ:326 · controlVacio:356 · normalizarControl:385
 
 ### `src/engine/control/recursos.ts` · 63 líneas
 Histograma semanal de horas-hombre y horas-máquina, plan vs. real.
@@ -141,9 +145,9 @@ CartaIMRᵗ:7 · cartaIMR:21 · normalAcumulada:58 · Capacidadᵗ:65 · capacid
 Tablero de indicadores clave de todas las fases.
 Tableroᵗ:19 · calcularTablero:60
 
-### `src/engine/control/valorizaciones.ts` · 111 líneas
+### `src/engine/control/valorizaciones.ts` · 128 líneas
 Valorizaciones mensuales con reajuste por fórmula polinómica, adelantos e IGV.
-Valorizacionᵗ:10 · coeficienteK:31 · calcularValorizaciones:49
+Valorizacionᵗ:11 · coeficienteK:34 · calcularValorizaciones:52
 
 ## Exportadores — `src/export/`
 
@@ -307,8 +311,8 @@ metaPorDefecto:10 · entidadVacia:47 · responsableVacio:51 · AVISO_DEFECTO:55 
 
 ## Interfaz — `src/ui/`
 
-### `src/ui/App.tsx` · 442 líneas
-esPlantillaDeCarga:20 · App:39 · Aplicacion:82
+### `src/ui/App.tsx` · 450 líneas
+esPlantillaDeCarga:22 · App:41 · Aplicacion:84
 
 ### `src/ui/BancoDialogos.tsx` · 268 líneas
 Ventanas del banco de datos: importar con revisión de fusión, actualizar precios del proyecto, agregar insumos y partidas del banco.
@@ -317,6 +321,10 @@ resumenFila:20 · Fusion:31 · ImportarAlBanco:111 · ActualizarPrecios:156 · A
 ### `src/ui/Barrera.tsx` · 31 líneas
 Barrera de errores: si un módulo falla, el resto del programa sigue y el trabajo no se pierde.
 Barrera:6
+
+### `src/ui/BusquedaGlobal.tsx` · 72 líneas
+Búsqueda global (Ctrl+K): partidas, insumos, módulos y acciones en una sola caja; Enter abre lo elegido.
+BusquedaGlobal:16
 
 ### `src/ui/Cinta.tsx` · 141 líneas
 Barra de herramientas tipo cinta (como S10, PowerCost o Delphin Express): Archivo, Edición, Partidas, Herramientas y Reportes.
@@ -329,6 +337,10 @@ Copias:11
 ### `src/ui/Dialogos.tsx` · 313 líneas
 Ventanas de la barra de herramientas: biblioteca, búsqueda, calculadoras, nuevo proyecto y atajos.
 Dialogos:13 · Biblioteca:29 · Buscar:69 · CalculadoraHH:122 · CalculadoraCuadrilla:182 · NuevoProyecto:256 · Atajos:281
+
+### `src/ui/FichaPartida.tsx` · 72 líneas
+Ficha de partida: reúne en un panel todo lo de una partida (metrado, análisis, especificación, actividad, avance,
+FichaPartida:12
 
 ### `src/ui/VistaTabla.tsx` · 99 líneas
 Muestra en pantalla las mismas tablas que van a Excel y PDF.
@@ -361,9 +373,9 @@ useControl:8 · opcionesPartidas:18 · opcionesFrentes:22 · opciones:26 · pct:
 Puente con la app de escritorio (Electron, carpeta electron/). En el navegador no existe y nada cambia.
 ComandoEscritorioᵗ:5 · InfoPestanaᵗ:15 · escritorio:33 · parametrosInicio:37 · ApiPaginaᵗ:48 · publicarApiPagina:55
 
-### `src/ui/estado.ts` · 248 líneas
+### `src/ui/estado.ts` · 251 líneas
 Estado del proyecto abierto: edición inmutable (immer), deshacer/rehacer y autoguardado en el almacén local.
-Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:160 · descargar:186 · elegirArchivos:198 · elegirArchivo:209 · leerLogo:220
+Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:162 · descargar:189 · elegirArchivos:201 · elegirArchivo:212 · leerLogo:223
 
 ### `src/ui/graficos.tsx` · 467 líneas
 Gráficos SVG livianos para los módulos de control (sin librerías externas).
@@ -391,9 +403,9 @@ ModCalidad:22 · Plan:77 · Protocolos:127 · Pncs:225 · Liberacion:329
 Cadena crítica (CCPM): duraciones agresivas, colchón del proyecto, colchones de alimentación y gráfico de fiebre.
 ModCcpm:11
 
-### `src/ui/modulos/Control.tsx` · 601 líneas
+### `src/ui/modulos/Control.tsx` · 662 líneas
 Control de obra (PMBOK): tablero, línea base y avance, valor ganado, valorizaciones, cambios, riesgos, recursos y cuaderno.
-ModControl:19 · SinLineaBase:75 · Tablero:118 · Avance:192 · CurvaControl:292 · ValorGanado:308 · Valorizaciones:348 · Cambios:415 · Riesgos:462 · Recursos:525 · Registros:551
+ModControl:20 · SinLineaBase:76 · Tablero:119 · Avance:193 · CurvaControl:293 · ValorGanado:309 · Valorizaciones:349 · Cambios:427 · Riesgos:475 · Recursos:538 · Registros:564 · PartidasDeCambios:619 · TableroObra:659
 
 ### `src/ui/modulos/Cronogramas.tsx` · 118 líneas
 CurvaS:9 · Histograma:48 · ModCronogramas:83
@@ -401,9 +413,9 @@ CurvaS:9 · Histograma:48 · ModCronogramas:83
 ### `src/ui/modulos/Documentos.tsx` · 99 líneas
 ModDocumentos:11
 
-### `src/ui/modulos/Ejecucion.tsx` · 408 líneas
+### `src/ui/modulos/Ejecucion.tsx` · 427 líneas
 Ejecución con Lean Construction: frentes de trabajo, control de rendimientos, cartas balance, pérdidas e inspecciones 5S.
-ModEjecucion:17 · Frentes:49 · Rendimientos:128 · Cartas:222 · Perdidas:299 · Inspecciones:352
+ModEjecucion:20 · Frentes:52 · Rendimientos:131 · Cartas:230 · Perdidas:307 · Inspecciones:360 · proponerRendimientos:418
 
 ### `src/ui/modulos/Exportar.tsx` · 81 líneas
 ModExportar:9
@@ -414,19 +426,23 @@ ModGG:7
 ### `src/ui/modulos/Insumos.tsx` · 263 líneas
 celda:19 · leerListaPrecios:31 · ModInsumos:49 · TiposCambio:234
 
-### `src/ui/modulos/Logistica.tsx` · 246 líneas
+### `src/ui/modulos/Logistica.tsx` · 292 líneas
 Kanban de materiales: tablero por estados, stock mínimo y punto de pedido, alertas y enlace con Last Planner.
-ModLogistica:20 · Tablero:83 · Materiales:150 · Lista:192
+ModLogistica:23 · Tablero:87 · Materiales:154 · Lista:196 · useProveedores:253 · Requerimiento:260
 
-### `src/ui/modulos/Lps.tsx` · 410 líneas
+### `src/ui/modulos/Lps.tsx` · 446 líneas
 Last Planner System: plan maestro e hitos, planificación por fases (pull), lookahead, restricciones, plan semanal y PPC.
-ModLps:17 · Maestro:54 · Fases:109 · inicioVentana:179 · Lookahead:186 · Restricciones:252 · PlanSemanal:301 · Ppc:382
+ModLps:18 · Maestro:55 · Fases:110 · inicioVentana:180 · Lookahead:187 · Restricciones:253 · RestriccionesAutomaticas:302 · PlanSemanal:337 · Ppc:418
+
+### `src/ui/modulos/Pendientes.tsx` · 60 líneas
+Centro de pendientes: una sola lista con lo que requiere atención en todos los apartados (validación, restricciones,
+ModPendientes:10
 
 ### `src/ui/modulos/Polinomica.tsx` · 67 líneas
 ModPolinomica:5
 
-### `src/ui/modulos/Presupuesto.tsx` · 495 líneas
-ModPresupuesto:21 · PieResumen:134 · DetalleTitulo:160 · DetallePartida:185 · EditorApu:232 · EditorMetrados:358 · EditorPrograma:407 · EditorEett:452
+### `src/ui/modulos/Presupuesto.tsx` · 498 líneas
+ModPresupuesto:21 · PieResumen:134 · DetalleTitulo:160 · DetallePartida:185 · EditorApu:235 · EditorMetrados:361 · EditorPrograma:410 · EditorEett:455
 
 ### `src/ui/modulos/PresupuestoAvanzado.tsx` · 212 líneas
 Presupuesto avanzado (2.9): subpresupuestos con su pie, subpartidas (análisis reutilizables dentro de otros APU) y piezas
@@ -443,13 +459,13 @@ ModProyecto:14 · SelectorLogo:209 · FichaEntidad:241 · FichaResponsable:269 �
 Panel de proyectos: crear, abrir, duplicar, archivar, restaurar, eliminar, exportar y respaldar.
 ModProyectos:21 · Papelera:204
 
-### `src/ui/modulos/Resumen.tsx` · 124 líneas
+### `src/ui/modulos/Resumen.tsx` · 148 líneas
 Resumen del proyecto: indicadores, gráficos y puntos de atención calculados con engine/analisis.ts.
-ModResumen:13
+ModResumen:18 · ResumenExpediente:37
 
-### `src/ui/modulos/Riesgo.tsx` · 260 líneas
+### `src/ui/modulos/Riesgo.tsx` · 300 líneas
 Riesgo de plazo y costo: simulación Monte Carlo / PERT sobre la red CPM del cronograma.
-ModRiesgo:18 · Configuracion:44 · SimulacionVista:97 · Resultados:157 · Estimaciones:215
+ModRiesgo:19 · Configuracion:45 · SimulacionVista:98 · Resultados:159 · Estimaciones:217 · LlevarContingencia:264
 
 ### `src/ui/modulos/Sigma.tsx` · 339 líneas
 Six Sigma / Lean Six Sigma: cartas de control, capacidad de proceso, Pareto, Ishikawa y proyectos DMAIC.
@@ -461,17 +477,17 @@ ModTdr:23
 ### `src/ui/modulos/Validacion.tsx` · 188 líneas
 ModValidacion:30 · ObservacionesOrigen:90 · Integridad:146
 
-### `src/ui/modulos/Valor.tsx` · 351 líneas
+### `src/ui/modulos/Valor.tsx` · 365 líneas
 Ingeniería de valor y Target Value Design: costo meta por título, alternativas con índice de valor, matriz de
-ModValor:25 · Metas:62 · opcionesAmbito:153 · Alternativas:157 · Matriz:285
+ModValor:28 · Metas:65 · opcionesAmbito:156 · Alternativas:160 · Matriz:299
 
 ### `src/ui/modulos/Versiones.tsx` · 172 líneas
 Versiones del presupuesto (oferta, negociado, contractual…): guardar, restaurar, comparar lado a lado por partida, insumo y
 ModVersiones:17
 
-### `src/ui/modulos/registro.ts` · 65 líneas
+### `src/ui/modulos/registro.ts` · 67 líneas
 Registro único de módulos. Para agregar uno:
-ItemNavᵗ:34 · NAV:37 · MODULOS:39
+ItemNavᵗ:35 · NAV:38 · MODULOS:40
 
 ## Línea de comandos — `cli/`
 
@@ -496,7 +512,7 @@ Puente de la barra de pestañas (pestanas.html) con la ventana.
 
 ## Herramientas — `scripts/`
 
-### `scripts/e2e.ts` · 196 líneas
+### `scripts/e2e.ts` · 214 líneas
 Pruebas de extremo a extremo con Playwright sobre dist/index.html (las corre `npm run verificar`).
 
 ### `scripts/extension.mjs` · 44 líneas
@@ -517,6 +533,9 @@ Versión 2.8 (etapa 2 del plan 3.0): banco de datos, sus formatos de intercambio
 Versión 2.7 (etapa 1 del plan 3.0): esquema y migraciones, estructura del archivo, bitácora, cronograma incremental y registro de exportadores.
 
 ### `tests/control.test.ts` · 191 líneas
+
+### `tests/integracion.test.ts` · 131 líneas
+Versión 2.10 (etapa 4 del plan 3.0): integración de apartados — un dato se registra una vez y los demás módulos lo leen.
 
 ### `tests/mejoras.test.ts` · 143 líneas
 Versión 2.6: cálculo incremental, calendario, análisis gerencial, integridad y organización del código.

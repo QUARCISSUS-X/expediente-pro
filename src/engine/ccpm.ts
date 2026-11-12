@@ -10,12 +10,13 @@ export type MetodoColchon = 'mitad' | 'rss';
 export interface ConfigCcpm {
   recortePct: number; // % que se quita a cada duración (la seguridad)
   metodo: MetodoColchon; // 50 % de la seguridad retirada o raíz de la suma de cuadrados
+  colchonDias?: number | null; // colchón del proyecto fijado desde el análisis de riesgo (P80 − P50); vacío = calculado
 }
 
 export const configCcpmVacia = (): ConfigCcpm => ({ recortePct: 50, metodo: 'mitad' });
 export function normalizarConfigCcpm(x: unknown): ConfigCcpm {
   const c = (x && typeof x === 'object' ? x : {}) as Partial<ConfigCcpm>;
-  return { recortePct: Math.min(90, Math.max(0, num(c.recortePct, 50))), metodo: c.metodo === 'rss' ? 'rss' : 'mitad' };
+  return { recortePct: Math.min(90, Math.max(0, num(c.recortePct, 50))), metodo: c.metodo === 'rss' ? 'rss' : 'mitad', ...(num(c.colchonDias) > 0 ? { colchonDias: num(c.colchonDias) } : {}) };
 }
 
 export interface NodoCcpm {
@@ -93,7 +94,7 @@ export function calcularCcpm(nodos: NodoCcpm[], config: ConfigCcpm, duracionCpm?
     const act = predecesorasActivas(red, actual, res.es, res.ef, ag).filter((b) => holg(b) <= 1e-6);
     actual = act.length ? act.reduce((a, b) => (res.ef[b] > res.ef[a] ? b : a)) : -1;
   }
-  const colchonProyecto = tamanoColchon(cadena.map((i) => seg[i]), config.metodo);
+  const colchonProyecto = num(config.colchonDias) > 0 ? num(config.colchonDias) : tamanoColchon(cadena.map((i) => seg[i]), config.metodo);
   // sucesores para detectar los puntos de alimentación
   const suc: number[][] = nodos.map(() => []);
   red.preds.forEach((ps, i) => ps.forEach((pr) => suc[pr.i].push(i)));

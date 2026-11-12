@@ -1,7 +1,10 @@
 // Ingeniería de valor y Target Value Design: costo meta por título, alternativas con índice de valor, matriz de
 // decisión ponderada, seguimiento de la brecha y aplicación de una alternativa aprobada al presupuesto (con deshacer).
 import { useMemo, useState } from 'react';
+import { produce } from 'immer';
 import { hoyIso } from '../../engine/control';
+import { crearEscenario } from '../../engine/escenarios';
+import { calcularTodo } from '../../engine/index';
 import { fmt, num, uid } from '../../engine/util';
 import {
   type Alternativa, aplicarAlternativa, calcularMetas, costoActual, costoAlternativa, deshacerAlternativa, esPartida, indiceValor, nombreAmbito,
@@ -171,6 +174,17 @@ function Alternativas({ ctx }: { ctx: Contexto }) {
     ctx.actualizar((d) => { error = aplicarAlternativa(d, x, antes, hoyIso()); });
     ctx.avisar(error ?? `${x.codigo} aplicada al presupuesto`, !!error);
   };
+  // ingeniería de valor → versiones: la alternativa se guarda como versión nueva (sin tocar el presupuesto) para compararla
+  const comoVersion = (x: Alternativa) => {
+    const antes = costoActual(r, x.ambitoId);
+    let error: string | null = null;
+    const p2 = produce(ctx.proyecto, (d) => { error = aplicarAlternativa(d as never, x, antes, hoyIso()); });
+    if (error) return ctx.avisar(error, true);
+    const e = crearEscenario(p2, calcularTodo(p2), `Con ${x.codigo}: ${x.descripcion}`.slice(0, 80), 'otro', 'Alternativa de ingeniería de valor');
+    ctx.actualizar((d) => { (d.escenarios ??= []).push(e); }, `Versión con la alternativa ${x.codigo}`);
+    ctx.avisar(`Versión «${e.nombre}» guardada: compárela en Versiones del presupuesto.`);
+    ctx.ir('versiones');
+  };
   const deshacer = (x: Alternativa) => {
     if (!window.confirm(`Se devolverá la partida, su APU y sus metrados a como estaban antes de aplicar ${x.codigo}. ¿Continuar?`)) return;
     let error: string | null = null;
@@ -218,10 +232,10 @@ function Alternativas({ ctx }: { ctx: Contexto }) {
               : <select value={x.estado} aria-label="Estado" onClick={(e) => e.stopPropagation()} onChange={(e) => set(x, 'estado', e.target.value)}>{ESTADOS.filter((s) => s.valor !== 'aplicada').map((s) => <option key={s.valor} value={s.valor}>{s.texto}</option>)}</select>,
           },
           {
-            clave: 'ap', titulo: 'Presupuesto', ancho: 120, valor: () => '',
+            clave: 'ap', titulo: 'Presupuesto', ancho: 200, valor: () => '',
             formato: (x) => x.estado === 'aplicada'
               ? <button className="boton chico" onClick={(e) => { e.stopPropagation(); deshacer(x); }}>Deshacer</button>
-              : <button className="boton chico primario" disabled={x.estado !== 'aprobada' || !x.aplicacion || !esPartida(r, x.ambitoId)} title={!esPartida(r, x.ambitoId) ? 'Solo se aplican alternativas de una partida' : !x.aplicacion ? 'Indique cómo llevarla al presupuesto' : x.estado !== 'aprobada' ? 'Apruébela primero' : 'Aplicar al presupuesto'} onClick={(e) => { e.stopPropagation(); aplicar(x); }}>Aplicar</button>,
+              : <span className="fila-flex" style={{ gap: 4, flexWrap: 'nowrap' }}><button className="boton chico primario" disabled={x.estado !== 'aprobada' || !x.aplicacion || !esPartida(r, x.ambitoId)} title={!esPartida(r, x.ambitoId) ? 'Solo se aplican alternativas de una partida' : !x.aplicacion ? 'Indique cómo llevarla al presupuesto' : x.estado !== 'aprobada' ? 'Apruébela primero' : 'Aplicar al presupuesto'} onClick={(e) => { e.stopPropagation(); aplicar(x); }}>Aplicar</button><button className="boton chico" disabled={!x.aplicacion || !esPartida(r, x.ambitoId)} title="Guardarla como versión del presupuesto para compararla, sin cambiar el presupuesto" onClick={(e) => { e.stopPropagation(); comoVersion(x); }}>Como versión</button></span>,
           },
         ]}
       />

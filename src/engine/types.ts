@@ -17,6 +17,7 @@ export interface Insumo {
   fuente?: string; // fuente del precio o proveedor de la cotización
   fechaPrecio?: string; // fecha de la cotización
   moneda?: string; // moneda del precio (vacío = la del proyecto); se convierte con meta.tiposCambio
+  proveedorRuc?: string; // proveedor de la cotización (banco de datos)
 }
 
 export interface Partida {
