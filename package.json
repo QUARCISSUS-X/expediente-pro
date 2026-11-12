@@ -1,6 +1,6 @@
 {
   "name": "expediente-pro",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Costos, presupuestos, cronogramas y documentos de expedientes y cotizaciones de obra (web y app de escritorio).",
   "main": "electron/main.cjs",
   "scripts": {
@@ -14,8 +14,9 @@
     "escritorio:dev": "node -e \"process.env.EXPEDIENTE_URL='http://localhost:5173/';require('child_process').spawn(require('electron'),['.'],{stdio:'inherit',env:process.env})\"",
     "app:win": "vite build && electron-builder --win nsis portable --x64",
     "mapa": "node scripts/mapa.mjs",
-    "verificar": "tsc --noEmit -p . && vitest run && vite build && npm run cli:build && node scripts/mapa.mjs",
-    "extension": "node scripts/extension.mjs"
+    "verificar": "tsc --noEmit -p . && vitest run && vite build && npm run cli:build && node scripts/mapa.mjs && tsx scripts/e2e.ts",
+    "extension": "node scripts/extension.mjs",
+    "e2e": "tsx scripts/e2e.ts"
   },
   "keywords": [],
   "author": "Expediente Pro",

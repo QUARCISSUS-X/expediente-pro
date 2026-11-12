@@ -7,7 +7,8 @@ let siguiente = 0;
 
 async function crearWorker(): Promise<Worker> {
   // la web y la app de escritorio son un solo HTML: el worker va dentro; la extensión lo lleva en un archivo aparte
-  const M = import.meta.env.MODE === 'extension' ? await import('../export/trabajador?worker') : await import('../export/trabajador?worker&inline');
+  // (el alias virtual:trabajador lo elige vite.config.ts según el modo de compilación)
+  const M = await import('virtual:trabajador');
   return new M.default();
 }
 

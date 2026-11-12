@@ -341,9 +341,9 @@ COLOR:5 · Serieᵗ:17 · GraficoLineas:27 · GraficoBarras:82 · GraficoPareto:
 Iconos de la barra de herramientas (trazo propio, 20 × 20).
 Icono:42
 
-### `src/ui/trabajo.ts` · 56 líneas
+### `src/ui/trabajo.ts` · 57 líneas
 Lanza trabajos pesados (exportar, Monte Carlo) en un web worker para que la pantalla no se congele.
-Trabajoᵗ:14 · enSegundoPlano:20
+Trabajoᵗ:15 · enSegundoPlano:21
 
 ## Interfaz: módulos (una pantalla por archivo) — `src/ui/modulos/`
 
@@ -448,16 +448,22 @@ Puente de la barra de pestañas (pestanas.html) con la ventana.
 
 ## Herramientas — `scripts/`
 
+### `scripts/e2e.ts` · 157 líneas
+Pruebas de extremo a extremo con Playwright sobre dist/index.html (las corre `npm run verificar`).
+
 ### `scripts/extension.mjs` · 44 líneas
 Arma la extensión de Firefox y de Chrome/Edge a partir de la misma interfaz web.
 
 ### `scripts/mapa.mjs` · 33 líneas
 Genera docs/MAPA.md: qué hace cada archivo y en qué línea está cada función exportada.
 
-### `scripts/probar-modulo.cjs` · 59 líneas
+### `scripts/probar-modulo.cjs` · 60 líneas
 Prueba en el navegador UN solo módulo (o varios) sin recorrer todo el programa.
 
 ## Pruebas — `tests/`
+
+### `tests/cimientos.test.ts` · 147 líneas
+Versión 2.7 (etapa 1 del plan 3.0): esquema y migraciones, estructura del archivo, bitácora, cronograma incremental y registro de exportadores.
 
 ### `tests/control.test.ts` · 191 líneas
 

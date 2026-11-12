@@ -10,7 +10,7 @@ archivos grandes completos:
 - No leer `package-lock.json`, `src/data/logosEjemplo.ts`, `src/data/plantillasEett.ts`, `dist/`, `dist-cli/` ni `release/`.
 - No volcar proyectos `.json`, Excel ni PDF al contexto: `npm run cli -- resumen|validar|integridad <archivo>`.
 - Buscar con `grep -n` el nombre de la función o el texto de la pantalla y leer solo ese rango de líneas.
-- `src/export/xlsx.ts` (≈1 500 líneas, entregables del expediente) y `src/engine/types.ts` se leen por partes.
+- El Excel del expediente está dividido por hojas en `src/export/xlsx/` (`comun.ts` tiene la clase `Hoja` y el contexto); `src/engine/types.ts` se lee por partes.
 - El motor de control ya está dividido por fase en `src/engine/control/`; `src/engine/control.ts` solo reexporta. Las importaciones
   del resto del programa siguen siendo `from '../engine/control'`.
 - Verificar solo lo tocado (ver «Verificación acotada»). La prueba completa se corre al final, una vez.
@@ -19,7 +19,7 @@ archivos grandes completos:
 ## Mapa: función → archivos
 | Función | Motor (cálculo) | Pantalla | Hojas del informe de control | Pruebas (`-t`) |
 |---|---|---|---|---|
-| Presupuesto, APU, metrados, insumos, GG | `engine/compute.ts` (orquesta en `engine/index.ts`: `calcularTodo`) | `ui/modulos/{Presupuesto,Insumos,GastosGenerales}.tsx` | — (entregables en `export/xlsx.ts`) | `motor.test.ts` |
+| Presupuesto, APU, metrados, insumos, GG | `engine/compute.ts` (orquesta en `engine/index.ts`: `calcularTodo`) | `ui/modulos/{Presupuesto,Insumos,GastosGenerales}.tsx` | — (entregables en `export/xlsx/`) | `motor.test.ts` |
 | Fórmula polinómica | `engine/polinomica.ts` | `ui/modulos/Polinomica.tsx` | — | `motor.test.ts` |
 | Validación (15 reglas), EETT y documentos | `engine/{validate,eett,documentos}.ts` | `ui/modulos/{Validacion,Documentos}.tsx` | — | `"las reglas detectan errores sembrados"` |
 | Cronograma CPM (red compartida) | `engine/schedule.ts` (`construirRed`, `pasadasCpm`, `calcularPrograma`) | `ui/modulos/Programa.tsx` | — | `"programación CPM"` |
@@ -36,7 +36,8 @@ archivos grandes completos:
 | **Resumen del proyecto** (indicadores, ABC, Pareto, curva S, alertas) | `engine/analisis.ts` | `ui/modulos/Resumen.tsx` | Informe ejecutivo PDF y Reporte gerencial Excel: `export/gerencial.ts` | `"análisis gerencial"` |
 | **Integridad de datos** (referencias rotas, repetidos, números no válidos) | `engine/integridad.ts` (`recorrer`) | `ui/modulos/Validacion.tsx` (sección Integridad) | Hoja Consistencia del reporte gerencial | `"integridad de datos"` |
 | Extensión de navegador (Firefox, Chrome/Edge) | — | misma interfaz; `extension/` (manifiesto base, fondo, íconos) y `scripts/extension.mjs` | — | `web-ext lint --source-dir dist-ext-firefox` |
-| Versiones del proyecto y almacenamiento | — | `ui/almacen.ts` (IndexedDB, copias, aviso entre pestañas), `ui/Copias.tsx` | — | — |
+| Versiones del proyecto, papelera y bitácora | `engine/bitacora.ts` | `ui/almacen.ts` (IndexedDB, copias, papelera, aviso entre pestañas), `ui/Copias.tsx`, `ui/modulos/Proyectos.tsx` | — | `cimientos.test.ts` |
+| Archivo de proyecto: esquema, migraciones y revisión al importar | `io/migrar.ts`, `io/migraciones/NN-*.ts`, `io/estructura.ts` | aviso de solo lectura en `ui/App.tsx` | — | `"esquema versionado"`, `"estructura del archivo"` |
 
 Piezas comunes (solo si la mejora las necesita):
 - Modelo de `Proyecto.control`, `controlVacio`, `normalizarControl` (archivos viejos): `engine/control/modelo.ts`.
@@ -47,13 +48,18 @@ Piezas comunes (solo si la mejora las necesita):
   tablas: `TablaEditable` en `ui/componentes.tsx` (columnas `texto`, `numero`, `fecha`, `select`, `casilla`).
 - Navegación: lista única en `electron/modulos.json` (grupo, texto, menú de escritorio, atajo, reglas); la leen `ui/modulos/registro.ts`
   (`NAV`, `MODULOS`) y `electron/main.cjs`. `ModuloId` en `ui/estado.ts`. `tests/mejoras.test.ts` avisa si las tres listas no coinciden.
-- Archivos de salida: una función `archivoX` en `export/paquete.ts` + `TipoExport` en `ui/acciones.ts` + tarjeta en `ui/modulos/Exportar.tsx`.
+- Archivos de salida: una entrada en `EXPORTADORES` (`export/registro.ts`); de ahí salen el ZIP, la tarjeta de Exportar, `TipoExport` y el trabajo en segundo plano.
+  Las funciones que arman cada archivo siguen en `export/paquete.ts`.
+- Trabajo pesado (exportar, Monte Carlo): `export/trabajador.ts` (web worker) y `ui/trabajo.ts` (`enSegundoPlano`, con respaldo en la página).
+- Tablas largas: `useFilasVirtuales` y `Espaciador` en `ui/componentes.tsx` (más de 300 filas: solo las visibles).
 - Comandos de consola: `cli/expediente.ts` (switch de `main` y texto de ayuda).
 - Si una pantalla falla, `ui/Barrera.tsx` la aísla; el resto del programa sigue.
 
 ## Cómo agregar una función nueva (receta)
 1. Motor puro en `src/engine/<funcion>.ts` (sin React). Reutilizar `schedule.ts`, `compute.ts` y `Resultados`; no recalcular cronograma ni presupuesto.
 2. Si guarda datos: campo nuevo en `Control` (`control/modelo.ts`), valor vacío en `controlVacio` y normalización en `normalizarControl`.
+   Un campo nuevo del `Proyecto` (fuera de `control`) que cambie su forma lleva una migración numerada en `src/io/migraciones/` y sube `ESQUEMA_ACTUAL`.
+   Las ediciones que el usuario querrá ver en la bitácora llevan etiqueta: `ctx.actualizar(cambio, 'Metrado de 02.03')`.
 3. Pantalla en `src/ui/modulos/<Funcion>.tsx`; registrarla en `electron/modulos.json` (con atajo único), `ModuloId` (`estado.ts`) y `ui/modulos/registro.ts`.
 4. Hoja(s) en `export/metodologias.ts` (o un archivo nuevo) e incluirlas en `tablasControl`; indicador en `control/tablero.ts` si es clave.
 5. Datos coherentes en `control/demo.ts`.
@@ -66,6 +72,7 @@ Piezas comunes (solo si la mejora las necesita):
   cálculo del expediente se agrega a `FUERA_DEL_CALCULO`. Copiar antes de ordenar listas de `Resultados` (`[...lista].sort()`).
 - Días laborables siempre con `Calendario` (`engine/schedule.ts`), que tiene caché; no contar día por día en bucles.
 - Un proyecto guardado con una versión anterior siempre debe abrir: todo campo nuevo pasa por `migrarProyecto` / `normalizarControl`.
+  Uno de un esquema más nuevo se abre solo para leer (`esSoloLectura`); al guardar en archivo o almacén se usa `conEsquema`.
 - Sin dependencias nuevas ni llamadas a internet. Nada de `eval`, `new Function` ni scripts en línea en código propio: la extensión no los permite.
 - Archivo nuevo: primera línea con un comentario `//` que diga qué hace (lo usa `docs/MAPA.md`).
 
@@ -73,9 +80,9 @@ Piezas comunes (solo si la mejora las necesita):
     npx tsc --noEmit -p .                              # tipos (rápido)
     npx vitest run tests/metodologias.test.ts -t "kanban"   # solo la función tocada
     npm run build && npm run probar:modulo -- "Kanban de materiales"   # navegador: un módulo, capturas en capturas/
-Al terminar, una sola vez: `npm test` y `npm run probar:modulo -- --todos`.
-Playwright y Chromium ya están instalados en la sesión (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers` si no los encuentra).
-Antes de entregar: `npm run verificar` (tipos + pruebas + web + CLI + mapa).
+Al terminar, una sola vez: `npm test`, `npm run e2e` (pruebas de extremo a extremo de `scripts/e2e.ts`) y `npm run probar:modulo -- --todos`.
+Playwright es dependencia de desarrollo; usa su Chromium si está instalado y, si no, Edge o Chrome del equipo.
+Antes de entregar: `npm run verificar` (tipos + pruebas + web + CLI + mapa + e2e).
 Escritorio: `xvfb-run -a` con Electron. Instalador de Windows: lo compila GitHub Actions (`.github/workflows/release-windows.yml`)
 en una máquina Windows; en cada PR deja el instalador como artefacto y, al unir a `main` una versión nueva, publica el release.
 

@@ -25,7 +25,8 @@ fs.mkdirSync(salida, { recursive: true });
 const archivo = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-').toLowerCase();
 
 (async () => {
-  const b = await playwright.chromium.launch();
+  // Chromium de Playwright; si no está instalado, Edge o Chrome del equipo
+  const b = await playwright.chromium.launch().catch(() => playwright.chromium.launch({ channel: 'msedge' })).catch(() => playwright.chromium.launch({ channel: 'chrome' }));
   const pg = await b.newPage({ viewport: { width: 1440, height: 900 } });
   const errores = [];
   pg.on('console', (m) => { if (m.type() === 'error') errores.push(m.text()); });
