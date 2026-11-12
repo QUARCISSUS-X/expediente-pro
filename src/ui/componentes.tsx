@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { fmt } from '../engine/util';
 
 // ------------------------------------------------------------ entradas
@@ -177,6 +177,68 @@ export function Modal({ titulo, children, alCerrar, pie }: { titulo: string; chi
   );
 }
 
+// ------------------------------------------------------------ filas virtuales
+
+/** Desde cuántas filas una tabla dibuja solo las visibles (presupuestos de más de 1 000 partidas). */
+export const UMBRAL_VIRTUAL = 300;
+const MARGEN_FILAS = 25;
+
+/**
+ * Filas virtuales para una tabla dentro de un marco con desplazamiento propio: devuelve el tramo [desde, hasta)
+ * que hay que dibujar y el alto de los espaciadores de arriba y abajo. Con pocas filas dibuja todas.
+ */
+export function useFilasVirtuales(n: number, altoInicial = 29) {
+  const marco = useRef<HTMLDivElement>(null);
+  const alto = useRef(altoInicial);
+  const activa = n > UMBRAL_VIRTUAL;
+  const [ventana, setVentana] = useState({ desde: 0, hasta: Math.min(n, 80) });
+  const calcular = useCallback(() => {
+    const el = marco.current;
+    if (!el) return;
+    const tr = el.querySelector<HTMLElement>('tbody tr[data-v]');
+    if (tr?.offsetHeight) alto.current = tr.offsetHeight;
+    const h = alto.current;
+    const cab = el.querySelector<HTMLElement>('thead')?.offsetHeight ?? 0;
+    const desde = Math.max(0, Math.floor((el.scrollTop - cab) / h) - MARGEN_FILAS);
+    const hasta = Math.min(n, Math.ceil((el.scrollTop + el.clientHeight) / h) + MARGEN_FILAS);
+    setVentana((v) => (v.desde === desde && v.hasta === hasta ? v : { desde, hasta }));
+  }, [n]);
+  useEffect(() => {
+    if (!activa) return;
+    calcular();
+    const el = marco.current;
+    el?.addEventListener('scroll', calcular, { passive: true });
+    window.addEventListener('resize', calcular);
+    return () => {
+      el?.removeEventListener('scroll', calcular);
+      window.removeEventListener('resize', calcular);
+    };
+  }, [activa, calcular]);
+  /** Lleva la fila i a la vista (aunque todavía no esté dibujada). */
+  const irA = useCallback((i: number) => {
+    const el = marco.current;
+    if (!el || !activa || i < 0) return;
+    const h = alto.current;
+    const cab = el.querySelector<HTMLElement>('thead')?.offsetHeight ?? 0;
+    const y = cab + i * h;
+    if (y < el.scrollTop + cab || y + h > el.scrollTop + el.clientHeight) el.scrollTop = Math.max(0, y - el.clientHeight / 2);
+  }, [activa]);
+  if (!activa) return { marco, activa, desde: 0, hasta: n, arriba: 0, abajo: 0, irA };
+  const hasta = Math.min(n, ventana.hasta);
+  const desde = Math.min(ventana.desde, hasta);
+  return { marco, activa, desde, hasta, arriba: desde * alto.current, abajo: (n - hasta) * alto.current, irA };
+}
+
+/** Fila vacía que ocupa el lugar de las filas no dibujadas. */
+export function Espaciador({ alto, columnas }: { alto: number; columnas: number }) {
+  if (alto <= 0) return null;
+  return (
+    <tr aria-hidden="true" className="espaciador">
+      <td colSpan={columnas} style={{ height: alto, padding: 0, border: 0 }} />
+    </tr>
+  );
+}
+
 // ------------------------------------------------------------ tabla editable
 
 export interface Columna<T> {
@@ -210,6 +272,10 @@ interface TablaProps<T> {
 
 export function TablaEditable<T>({ filas, columnas, clave, alEliminar, pie, vacio, claseFila, alClicFila, alto, etiqueta }: TablaProps<T>) {
   const ref = useRef<HTMLTableElement>(null);
+  const v = useFilasVirtuales(filas.length);
+  const nCol = columnas.length + (alEliminar ? 1 : 0);
+  // una tabla larga necesita su propio desplazamiento para dibujar solo lo visible
+  const altoMarco = alto ?? (v.activa ? 'calc(100vh - 260px)' : undefined);
   const mover = (e: React.KeyboardEvent<HTMLElement>) => {
     const t = e.target as HTMLElement;
     const f = Number(t.dataset.f);
@@ -224,13 +290,19 @@ export function TablaEditable<T>({ filas, columnas, clave, alEliminar, pie, vaci
       e.preventDefault();
       (t as HTMLInputElement).blur();
       el.focus();
+      if (v.activa) el.scrollIntoView({ block: 'nearest' });
+    } else if (v.activa && destino[0] >= 0 && destino[0] < filas.length) {
+      e.preventDefault();
+      v.irA(destino[0]);
+      const [ff, cc] = destino;
+      window.setTimeout(() => ref.current?.querySelector<HTMLElement>(`[data-f="${ff}"][data-c="${cc}"]`)?.focus(), 30);
     } else if (e.key === 'Enter') {
       (t as HTMLInputElement).blur();
     }
   };
   return (
-    <div className="tabla-marco" style={alto ? { maxHeight: alto } : undefined}>
-      <table className="tabla" ref={ref} aria-label={etiqueta}>
+    <div className="tabla-marco" ref={v.marco} style={altoMarco ? { maxHeight: altoMarco } : undefined}>
+      <table className="tabla" ref={ref} aria-label={etiqueta} aria-rowcount={v.activa ? filas.length + 1 : undefined}>
         <thead>
           <tr>
             {columnas.map((c) => (
@@ -249,8 +321,9 @@ export function TablaEditable<T>({ filas, columnas, clave, alEliminar, pie, vaci
               </td>
             </tr>
           )}
-          {filas.map((f, i) => (
-            <tr key={clave(f, i)} className={[claseFila?.(f, i), alClicFila ? 'clic' : ''].filter(Boolean).join(' ')} onClick={alClicFila ? () => alClicFila(f, i) : undefined}>
+          <Espaciador alto={v.arriba} columnas={nCol} />
+          {filas.slice(v.desde, v.hasta).map((f, k) => { const i = v.desde + k; return (
+            <tr key={clave(f, i)} data-v="" className={[claseFila?.(f, i), alClicFila ? 'clic' : ''].filter(Boolean).join(' ')} onClick={alClicFila ? () => alClicFila(f, i) : undefined}>
               {columnas.map((c, ci) => {
                 const v = c.valor(f, i);
                 const num = c.num || c.tipo === 'numero';
@@ -308,7 +381,8 @@ export function TablaEditable<T>({ filas, columnas, clave, alEliminar, pie, vaci
                 </td>
               )}
             </tr>
-          ))}
+          ); })}
+          <Espaciador alto={v.abajo} columnas={nCol} />
         </tbody>
         {pie && <tfoot>{pie}</tfoot>}
       </table>

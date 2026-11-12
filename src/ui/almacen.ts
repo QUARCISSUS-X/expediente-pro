@@ -1,7 +1,7 @@
 // Almacén local de proyectos (IndexedDB del navegador, con respaldo en localStorage).
 // Cada proyecto se guarda por separado con su información general, costos, metrados, cronogramas y documentos.
 import type { Proyecto, Resultados } from '../engine/types';
-import { migrarProyecto } from '../io/migrar';
+import { conEsquema, migrarProyecto } from '../io/migrar';
 
 export interface ResumenProyecto {
   nombre: string;
@@ -23,9 +23,12 @@ export interface RegistroProyecto {
   creado: string; // ISO
   actualizado: string; // ISO
   archivado: boolean;
+  eliminado?: string; // ISO: está en la papelera desde esa fecha (se borra solo a los DIAS_PAPELERA días)
   resumen: ResumenProyecto;
   proyecto: Proyecto;
 }
+
+export const DIAS_PAPELERA = 30;
 
 export interface Respaldo {
   formato: 'expediente-pro-respaldo';
@@ -118,26 +121,21 @@ export async function modoAlmacen(): Promise<'indexeddb' | 'localstorage'> {
   return (await abrirDb()) ? 'indexeddb' : 'localstorage';
 }
 
-export async function listarProyectos(): Promise<RegistroProyecto[]> {
+async function todos(): Promise<RegistroProyecto[]> {
   const db = await abrirDb();
-  const lista = db ? await tx<RegistroProyecto[]>(db, 'readonly', (s) => s.getAll() as IDBRequest<RegistroProyecto[]>) : lsListar();
-  return lista.sort((a, b) => b.actualizado.localeCompare(a.actualizado));
+  return db ? await tx<RegistroProyecto[]>(db, 'readonly', (s) => s.getAll() as IDBRequest<RegistroProyecto[]>) : lsListar();
 }
 
+/** Proyectos activos y archivados (sin los de la papelera). */
+export async function listarProyectos(): Promise<RegistroProyecto[]> {
+  return (await todos()).filter((x) => !x.eliminado).sort((a, b) => b.actualizado.localeCompare(a.actualizado));
+}
+
+/** Lee un proyecto (migrado). Los de la papelera no se abren: primero se restauran. */
 export async function leerProyecto(id: string): Promise<RegistroProyecto | null> {
-  const db = await abrirDb();
-  if (db) {
-    const r = await tx<RegistroProyecto | undefined>(db, 'readonly', (s) => s.get(id) as IDBRequest<RegistroProyecto | undefined>);
-    return r ? { ...r, proyecto: migrarProyecto(r.proyecto) } : null;
-  }
-  try {
-    const t = localStorage.getItem(PREFIJO_LS + id);
-    if (!t) return null;
-    const r = JSON.parse(t) as RegistroProyecto;
-    return { ...r, proyecto: migrarProyecto(r.proyecto) };
-  } catch {
-    return null;
-  }
+  const r = await leerSinMigrar(id).catch(() => null);
+  if (!r || r.eliminado) return null;
+  return { ...r, proyecto: migrarProyecto(r.proyecto) };
 }
 
 export async function guardarRegistro(reg: RegistroProyecto): Promise<void> {
@@ -161,8 +159,9 @@ export async function guardarProyecto(id: string, p: Proyecto, r?: Resultados, e
     creado: previo?.creado ?? ahora,
     actualizado: ahora,
     archivado: previo?.archivado ?? false,
+    ...(previo?.eliminado ? { eliminado: previo.eliminado } : {}),
     resumen: resumir(p, r),
-    proyecto: p,
+    proyecto: conEsquema(p),
     ...extra,
   };
   await guardarRegistro(reg);
@@ -201,7 +200,35 @@ export async function archivarProyecto(id: string, archivado: boolean): Promise<
   await guardarRegistro({ ...r, archivado });
 }
 
+/** Manda el proyecto a la papelera; se borra solo a los DIAS_PAPELERA días. */
 export async function eliminarProyecto(id: string): Promise<void> {
+  const r = await leerSinMigrar(id);
+  if (r) await guardarRegistro({ ...r, eliminado: new Date().toISOString() });
+  if (ultimoAbierto() === id) recordarUltimo(null);
+}
+
+/** Proyectos de la papelera (antes borra los que cumplieron el plazo). */
+export async function listarPapelera(ahora = new Date()): Promise<RegistroProyecto[]> {
+  const lista = (await todos()).filter((x) => x.eliminado);
+  const vivos: RegistroProyecto[] = [];
+  for (const x of lista) {
+    if (diasEnPapelera(x, ahora) >= DIAS_PAPELERA) await eliminarDefinitivo(x.id);
+    else vivos.push(x);
+  }
+  return vivos.sort((a, b) => b.eliminado!.localeCompare(a.eliminado!));
+}
+
+export const diasEnPapelera = (x: Pick<RegistroProyecto, 'eliminado'>, ahora = new Date()) => (x.eliminado ? Math.floor((ahora.getTime() - new Date(x.eliminado).getTime()) / 86_400_000) : 0);
+
+export async function restaurarDePapelera(id: string): Promise<void> {
+  const r = await leerSinMigrar(id);
+  if (!r) return;
+  const { eliminado: _e, ...resto } = r;
+  await guardarRegistro(resto);
+}
+
+/** Borra el proyecto y sus versiones sin pasar por la papelera. */
+export async function eliminarDefinitivo(id: string): Promise<void> {
   const db = await abrirDb();
   if (db) await tx(db, 'readwrite', (s) => s.delete(id));
   else localStorage.removeItem(PREFIJO_LS + id);
@@ -245,15 +272,14 @@ export function olvidarV1() {
 }
 
 export async function respaldoCompleto(): Promise<Respaldo> {
-  const db = await abrirDb();
-  const lista = db ? await tx<RegistroProyecto[]>(db, 'readonly', (s) => s.getAll() as IDBRequest<RegistroProyecto[]>) : lsListar();
+  const lista = (await todos()).filter((x) => !x.eliminado);
   return { formato: 'expediente-pro-respaldo', version: 1, fecha: new Date().toISOString(), proyectos: lista };
 }
 
 /** Restaura un respaldo: los proyectos con un id ya existente se agregan como copia. */
 export async function restaurarRespaldo(r: Respaldo): Promise<number> {
   if (r?.formato !== 'expediente-pro-respaldo' || !Array.isArray(r.proyectos)) throw new Error('El archivo no es un respaldo de Expediente Pro.');
-  const existentes = new Set((await listarProyectos()).map((x) => x.id));
+  const existentes = new Set((await todos()).map((x) => x.id));
   let n = 0;
   for (const reg of r.proyectos) {
     const id = existentes.has(reg.id) ? nuevoId() : reg.id;

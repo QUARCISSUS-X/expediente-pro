@@ -8,6 +8,7 @@ import { fmt, num } from '../../engine/util';
 import { tablaCriticidad } from '../../export/metodologias';
 import { Campo, EntradaNumero, Insignia, Pestanas, TablaEditable } from '../componentes';
 import { fc, pct, useControl } from '../control';
+import { enSegundoPlano } from '../trabajo';
 import type { Contexto } from '../estado';
 import { COLOR, GraficoProbabilidad, Indicador } from '../graficos';
 import { VistaTabla } from '../VistaTabla';
@@ -101,28 +102,42 @@ function SimulacionVista({ ctx }: { ctx: Contexto }) {
   const [res, setRes] = useState<ResultadoRiesgo | null>(null);
   const [avance, setAvance] = useState<number | null>(null);
   const trabajo = useRef(0);
+  const enCurso = useRef<(() => void) | null>(null);
   const simular = () => {
     const id = ++trabajo.current;
-    const s = new Simulacion(r, entrada);
+    enCurso.current?.();
     setAvance(0);
-    const paso = () => {
-      if (id !== trabajo.current) return; // se lanzó otra simulación o se salió de la pestaña
-      const t0 = performance.now();
-      while (!s.terminado && performance.now() - t0 < 30) s.avanzar(50); // bloques de ~30 ms: la interfaz no se congela
-      setAvance(s.progreso);
-      if (s.terminado) {
-        const x = s.resultado();
-        setRes(x);
-        setAvance(null);
-        mut((d) => { d.riesgo.resumen = resumirRiesgo(x, hoyIso()); });
-      } else window.setTimeout(paso, 0);
-    };
-    window.setTimeout(paso, 0);
+    // respaldo sin worker: bloques de ~30 ms en la página para que la interfaz no se congele
+    const enPagina = () => new Promise<ResultadoRiesgo>((resolver) => {
+      const s = new Simulacion(r, entrada);
+      const paso = () => {
+        if (id !== trabajo.current) return; // se lanzó otra simulación o se salió de la pestaña
+        const t0 = performance.now();
+        while (!s.terminado && performance.now() - t0 < 30) s.avanzar(50);
+        setAvance(s.progreso);
+        if (s.terminado) resolver(s.resultado());
+        else window.setTimeout(paso, 0);
+      };
+      window.setTimeout(paso, 0);
+    });
+    const t = enSegundoPlano<ResultadoRiesgo>(
+      { tarea: 'simular', programa: r.programa, meta: { diasLaborables: r.proyecto.meta.diasLaborables, feriados: r.proyecto.meta.feriados }, entrada },
+      enPagina,
+      (x) => { if (id === trabajo.current && typeof x === 'number') setAvance(x); },
+    );
+    enCurso.current = t.cancelar;
+    void t.promesa.then((x) => {
+      if (id !== trabajo.current) return;
+      enCurso.current = null;
+      setRes(x);
+      setAvance(null);
+      mut((d) => { d.riesgo.resumen = resumirRiesgo(x, hoyIso()); });
+    });
   };
   // corre sola al abrir y cuando cambian los datos (la huella no incluye el resumen guardado, así que no se repite en bucle)
   useEffect(() => {
     if (!res || res.entrada.huella !== entrada.huella) simular();
-    return () => { trabajo.current++; };
+    return () => { trabajo.current++; enCurso.current?.(); };
   }, [entrada.huella]); // eslint-disable-line react-hooks/exhaustive-deps
   const m = r.proyecto.meta.moneda;
   const vigente = res && res.entrada.huella === entrada.huella ? res : null;

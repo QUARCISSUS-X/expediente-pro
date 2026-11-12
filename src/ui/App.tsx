@@ -5,7 +5,8 @@ import type { DocKey, Proyecto } from '../engine/types';
 import { fechaCorta, fmt } from '../engine/util';
 import { importarPlantilla } from '../io/plantilla';
 import { leerCompacto } from '../io/compacto';
-import { migrarProyecto } from '../io/migrar';
+import { conEsquema, esSoloLectura, migrarProyecto } from '../io/migrar';
+import { leerJson } from '../io/estructura';
 import { accionesPartida, generarArchivo, NOMBRE_EXPORT, type TipoExport } from './acciones';
 import { crearProyecto, leerProyecto, listarProyectos, olvidarV1, proyectoV1, ultimoAbierto } from './almacen';
 import { Cinta } from './Cinta';
@@ -93,6 +94,9 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
     setToast({ texto, error });
     window.setTimeout(() => setToast((t) => (t && t.texto === texto ? null : t)), error ? 6500 : 3200);
   }, []);
+  useEffect(() => {
+    if (st.intentoBloqueado) avisar('El proyecto está en solo lectura (lo guardó una versión más nueva del programa): el cambio no se aplicó.', true);
+  }, [st.intentoBloqueado, avisar]);
   const ir = useCallback((m: ModuloId, partidaId?: string) => {
     setModulo(m);
     if (partidaId) setPartidaSel(partidaId);
@@ -132,9 +136,9 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
       const resto = fs.filter((f) => !/\.mpp$/i.test(f.name));
       if (!resto.length) return;
       if (resto.length === 1 && /\.json$/i.test(resto[0].name)) {
-        const datos = JSON.parse(await resto[0].text());
-        if (datos?.formato === 'expediente-pro-respaldo') return avisar('Es un respaldo de varios proyectos: use “Restaurar respaldo” en el panel de proyectos.', true);
+        const datos = leerJson(await resto[0].text(), resto[0].name);
         const rep = repararIntegridad(migrarProyecto(datos));
+        if (esSoloLectura(rep.proyecto)) return void (await crearYAbrir(rep.proyecto, `${resto[0].name} lo guardó una versión más nueva de Expediente Pro: se abre solo para leer.`, 'presupuesto'));
         const n = rep.reparados.reduce((s, x) => s + x.cantidad, 0);
         return void (await crearYAbrir(rep.proyecto, `Proyecto abierto desde ${resto[0].name}${n ? `. Se repararon ${n} datos sueltos o dañados del archivo.` : ''}`, 'presupuesto'));
       }
@@ -174,7 +178,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
   }, [abrirProyecto, crearYAbrir]);
 
   const guardarArchivo = useCallback(async () => {
-    const datos = JSON.stringify(proyecto, null, 2);
+    const datos = JSON.stringify(conEsquema(proyecto), null, 2);
     const nombre = `${(proyecto.meta.codigo || 'proyecto').replace(/[^\w.-]+/g, '_')}.expediente.json`;
     const w = window as unknown as { showSaveFilePicker?: (o: unknown) => Promise<ManejadorArchivo> };
     try {
@@ -350,6 +354,11 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
       </nav>
 
       <main className="trabajo">
+        {st.soloLectura && (
+          <div className="aviso advertencia" role="alert" style={{ margin: '12px 18px 0' }}>
+            Solo lectura: este proyecto lo guardó una versión más nueva de Expediente Pro (esquema {proyecto.esquema}). Puede verlo y exportar sus entregables, pero los cambios no se guardan. Actualice el programa para editarlo.
+          </div>
+        )}
         {st.editadoFuera && (
           <div className="aviso advertencia" style={{ margin: '12px 18px 0' }}>
             Este proyecto se modificó en otra pestaña del navegador. Para no pisar esos cambios, trabaje en una sola pestaña.{' '}

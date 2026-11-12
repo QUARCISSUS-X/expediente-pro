@@ -2,18 +2,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { fechaCorta, fmt } from '../../engine/util';
 import { MIME } from '../../export/paquete';
+import { leerJson } from '../../io/estructura';
+import { conEsquema } from '../../io/migrar';
 import {
-  archivarProyecto, duplicarProyecto, eliminarProyecto, leerProyecto, listarProyectos, modoAlmacen, respaldoCompleto, restaurarRespaldo, type RegistroProyecto,
+  archivarProyecto, DIAS_PAPELERA, diasEnPapelera, duplicarProyecto, eliminarDefinitivo, eliminarProyecto, leerProyecto, listarPapelera, listarProyectos, modoAlmacen,
+  respaldoCompleto, restaurarDePapelera, restaurarRespaldo, type RegistroProyecto,
 } from '../almacen';
 import { Insignia, Modal, Pestanas } from '../componentes';
 import { escritorio } from '../escritorio';
 import { descargar, elegirArchivo, type Contexto } from '../estado';
 import { Icono } from '../iconos';
 
-type Filtro = 'activos' | 'archivados' | 'todos';
+type Filtro = 'activos' | 'archivados' | 'todos' | 'papelera';
 
 export function ModProyectos({ ctx }: { ctx: Contexto }) {
   const [lista, setLista] = useState<RegistroProyecto[] | null>(null);
+  const [papelera, setPapelera] = useState<RegistroProyecto[]>([]);
   const [filtro, setFiltro] = useState<Filtro>('activos');
   const [q, setQ] = useState('');
   const [borrar, setBorrar] = useState<RegistroProyecto | null>(null);
@@ -23,6 +27,7 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
   useEffect(() => {
     let vivo = true;
     void listarProyectos().then((l) => vivo && setLista(l));
+    void listarPapelera().then((l) => vivo && setPapelera(l));
     void modoAlmacen().then((m) => vivo && setModo(m));
     return () => { vivo = false; };
   }, [ctx.version, recarga, ctx.id]);
@@ -39,7 +44,7 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
   const exportarUno = async (id: string) => {
     const r = await leerProyecto(id);
     if (!r) return;
-    descargar(`${(r.proyecto.meta.codigo || 'proyecto').replace(/[^\w.-]+/g, '_')}.expediente.json`, JSON.stringify(r.proyecto, null, 2), MIME.json);
+    descargar(`${(r.proyecto.meta.codigo || 'proyecto').replace(/[^\w.-]+/g, '_')}.expediente.json`, JSON.stringify(conEsquema(r.proyecto), null, 2), MIME.json);
   };
   const respaldo = async () => {
     const r = await respaldoCompleto();
@@ -50,7 +55,7 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
     const f = await elegirArchivo('.json');
     if (!f) return;
     try {
-      const n = await restaurarRespaldo(JSON.parse(await f.text()));
+      const n = await restaurarRespaldo(leerJson(await f.text(), f.name) as never);
       ctx.avisar(`Se restauraron ${n} proyecto(s).`);
       refrescar();
     } catch (e) {
@@ -80,6 +85,7 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
             { id: 'activos', texto: 'Activos' },
             { id: 'archivados', texto: `Archivados${nArch ? ` (${nArch})` : ''}` },
             { id: 'todos', texto: 'Todos' },
+            { id: 'papelera', texto: `Papelera${papelera.length ? ` (${papelera.length})` : ''}` },
           ]}
         />
         <span className="separador" />
@@ -88,7 +94,9 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
         <button className="boton chico" onClick={restaurar} title="Agregar los proyectos de un archivo de respaldo">Restaurar respaldo</button>
       </div>
 
-      {lista === null ? (
+      {filtro === 'papelera' ? (
+        <Papelera ctx={ctx} lista={papelera} alCambiar={refrescar} />
+      ) : lista === null ? (
         <div className="vacio">Cargando proyectos…</div>
       ) : visibles.length === 0 ? (
         <div className="vacio"><p>{filtro === 'archivados' ? 'No hay proyectos archivados.' : 'No hay proyectos que coincidan.'}</p></div>
@@ -160,21 +168,63 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
                   const id = borrar.id;
                   await eliminarProyecto(id);
                   setBorrar(null);
-                  ctx.avisar(`Proyecto eliminado: ${borrar.resumen.nombre}`);
+                  ctx.avisar(`Proyecto enviado a la papelera: ${borrar.resumen.nombre}. Se puede restaurar durante ${DIAS_PAPELERA} días.`);
                   escritorio?.proyectoEliminado(id);
                   if (id === ctx.id) await ctx.trasEliminar(id);
                   refrescar();
                 }}
               >
-                Eliminar definitivamente
+                Enviar a la papelera
               </button>
             </>
           }
         >
-          <p style={{ marginTop: 0 }}>Se eliminará <strong>{borrar.resumen.nombre}</strong> con todos sus datos. Esta acción no se puede deshacer.</p>
-          <p className="pequeno">Si quiere conservarlo fuera de la lista, use Archivar o descargue antes su archivo .json.</p>
+          <p style={{ marginTop: 0 }}><strong>{borrar.resumen.nombre}</strong> pasará a la papelera con todos sus datos y versiones. Se puede restaurar durante {DIAS_PAPELERA} días; después se borra solo.</p>
+          <p className="pequeno">Si solo quiere quitarlo de la lista, use Archivar.</p>
         </Modal>
       )}
     </div>
+  );
+}
+
+function Papelera({ ctx, lista, alCambiar }: { ctx: Contexto; lista: RegistroProyecto[]; alCambiar: () => void }) {
+  if (!lista.length) return <div className="vacio"><p>La papelera está vacía. Los proyectos eliminados quedan aquí {DIAS_PAPELERA} días antes de borrarse.</p></div>;
+  const borrarYa = async (x: RegistroProyecto) => {
+    if (!window.confirm(`Se borrará definitivamente «${x.resumen.nombre}» con sus versiones. Esta acción no se puede deshacer. ¿Continuar?`)) return;
+    await eliminarDefinitivo(x.id);
+    ctx.avisar(`Proyecto borrado: ${x.resumen.nombre}`);
+    alCambiar();
+  };
+  const vaciar = async () => {
+    if (!window.confirm(`Se borrarán definitivamente ${lista.length} proyecto(s) de la papelera. Esta acción no se puede deshacer. ¿Continuar?`)) return;
+    for (const x of lista) await eliminarDefinitivo(x.id);
+    ctx.avisar('Papelera vaciada.');
+    alCambiar();
+  };
+  return (
+    <>
+      <div className="tabla-marco">
+        <table className="tabla" aria-label="Papelera">
+          <thead><tr><th>Proyecto</th><th className="num">Total</th><th>Eliminado</th><th>Se borra en</th><th style={{ width: 230 }}>Acciones</th></tr></thead>
+          <tbody>
+            {lista.map((x) => (
+              <tr key={x.id}>
+                <td><strong>{x.resumen.nombre}</strong> <span className="pequeno">{x.resumen.codigo}</span></td>
+                <td className="num">{x.resumen.moneda} {fmt(x.resumen.total)}</td>
+                <td className="pequeno">{fechaCorta(x.eliminado!.slice(0, 10))}</td>
+                <td>{Math.max(0, DIAS_PAPELERA - diasEnPapelera(x))} días</td>
+                <td>
+                  <div className="fila-flex" style={{ gap: 4, flexWrap: 'nowrap' }}>
+                    <button className="boton chico" onClick={async () => { await restaurarDePapelera(x.id); ctx.avisar(`Proyecto restaurado: ${x.resumen.nombre}`); alCambiar(); }}>Restaurar</button>
+                    <button className="boton chico peligro" onClick={() => void borrarYa(x)}>Borrar ya</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="fila-flex" style={{ marginTop: 10 }}><button className="boton chico peligro" onClick={() => void vaciar()}>Vaciar papelera</button></div>
+    </>
   );
 }

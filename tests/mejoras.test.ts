@@ -134,9 +134,9 @@ describe('organización del código', () => {
     expect(comp).toEqual(ids);
     expect(new Set(nav.map((x) => x.atajo)).size).toBe(nav.length);
   });
-  it('ningún archivo de código pasa de 1 000 líneas, salvo los ya conocidos', () => {
+  it('ningún archivo de código pasa de 1 000 líneas', () => {
     const mapa = leer('docs/MAPA.md');
     const grandes = [...mapa.matchAll(/^### `(.+?)` · (\d+) líneas/gm)].filter((m) => +m[2] > 1000).map((m) => m[1]);
-    expect(grandes).toEqual(['src/export/xlsx.ts']);
+    expect(grandes).toEqual([]);
   });
 });

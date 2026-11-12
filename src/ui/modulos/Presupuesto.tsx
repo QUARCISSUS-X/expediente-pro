@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { detectarPlantilla, SECCIONES_EETT } from '../../engine/eett';
 import type { ApuItem, MetradoFila, Partida, TipoInsumo } from '../../engine/types';
 import { fechaCorta, fmt, uid } from '../../engine/util';
 import { CAMPOS_METRADO, parcialMetrado } from '../../engine/compute';
 import { parsearPreds, textoPreds } from '../../io/plantilla';
-import { AreaTexto, Campo, EntradaNumero, EntradaTexto, IconoMas, Insignia, Pestanas, TablaEditable } from '../componentes';
+import { AreaTexto, Campo, EntradaNumero, EntradaTexto, Espaciador, IconoMas, Insignia, Pestanas, TablaEditable, useFilasVirtuales } from '../componentes';
 import type { Contexto } from '../estado';
 import { Icono } from '../iconos';
 import { accionesPartida } from '../acciones';
@@ -24,6 +24,11 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
     for (const v of r.validacion) for (const h of v.hallazgos) if (h.referencia && (m.get(h.referencia) !== 'error')) m.set(h.referencia, h.severidad);
     return m;
   }, [r.validacion]);
+  // más de 300 filas: solo se dibujan las visibles; al elegir con flechas o desde otro módulo, la fila se lleva a la vista
+  const v = useFilasVirtuales(r.filas.length);
+  useEffect(() => {
+    if (partidaSel) v.irA(r.filas.findIndex((f) => f.partida.id === partidaSel));
+  }, [partidaSel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="modulo">
@@ -48,8 +53,8 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
               </div>
             </div>
           ) : (
-            <div className="tabla-marco" style={{ maxHeight: 'calc(100vh - 330px)' }}>
-              <table className="tabla tabla-presupuesto" aria-label="Presupuesto">
+            <div className="tabla-marco" ref={v.marco} style={{ maxHeight: 'calc(100vh - 330px)' }}>
+              <table className="tabla tabla-presupuesto" aria-label="Presupuesto" aria-rowcount={v.activa ? r.filas.length + 2 : undefined}>
                 <thead>
                   <tr>
                     <th style={{ width: 92 }}>Ítem</th>
@@ -61,11 +66,13 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {r.filas.map((f) => {
+                  <Espaciador alto={v.arriba} columnas={6} />
+                  {r.filas.slice(v.desde, v.hasta).map((f) => {
                     const obs = observadas.get(f.partida.codigo);
                     return (
                       <tr
                         key={f.partida.id}
+                        data-v=""
                         data-partida={f.partida.id}
                         className={['clic', f.esTitulo ? (f.nivel === 1 ? 'titulo' : 'titulo-2') : '', partidaSel === f.partida.id ? 'seleccionada' : ''].join(' ')}
                         onClick={() => setPartidaSel(f.partida.id)}
@@ -82,6 +89,7 @@ export function ModPresupuesto({ ctx }: { ctx: Contexto }) {
                       </tr>
                     );
                   })}
+                  <Espaciador alto={v.abajo} columnas={6} />
                 </tbody>
                 <tfoot>
                   <tr>
@@ -144,7 +152,7 @@ function DetalleTitulo({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
       <div className="panel-cabecera">
         <div className="codigo">Título {pt.codigo}</div>
         <Campo etiqueta="Descripción">
-          <EntradaTexto valor={pt.descripcion} alCambiar={(v) => actualizar((d) => { const x = d.partidas.find((y) => y.id === pt.id); if (x) x.descripcion = v; })} />
+          <EntradaTexto valor={pt.descripcion} alCambiar={(v) => actualizar((d) => { const x = d.partidas.find((y) => y.id === pt.id); if (x) x.descripcion = v; }, `Descripción de ${pt.codigo}`)} />
         </Campo>
       </div>
       <div className="panel-cuerpo">
@@ -164,7 +172,7 @@ function DetallePartida({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
   const [pest, setPest] = useState<'apu' | 'metrados' | 'programa' | 'eett'>('apu');
   const fila = r.filas.find((x) => x.partida.id === pt.id);
   const act = r.programa.actividades.find((a) => a.partidaId === pt.id);
-  const upd = (f: (x: Partida) => void) => actualizar((d) => { const x = d.partidas.find((y) => y.id === pt.id); if (x) f(x as Partida); });
+  const upd = (f: (x: Partida) => void) => actualizar((d) => { const x = d.partidas.find((y) => y.id === pt.id); if (x) f(x as Partida); }, `Partida ${pt.codigo}`);
   return (
     <div className="panel">
       <div className="panel-cabecera">
@@ -212,7 +220,7 @@ function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
   const calc = r.apus[pt.id];
   const [nuevo, setNuevo] = useState('');
   const ins = useMemo(() => new Map(p.insumos.map((i) => [i.codigo, i])), [p.insumos]);
-  const setItem = (i: number, f: (x: ApuItem) => void) => actualizar((d) => { const a = d.apus[pt.id]; if (a) f(a.items[i] as ApuItem); });
+  const setItem = (i: number, f: (x: ApuItem) => void) => actualizar((d) => { const a = d.apus[pt.id]; if (a) f(a.items[i] as ApuItem); }, `Análisis de ${pt.codigo}`);
   const agregar = () => {
     const codigo = nuevo.split(' — ')[0].trim();
     const i = ins.get(codigo);
@@ -229,7 +237,7 @@ function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
     <div>
       <div className="rejilla" style={{ gridTemplateColumns: '150px 110px 1fr', alignItems: 'end' }}>
         <Campo etiqueta={`Rendimiento (${pt.unidad || 'und'}/día)`}>
-          <EntradaNumero valor={apu.rendimiento} decimales={4} alCambiar={(v) => actualizar((d) => { const a = d.apus[pt.id] ?? (d.apus[pt.id] = { rendimiento: 0, items: [] }); a.rendimiento = v ?? 0; })} />
+          <EntradaNumero valor={apu.rendimiento} decimales={4} alCambiar={(v) => actualizar((d) => { const a = d.apus[pt.id] ?? (d.apus[pt.id] = { rendimiento: 0, items: [] }); a.rendimiento = v ?? 0; }, `Rendimiento de ${pt.codigo}`)} />
         </Campo>
         <Campo etiqueta="Jornada (h/día)">
           <EntradaNumero valor={apu.jornada ?? null} decimales={1} placeholder={String(p.meta.jornadaHoras)} alCambiar={(v) => actualizar((d) => { const a = d.apus[pt.id] ?? (d.apus[pt.id] = { rendimiento: 0, items: [] }); a.jornada = v && v !== p.meta.jornadaHoras ? v : null; })} />
@@ -258,7 +266,7 @@ function EditorApu({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
               etiqueta={n}
               filas={its}
               clave={(x) => String(x.origen)}
-              alEliminar={(x) => actualizar((d) => { d.apus[pt.id]?.items.splice(x.origen, 1); })}
+              alEliminar={(x) => actualizar((d) => { d.apus[pt.id]?.items.splice(x.origen, 1); }, `Análisis de ${pt.codigo}`)}
               columnas={[
                 { clave: 'c', titulo: 'Código', ancho: 66, valor: (x) => x.insumo.codigo },
                 { clave: 'd', titulo: 'Insumo', valor: (x) => x.insumo.descripcion },
@@ -323,7 +331,7 @@ const ETQ_METRADO: Record<(typeof CAMPOS_METRADO)[number], string> = {
 function EditorMetrados({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
   const { proyecto: p, actualizar, resultados: r } = ctx;
   const filas = p.metrados.map((m, gi) => ({ m, gi })).filter((x) => x.m.partidaId === pt.id);
-  const set = (gi: number, f: (m: MetradoFila) => void) => actualizar((d) => f(d.metrados[gi] as MetradoFila));
+  const set = (gi: number, f: (m: MetradoFila) => void) => actualizar((d) => f(d.metrados[gi] as MetradoFila), `Metrado de ${pt.codigo}`);
   const num = (k: (typeof CAMPOS_METRADO)[number]) => ({
     clave: k,
     titulo: ETQ_METRADO[k],
@@ -340,7 +348,7 @@ function EditorMetrados({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
         etiqueta="Metrados"
         filas={filas}
         clave={(x) => x.m.id}
-        alEliminar={(x) => actualizar((d) => { d.metrados.splice(x.gi, 1); })}
+        alEliminar={(x) => actualizar((d) => { d.metrados.splice(x.gi, 1); }, `Metrado de ${pt.codigo}`)}
         columnas={[
           { clave: 'd', titulo: 'Descripción', valor: (x) => x.m.descripcion, cambiar: (x, v) => set(x.gi, (m) => (m.descripcion = String(v))) },
           { clave: 'r', titulo: 'Referencia', ancho: 92, valor: (x) => x.m.referencia ?? '', cambiar: (x, v) => set(x.gi, (m) => (m.referencia = String(v))), placeholder: 'Plano…' },
@@ -367,7 +375,7 @@ function EditorPrograma({ ctx, pt }: { ctx: Contexto; pt: Partida }) {
   const cfg = p.programa[pt.id] ?? { cuadrillas: 1, duracionManual: null, predecesoras: [] };
   const act = r.programa.actividades.find((a) => a.partidaId === pt.id);
   const [errores, setErrores] = useState<string[]>([]);
-  const set = (f: (c: typeof cfg) => void) => actualizar((d) => { const c = d.programa[pt.id] ?? (d.programa[pt.id] = { cuadrillas: 1, duracionManual: null, predecesoras: [] }); f(c as typeof cfg); });
+  const set = (f: (c: typeof cfg) => void) => actualizar((d) => { const c = d.programa[pt.id] ?? (d.programa[pt.id] = { cuadrillas: 1, duracionManual: null, predecesoras: [] }); f(c as typeof cfg); }, `Programación de ${pt.codigo}`);
   const idPorCodigo = useMemo(() => new Map(p.partidas.filter((x) => !x.titulo).map((x) => [x.codigo, x.id])), [p.partidas]);
   return (
     <div>

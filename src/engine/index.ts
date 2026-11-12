@@ -47,7 +47,7 @@ function apuEnCache(id: string, apu: Apu | undefined, p: Proyecto, mapa: Map<str
 }
 
 /** Datos del proyecto que no entran al cálculo del expediente (se editan sin recalcular). */
-const FUERA_DEL_CALCULO = new Set<string>(['control']);
+const FUERA_DEL_CALCULO = new Set<string>(['control', 'bitacora', 'esquema']);
 
 /** Verdadero si entre los dos proyectos solo cambiaron datos que no entran al cálculo. */
 export function mismoCalculo(a: Proyecto, b: Proyecto): boolean {
@@ -73,7 +73,7 @@ export function calcularTodo(p: Proyecto, incremental = false): Resultados {
   const filas = construirPresupuesto(p, apus, metradoPorPartida);
   const hojas = filas.filter((f) => !f.esTitulo);
   const cd = costoDirecto(filas);
-  const programa = calcularPrograma(p, filas, apus);
+  const programa = calcularPrograma(p, filas, apus, incremental);
   const gg = calcularGG(p, cd, programa.plazoMeses);
   const pie = calcularPie(p, cd, gg);
   const rel = relacionInsumos(filas, apus, cd);

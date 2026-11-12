@@ -61,7 +61,7 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
   const filas = p.insumos
     .map((ins, gi) => ({ ins, gi }))
     .filter(({ ins }) => (tipo === 'todos' || ins.tipo === tipo) && (!soloUsados || uso.has(ins.codigo)) && (ins.codigo + ' ' + ins.descripcion).toLowerCase().includes(q.toLowerCase()));
-  const set = (gi: number, f: (i: Insumo) => void) => actualizar((d) => f(d.insumos[gi] as Insumo));
+  const set = (gi: number, f: (i: Insumo) => void) => actualizar((d) => f(d.insumos[gi] as Insumo), `Insumo ${p.insumos[gi]?.codigo ?? ''} ${p.insumos[gi]?.descripcion ?? ''}`.trim());
 
   const importar = async () => {
     const f = await elegirArchivo('.xlsx,.csv,.txt');
@@ -173,7 +173,7 @@ export function ModInsumos({ ctx }: { ctx: Contexto }) {
         clave={(x) => `${x.gi}`}
         alEliminar={(x) => {
           if (uso.has(x.ins.codigo)) { avisar(`${x.ins.codigo} se usa en ${uso.get(x.ins.codigo)} APU; quítelo de esos APU antes de eliminarlo.`, true); return; }
-          actualizar((d) => { d.insumos.splice(x.gi, 1); });
+          actualizar((d) => { d.insumos.splice(x.gi, 1); }, `Insumo quitado: ${x.ins.codigo} ${x.ins.descripcion}`);
         }}
         columnas={[
           {

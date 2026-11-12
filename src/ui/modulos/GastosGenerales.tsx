@@ -7,7 +7,7 @@ import type { Contexto } from '../estado';
 export function ModGG({ ctx }: { ctx: Contexto }) {
   const { proyecto: p, resultados: r, actualizar } = ctx;
   const calc = new Map(r.gg.items.map((i) => [i.id, i]));
-  const set = (gi: number, f: (g: GGItem) => void) => actualizar((d) => f(d.gg[gi] as GGItem));
+  const set = (gi: number, f: (g: GGItem) => void) => actualizar((d) => f(d.gg[gi] as GGItem), 'Gastos generales');
   const agregar = (grupo: GrupoGG) =>
     actualizar((d) => {
       d.gg.push({
@@ -45,7 +45,7 @@ export function ModGG({ ctx }: { ctx: Contexto }) {
           etiqueta={grupo}
           filas={filas}
           clave={(x) => x.g.id}
-          alEliminar={(x) => actualizar((d) => { d.gg.splice(x.gi, 1); })}
+          alEliminar={(x) => actualizar((d) => { d.gg.splice(x.gi, 1); }, 'Gastos generales')}
           columnas={[
             { clave: 'r', titulo: 'Rubro', ancho: 170, valor: (x) => x.g.rubro, cambiar: (x, v) => set(x.gi, (g) => (g.rubro = String(v))) },
             { clave: 'd', titulo: 'Descripción', valor: (x) => x.g.descripcion, cambiar: (x, v) => set(x.gi, (g) => (g.descripcion = String(v))), placeholder: 'Concepto' },
@@ -83,7 +83,7 @@ export function ModGG({ ctx }: { ctx: Contexto }) {
           <p className="proposito">Desagregado de gastos variables, fijos y financieros. Los variables marcados “Todo el plazo” toman la duración del programa de obra, así que cambian solos si cambia el plazo.</p>
         </div>
         <div className="herramientas">
-          <button className="boton" onClick={() => { if (window.confirm('¿Reemplazar los gastos generales por la plantilla típica?')) actualizar((d) => { d.gg = ggPlantilla(); }); }}>Usar plantilla típica</button>
+          <button className="boton" onClick={() => { if (window.confirm('¿Reemplazar los gastos generales por la plantilla típica?')) actualizar((d) => { d.gg = ggPlantilla(); }, 'Gastos generales: plantilla típica'); }}>Usar plantilla típica</button>
         </div>
       </div>
       <div className="cifras">

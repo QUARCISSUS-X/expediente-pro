@@ -1,60 +1,22 @@
 // Acciones compartidas por la barra de herramientas, los menús y los módulos.
 import type { DocKey, Proyecto, Resultados } from '../engine/types';
-import {
-  archivoCarta, archivoConsistencia, archivoObservaciones, archivoEett, archivoExcel, archivoMatriz, archivoMemoria, archivoMsProject, archivoPdf, archivoProyecto,
-  archivoEjecutivo, archivoGerencial, empaquetarZip, generarTodos, MIME, nombreBase, type Archivo,
-} from '../export/paquete';
+import type { Archivo } from '../export/paquete';
+import { generarExport, NOMBRE_EXPORT, type TipoExport } from '../export/registro';
 import { renderPdfBrowser } from '../export/render-browser';
-import { exportarPlantilla } from '../io/plantilla';
-import { escribirCompacto } from '../io/compacto';
 import { agregarPartida, agregarTitulo, aumentarNivel, disminuirNivel, duplicar, eliminar, mover, renumerar } from './arbol';
 import type { Contexto } from './estado';
+import { enSegundoPlano } from './trabajo';
 
-export type TipoExport = 'xlsx' | 'eett' | 'memoria' | 'carta' | 'matriz' | 'consistencia' | 'informe' | 'msp' | 'pdf' | 'ejecutivo' | 'gerencial' | 'zip' | 'json' | 'plantilla' | 'compacto';
+export { NOMBRE_EXPORT, type TipoExport };
 
-export const NOMBRE_EXPORT: Record<TipoExport, string> = {
-  xlsx: 'Excel con fórmulas',
-  eett: 'Especificaciones técnicas',
-  memoria: 'Memoria descriptiva',
-  carta: 'Carta de presentación',
-  matriz: 'Matriz del TdR',
-  consistencia: 'Reporte de consistencia',
-  informe: 'Informe de revisión',
-  msp: 'MS Project',
-  pdf: 'PDF consolidado',
-  ejecutivo: 'Informe ejecutivo',
-  gerencial: 'Reporte gerencial',
-  zip: 'Todos los entregables',
-  json: 'Proyecto',
-  plantilla: 'Plantilla de carga',
-  compacto: 'Formato compacto',
-};
+/** Archivos que se generan en un instante: no vale la pena abrir un worker. */
+const LIVIANOS = new Set<TipoExport>(['json', 'msp', 'compacto']);
 
+/** Genera un entregable del registro; los pesados (Excel, Word, PDF, ZIP) en segundo plano. */
 export async function generarArchivo(r: Resultados, p: Proyecto, tipo: TipoExport, progreso?: (paso: string) => void, secciones?: DocKey[]): Promise<Archivo> {
-  switch (tipo) {
-    case 'xlsx': return archivoExcel(r);
-    case 'eett': return archivoEett(r);
-    case 'memoria': return archivoMemoria(r);
-    case 'carta': return archivoCarta(r);
-    case 'matriz': return archivoMatriz(r);
-    case 'consistencia': return archivoConsistencia(r);
-    case 'informe': {
-      const a = await archivoObservaciones(r);
-      if (!a) throw new Error('El proyecto no se importó de un expediente existente.');
-      return a;
-    }
-    case 'msp': return archivoMsProject(r);
-    case 'pdf': return archivoPdf(r, renderPdfBrowser, secciones);
-    case 'ejecutivo': return archivoEjecutivo(r, renderPdfBrowser);
-    case 'gerencial': return archivoGerencial(r);
-    case 'json': return archivoProyecto(r);
-    case 'compacto': return { nombre: `${nombreBase(r)}.exp.txt`, tipo: 'text/plain;charset=utf-8', datos: new TextEncoder().encode(escribirCompacto(p)) };
-    case 'plantilla': return { nombre: `${nombreBase(r)}_Plantilla_de_carga.xlsx`, tipo: MIME.xlsx, datos: await exportarPlantilla(p) };
-    case 'zip': {
-      const archivos = await generarTodos(r, renderPdfBrowser, progreso);
-      return { nombre: `${nombreBase(r)}_Entregables.zip`, tipo: MIME.zip, datos: await empaquetarZip(archivos, nombreBase(r)) };
-    }
-  }
+  const enPagina = () => generarExport(r, tipo, { render: renderPdfBrowser, secciones, progreso });
+  if (LIVIANOS.has(tipo)) return enPagina();
+  return enSegundoPlano<Archivo>({ tarea: 'exportar', proyecto: p, tipo, secciones }, enPagina, (x) => typeof x === 'string' && progreso?.(x)).promesa;
 }
 
 // ------------------------------------------------------------ partidas
@@ -64,26 +26,26 @@ const seleccion = (ctx: Contexto) => ctx.proyecto.partidas.find((x) => x.id === 
 export const accionesPartida = {
   titulo(ctx: Contexto) {
     let id = '';
-    ctx.actualizar((d) => { id = agregarTitulo(d, seleccion(ctx)); });
+    ctx.actualizar((d) => { id = agregarTitulo(d, seleccion(ctx)); }, 'Título agregado');
     ctx.ir('presupuesto', id);
   },
   subtitulo(ctx: Contexto) {
     const sel = seleccion(ctx);
     if (!sel?.titulo) return ctx.avisar('Seleccione un título para agregarle un subtítulo.', true);
     let id = '';
-    ctx.actualizar((d) => { id = agregarTitulo(d, sel, true); });
+    ctx.actualizar((d) => { id = agregarTitulo(d, sel, true); }, `Subtítulo agregado en ${sel.codigo}`);
     ctx.ir('presupuesto', id);
   },
   partida(ctx: Contexto) {
     let id: string | null = null;
-    ctx.actualizar((d) => { id = agregarPartida(d, seleccion(ctx)); });
+    ctx.actualizar((d) => { id = agregarPartida(d, seleccion(ctx)); }, 'Partida agregada');
     if (id) ctx.ir('presupuesto', id);
   },
   duplicar(ctx: Contexto) {
     const sel = seleccion(ctx);
     if (!sel || sel.titulo) return ctx.avisar('Seleccione una partida para duplicarla.', true);
     let id: string | null = null;
-    ctx.actualizar((d) => { id = duplicar(d, sel.id); });
+    ctx.actualizar((d) => { id = duplicar(d, sel.id); }, `Partida duplicada: ${sel.codigo}`);
     if (id) ctx.ir('presupuesto', id);
   },
   eliminar(ctx: Contexto) {
@@ -91,7 +53,7 @@ export const accionesPartida = {
     if (!sel) return ctx.avisar('Seleccione el título o la partida que desea eliminar.', true);
     const n = ctx.proyecto.partidas.filter((x) => x.codigo.startsWith(sel.codigo + '.')).length;
     if (n && !window.confirm(`Se eliminará "${sel.descripcion}" con sus ${n} subpartidas. ¿Continuar?`)) return;
-    ctx.actualizar((d) => eliminar(d, sel.id));
+    ctx.actualizar((d) => eliminar(d, sel.id), `Eliminado: ${sel.codigo} ${sel.descripcion}`);
     ctx.setPartidaSel(null);
     ctx.avisar(`Eliminado: ${sel.codigo} ${sel.descripcion} (puede deshacer con Ctrl+Z).`);
   },
@@ -118,7 +80,7 @@ export const accionesPartida = {
     if (!ok) ctx.avisar('No se puede disminuir el nivel: una partida debe quedar dentro de un título.', true);
   },
   renumerar(ctx: Contexto) {
-    ctx.actualizar((d) => renumerar(d));
+    ctx.actualizar((d) => renumerar(d), 'Ítems numerados de nuevo');
     ctx.avisar('Ítems numerados de nuevo (01, 01.01, 01.02…).');
   },
 };
