@@ -3,7 +3,8 @@
 // con su propio proyecto. Los módulos, archivos y pestañas también están en el menú, con atajos de teclado.
 'use strict';
 
-const { app, BrowserWindow, WebContentsView, Menu, ipcMain, protocol, dialog, shell, session } = require('electron');
+const { app, BrowserWindow, WebContentsView, Menu, ipcMain, protocol, dialog, shell, session, net } = require('electron');
+const os = require('node:os');
 const path = require('node:path');
 const fs = require('node:fs');
 
@@ -282,6 +283,162 @@ ipcMain.on('barra:mover', (_e, d) => d && moverPestana(d.id, d.indice));
 
 // ------------------------------------------------------------------ menú de la ventana
 
+// ------------------------------------------------------------------ archivos del usuario (2.12)
+// La página solo puede leer y escribir rutas que el usuario eligió en un diálogo o abrió con doble clic; la lista se
+// guarda para que el autoguardado al archivo siga funcionando después de reiniciar.
+
+const archivoRutas = () => path.join(app.getPath('userData'), 'rutas.json');
+let rutasPermitidas = null;
+function permitidas() {
+  if (!rutasPermitidas) {
+    try {
+      rutasPermitidas = new Set(JSON.parse(fs.readFileSync(archivoRutas(), 'utf8')));
+    } catch {
+      rutasPermitidas = new Set();
+    }
+  }
+  return rutasPermitidas;
+}
+function permitir(ruta) {
+  const r = path.resolve(ruta);
+  const s = permitidas();
+  if (s.has(r)) return r;
+  s.add(r);
+  try {
+    fs.mkdirSync(path.dirname(archivoRutas()), { recursive: true });
+    fs.writeFileSync(archivoRutas(), JSON.stringify([...s].slice(-500)));
+  } catch {
+    /* sin lista guardada: se vuelve a pedir la ruta */
+  }
+  return r;
+}
+const permitida = (ruta) => typeof ruta === 'string' && permitidas().has(path.resolve(ruta));
+const filtrosValidos = (f) => (Array.isArray(f) ? f.filter((x) => x && typeof x.name === 'string' && Array.isArray(x.extensions)).map((x) => ({ name: x.name, extensions: x.extensions.map(String) })) : []);
+
+ipcMain.handle('ep:archivo-guardar-como', async (e, sugerido, filtros) => {
+  const r = await dialog.showSaveDialog(BrowserWindow.fromWebContents(e.sender) || ventana, {
+    title: 'Guardar en una carpeta',
+    defaultPath: path.join(app.getPath('documents'), path.basename(String(sugerido || 'proyecto.expediente'))),
+    filters: filtrosValidos(filtros),
+  });
+  return r.canceled || !r.filePath ? null : permitir(r.filePath);
+});
+ipcMain.handle('ep:archivo-abrir', async (e, filtros) => {
+  const r = await dialog.showOpenDialog(BrowserWindow.fromWebContents(e.sender) || ventana, { title: 'Abrir archivo', properties: ['openFile'], filters: filtrosValidos(filtros) });
+  return r.canceled || !r.filePaths[0] ? null : permitir(r.filePaths[0]);
+});
+ipcMain.handle('ep:archivo-leer', async (_e, ruta) => {
+  if (!permitida(ruta)) throw new Error('Ruta no autorizada: ábrala desde el programa.');
+  try {
+    const [datos, st] = await Promise.all([fs.promises.readFile(ruta), fs.promises.stat(ruta)]);
+    return { datos: new Uint8Array(datos), modificado: st.mtimeMs };
+  } catch {
+    return null;
+  }
+});
+ipcMain.handle('ep:archivo-escribir', async (_e, ruta, datos) => {
+  if (!permitida(ruta)) throw new Error('Ruta no autorizada: elíjala desde el programa.');
+  // se escribe en un temporal y se renombra: un corte a la mitad no deja el archivo dañado
+  const tmp = `${ruta}.${process.pid}.tmp`;
+  await fs.promises.writeFile(tmp, Buffer.from(datos));
+  await fs.promises.rename(tmp, ruta);
+  return (await fs.promises.stat(ruta)).mtimeMs;
+});
+ipcMain.handle('ep:archivo-info', async (_e, ruta) => {
+  if (!permitida(ruta)) return null;
+  try {
+    return { modificado: (await fs.promises.stat(ruta)).mtimeMs };
+  } catch {
+    return null;
+  }
+});
+
+/** Archivos pasados al programa (doble clic en un .expediente, .expediente.json o .epdb, o «Abrir con»). */
+const EXT_ABRIBLES = /\.(expediente|epdb|json)$/i;
+function archivosDeArgumentos(argv) {
+  return argv.slice(1).filter((a) => !a.startsWith('-') && EXT_ABRIBLES.test(a) && fs.existsSync(a)).map((a) => permitir(a));
+}
+function abrirArchivos(rutas) {
+  for (const r of rutas) crearPestana(`?archivo=${encodeURIComponent(r)}`);
+}
+
+// ------------------------------------------------------------------ actualizaciones (2.12)
+// Solo en la app instalada: consulta el último release de GitHub y, si hay una versión nueva, ofrece descargar el
+// instalador y abrirlo. Es la única conexión a internet del programa y se puede apagar en el menú Ayuda.
+
+const REPO = 'QUARCISSUS-X/expediente-pro';
+const archivoPreferencias = () => path.join(app.getPath('userData'), 'preferencias.json');
+function leerPreferencias() {
+  try {
+    return JSON.parse(fs.readFileSync(archivoPreferencias(), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+function guardarPreferencia(k, v) {
+  const p = { ...leerPreferencias(), [k]: v };
+  try {
+    fs.mkdirSync(path.dirname(archivoPreferencias()), { recursive: true });
+    fs.writeFileSync(archivoPreferencias(), JSON.stringify(p, null, 1));
+  } catch {
+    /* se pierde la preferencia */
+  }
+}
+
+/** Compara versiones x.y.z: mayor que 0 si a es más nueva que b. */
+function compararVersiones(a, b) {
+  const pa = String(a).replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0);
+  const pb = String(b).replace(/^v/, '').split('.').map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) - (pb[i] || 0);
+  return 0;
+}
+
+let buscandoActualizacion = false;
+async function buscarActualizacion(manual) {
+  if (buscandoActualizacion) return;
+  buscandoActualizacion = true;
+  try {
+    const r = await net.fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { accept: 'application/vnd.github+json', 'user-agent': 'expediente-pro-app' } });
+    if (!r.ok) throw new Error(`GitHub respondió ${r.status}`);
+    const rel = await r.json();
+    const nueva = String(rel.tag_name || '').replace(/^v/, '');
+    if (!nueva || compararVersiones(nueva, app.getVersion()) <= 0) {
+      if (manual) await dialog.showMessageBox(ventana, { type: 'info', title: 'Actualizaciones', message: `Expediente Pro ${app.getVersion()} es la versión más reciente.`, buttons: ['Aceptar'] });
+      return;
+    }
+    if (!manual && leerPreferencias().omitirVersion === nueva) return;
+    const portable = !!process.env.PORTABLE_EXECUTABLE_FILE;
+    const instalador = (rel.assets || []).find((a) => /Setup.*\.exe$/i.test(a.name));
+    const sinInstalador = portable || !instalador || process.platform !== 'win32';
+    const { response } = await dialog.showMessageBox(ventana, {
+      type: 'info',
+      title: 'Actualización disponible',
+      message: `Hay una versión nueva: Expediente Pro ${nueva} (tiene la ${app.getVersion()}).`,
+      detail: (sinInstalador ? 'Descárguela desde la página del release.' : 'Se descarga el instalador y se abre; sus proyectos y el banco se conservan.') + (rel.body ? `\n\n${String(rel.body).slice(0, 900)}` : ''),
+      buttons: [sinInstalador ? 'Abrir la página del release' : 'Descargar e instalar', 'Más tarde', 'Omitir esta versión'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 2) return guardarPreferencia('omitirVersion', nueva);
+    if (response !== 0) return;
+    if (sinInstalador) return void shell.openExternal(rel.html_url || `https://github.com/${REPO}/releases/latest`);
+    const destino = path.join(os.tmpdir(), path.basename(instalador.name));
+    const d = await net.fetch(instalador.browser_download_url);
+    if (!d.ok) throw new Error(`descarga ${d.status}`);
+    await fs.promises.writeFile(destino, Buffer.from(await d.arrayBuffer()));
+    if (instalador.size && (await fs.promises.stat(destino)).size !== instalador.size) throw new Error('el instalador llegó incompleto');
+    // se guardan los proyectos antes de cerrar para instalar
+    await Promise.all(pestanas.map(guardarPestana));
+    const err = await shell.openPath(destino);
+    if (err) throw new Error(err);
+    app.quit();
+  } catch (e) {
+    if (manual) await dialog.showMessageBox(ventana, { type: 'warning', title: 'Actualizaciones', message: 'No se pudo buscar la actualización.', detail: String((e && e.message) || e), buttons: ['Aceptar'] });
+  } finally {
+    buscandoActualizacion = false;
+  }
+}
+
 function construirMenu() {
   const wcActiva = () => {
     const p = pestanaActiva();
@@ -305,6 +462,7 @@ function construirMenu() {
         { label: 'Proyecto en blanco (pestaña nueva)', accelerator: 'CmdOrCtrl+N', click: () => crearPestana('?nuevo=blanco') },
         { label: 'Proyecto desde el ejemplo (pestaña nueva)', click: () => crearPestana('?nuevo=ejemplo') },
         { label: 'Importar archivos de un expediente…', accelerator: 'CmdOrCtrl+O', click: () => comando({ tipo: 'importar' }) },
+        { label: 'Abrir un proyecto de una carpeta (y guardar allí)…', click: () => comando({ tipo: 'abrir-vinculado' }) },
         { type: 'separator' },
         { label: 'Guardar una copia (.json)', accelerator: 'CmdOrCtrl+S', registerAccelerator: false, click: () => comando({ tipo: 'guardar' }) },
         { label: 'Exportar entregables', click: () => comando({ tipo: 'ir', modulo: 'exportar' }) },
@@ -372,6 +530,9 @@ function construirMenu() {
       submenu: [
         { label: 'Atajos de teclado', click: () => comando({ tipo: 'atajos' }) },
         { label: 'Guía de uso', accelerator: 'F1', click: abrirGuia },
+        { type: 'separator' },
+        { label: 'Buscar actualizaciones…', click: () => void buscarActualizacion(true) },
+        { label: 'Buscar actualizaciones al iniciar', type: 'checkbox', checked: leerPreferencias().actualizarAlIniciar !== false, click: (it) => guardarPreferencia('actualizarAlIniciar', it.checked) },
         { type: 'separator' },
         { label: 'Acerca de Expediente Pro', click: acercaDe },
       ],
@@ -463,10 +624,18 @@ function crearVentana() {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
+  app.on('second-instance', (_e, argv) => {
     if (!ventana) return;
     if (ventana.isMinimized()) ventana.restore();
     ventana.focus();
+    abrirArchivos(archivosDeArgumentos(argv));
+  });
+  // macOS: doble clic en un archivo asociado
+  const pendientesMac = [];
+  app.on('open-file', (e, ruta) => {
+    e.preventDefault();
+    if (ventana) abrirArchivos([permitir(ruta)]);
+    else pendientesMac.push(permitir(ruta));
   });
 
   app.whenReady().then(() => {
@@ -494,6 +663,8 @@ if (!app.requestSingleInstanceLock()) {
 
     construirMenu();
     crearVentana();
+    abrirArchivos([...archivosDeArgumentos(process.argv), ...pendientesMac]);
+    if (app.isPackaged && leerPreferencias().actualizarAlIniciar !== false) setTimeout(() => void buscarActualizacion(false), 15000);
   });
 
   app.on('window-all-closed', () => app.quit());

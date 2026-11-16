@@ -18,6 +18,9 @@ import { BusquedaGlobal } from './BusquedaGlobal';
 import { FichaPartida } from './FichaPartida';
 import { repararIntegridad } from '../engine/integridad';
 import { MODULOS, NAV } from './modulos/registro';
+import { abrirProyectoVinculado, proyectoDeArchivo, useVinculo } from './useVinculo';
+import { ponerBancoPendiente, proyectoDeRuta, reasignar, vincularManejador, vincularRuta } from './vinculo';
+import { AvisoRespaldo } from './AvisoRespaldo';
 
 async function esPlantillaDeCarga(f: File): Promise<boolean> {
   try {
@@ -45,6 +48,32 @@ export function App() {
     (async () => {
       // pestaña de la app de escritorio: proyecto indicado o proyecto nuevo
       const ini = parametrosInicio();
+      if (ini.archivo && escritorio?.archivos) {
+        const ruta = ini.archivo;
+        const nombre = ruta.split(/[\\/]/).pop() || ruta;
+        const l = await escritorio.archivos.leer(ruta);
+        if (l && /\.epdb$/i.test(ruta)) {
+          // banco de datos: se abre el último proyecto y la pantalla del banco muestra la fusión
+          ponerBancoPendiente({ nombre, datos: l.datos });
+          const ult = ultimoAbierto();
+          const r = ult ? await leerProyecto(ult) : null;
+          if (r) return setInicial({ id: r.id, proyecto: r.proyecto, modulo: 'banco' });
+          const p = proyectoEnBlanco();
+          const reg = await crearProyecto(p, calcularTodo(p));
+          return setInicial({ id: reg.id, proyecto: p, modulo: 'banco' });
+        }
+        if (l) {
+          // proyecto: si ya se abrió antes desde ese archivo, se reutiliza (y se comprueba si cambió); si no, se crea
+          const ya = await proyectoDeRuta(ruta);
+          const r = ya ? await leerProyecto(ya) : null;
+          if (r) return setInicial({ id: r.id, proyecto: r.proyecto });
+          const p = proyectoDeArchivo(l.datos, nombre);
+          const reg = await crearProyecto(p, calcularTodo(p));
+          await vincularRuta(reg.id, ruta, l.modificado);
+          if (history.replaceState) history.replaceState(null, '', `?proyecto=${encodeURIComponent(reg.id)}`);
+          return setInicial({ id: reg.id, proyecto: p, modulo: 'presupuesto' });
+        }
+      }
       if (ini.proyecto) {
         const r = await leerProyecto(ini.proyecto);
         if (r) return setInicial({ id: r.id, proyecto: r.proyecto });
@@ -91,7 +120,6 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
   const [consultaInsumo, setConsultaInsumo] = useState('');
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [ficha, setFicha] = useState<string | null>(null);
-  const archivo = useRef<ManejadorArchivo | null>(null);
 
   const avisar = useCallback((texto: string, error?: boolean) => {
     setToast({ texto, error });
@@ -110,7 +138,6 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
   const abrirProyecto = useCallback((id: string, p: Proyecto, aviso?: string) => {
     st.abrir(id, p);
     setPartidaSel(null);
-    archivo.current = null;
     if (aviso) avisar(aviso);
   }, [st, avisar]);
 
@@ -180,25 +207,21 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
     await crearYAbrir(proyectoEnBlanco(), 'No quedan proyectos activos: se creó uno en blanco.', 'proyectos');
   }, [abrirProyecto, crearYAbrir]);
 
-  const guardarArchivo = useCallback(async () => {
-    const datos = JSON.stringify(conEsquema(proyecto), null, 2);
-    const nombre = `${(proyecto.meta.codigo || 'proyecto').replace(/[^\w.-]+/g, '_')}.expediente.json`;
-    const w = window as unknown as { showSaveFilePicker?: (o: unknown) => Promise<ManejadorArchivo> };
+  // archivo vinculado en una carpeta del usuario: «Guardar» lo elige una vez y luego cada guardado lo escribe
+  const vin = useVinculo({ id: st.id, version: st.version, proyecto, avisar, reemplazar: (p) => st.actualizar(() => p as never, 'Versión cargada del archivo vinculado') });
+  const guardarArchivo = vin.guardar;
+  const abrirVinculado = useCallback(async () => {
     try {
-      if (w.showSaveFilePicker) {
-        if (!archivo.current) archivo.current = await w.showSaveFilePicker({ suggestedName: nombre, types: [{ description: 'Proyecto de Expediente Pro', accept: { 'application/json': ['.json'] } }] });
-        const s = await archivo.current.createWritable();
-        await s.write(new Blob([datos], { type: 'application/json' }));
-        await s.close();
-        avisar(`Copia guardada en ${archivo.current.name}`);
-      } else {
-        descargar(nombre, datos, 'application/json');
-        avisar('Proyecto descargado como archivo .json');
-      }
+      const x = await abrirProyectoVinculado();
+      if (!x) return;
+      const reg = await crearProyecto(x.proyecto, calcularTodo(x.proyecto));
+      await reasignar(x.vinculo, reg.id);
+      abrirProyecto(reg.id, x.proyecto, `Proyecto abierto desde ${x.vinculo.nombre}: cada cambio se guarda también en ese archivo.`);
+      setModulo('presupuesto');
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') avisar(`No se pudo guardar: ${(e as Error).message}`, true);
+      avisar(`No se pudo abrir: ${(e as Error).message}`, true);
     }
-  }, [proyecto, avisar]);
+  }, [abrirProyecto, avisar]);
 
   // ---------------------------------------------------------- reportes
   const exportar = useCallback(async (tipo: TipoExport, secciones?: DocKey[]) => {
@@ -236,6 +259,8 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
   };
   const ctxRef = useRef(ctx);
   ctxRef.current = ctx;
+  const abrirVinculadoRef = useRef(abrirVinculado);
+  abrirVinculadoRef.current = abrirVinculado;
 
   // ---------------------------------------------------------- app de escritorio
   const m0 = proyecto.meta;
@@ -259,9 +284,35 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
         case 'deshacer': return x.deshacer();
         case 'rehacer': return x.rehacer();
         case 'atajos': return x.abrirDialogo('atajos');
+        case 'abrir-vinculado': return void abrirVinculadoRef.current();
       }
       },
     });
+  }, []);
+
+  // ---------------------------------------------------------- web instalada (PWA): doble clic en un .expediente o .epdb
+  useEffect(() => {
+    const lq = (window as unknown as { launchQueue?: { setConsumer: (f: (p: { files: FileSystemFileHandle[] }) => void) => void } }).launchQueue;
+    lq?.setConsumer(async (p) => {
+      for (const h of p.files ?? []) {
+        try {
+          if (/\.epdb$/i.test(h.name)) {
+            const f = await h.getFile();
+            ponerBancoPendiente({ nombre: h.name, datos: new Uint8Array(await f.arrayBuffer()) });
+            ir('banco');
+            continue;
+          }
+          const { vinculo, datos } = await vincularManejador('pendiente', h);
+          const pr = proyectoDeArchivo(datos, h.name);
+          const reg = await crearProyecto(pr, calcularTodo(pr));
+          await reasignar(vinculo, reg.id);
+          abrirProyecto(reg.id, pr, `Proyecto abierto desde ${h.name}: cada cambio se guarda también en ese archivo.`);
+        } catch (e) {
+          avisar(`No se pudo abrir ${h.name}: ${(e as Error).message}`, true);
+        }
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ---------------------------------------------------------- atajos de teclado
@@ -332,11 +383,20 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('global')} title="Buscar partidas, insumos, módulos y acciones (Ctrl+K)">Buscar… <kbd>Ctrl K</kbd></button>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('atajos')} title="Atajos de teclado" aria-label="Atajos de teclado">⌨</button>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('copias')} title="Versiones guardadas de este proyecto: restaurar o guardar una nueva">Versiones</button>
-          <button className="boton chico siempre" onClick={() => void guardarArchivo()} title="Guardar una copia .json (Ctrl+S)">Guardar</button>
+          {vin.vinculo && (
+            <span className="estado-guardado solo-escritorio" title={`Cada cambio se guarda también en ${vin.vinculo.ruta ?? vin.vinculo.nombre}`}>
+              {vin.estado === 'permiso'
+                ? <button className="boton chico" onClick={vin.reactivar}>Permitir guardar en {vin.vinculo.nombre}</button>
+                : <>→ {vin.vinculo.nombre}{vin.estado === 'escribiendo' ? '…' : vin.estado === 'error' ? ' (sin escribir)' : ''}</>}
+              <button className="boton chico icono" aria-label="Dejar de guardar en el archivo" title="Dejar de guardar en el archivo" onClick={() => void vin.quitar()}>×</button>
+            </span>
+          )}
+          <button className="boton chico siempre" onClick={() => void guardarArchivo()} title={vin.vinculo ? `Guardar ahora en ${vin.vinculo.nombre} (Ctrl+S)` : 'Guardar en una carpeta (OneDrive, Dropbox…); desde entonces cada cambio se guarda también allí (Ctrl+S)'}>Guardar</button>
           <button className="boton chico primario" onClick={() => ir('exportar')}>Exportar entregables</button>
         </div>
       </header>
 
+      <AvisoRespaldo ctx={ctx} />
       <Cinta ctx={ctx} />
 
       <nav className="nav" aria-label="Módulos">
