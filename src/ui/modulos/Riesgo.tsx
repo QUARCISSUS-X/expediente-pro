@@ -4,11 +4,12 @@ import { hoyIso } from '../../engine/control';
 import {
   type ConfigRiesgo, entradaSimulacion, type EstimacionActividad, mediaPert, mediaTriangular, type ResultadoRiesgo, resumirRiesgo, Simulacion,
 } from '../../engine/riesgo';
-import { fmt, num } from '../../engine/util';
+import { fmt, num, uid } from '../../engine/util';
 import { tablaCriticidad } from '../../export/metodologias';
 import { Campo, EntradaNumero, Insignia, Pestanas, TablaEditable } from '../componentes';
 import { fc, pct, useControl } from '../control';
 import { enSegundoPlano } from '../trabajo';
+import { contingenciaRiesgo } from '../../engine/integracion';
 import type { Contexto } from '../estado';
 import { COLOR, GraficoProbabilidad, Indicador } from '../graficos';
 import { VistaTabla } from '../VistaTabla';
@@ -150,6 +151,7 @@ function SimulacionVista({ ctx }: { ctx: Contexto }) {
       </div>
       {avance !== null && <div className="progreso" aria-label="Avance de la simulación"><div style={{ width: `${avance * 100}%` }} /></div>}
       {vigente && <Resultados ctx={ctx} x={vigente} moneda={m} />}
+      {vigente && <LlevarContingencia ctx={ctx} />}
     </>
   );
 }
@@ -257,3 +259,41 @@ function Estimaciones({ ctx }: { ctx: Contexto }) {
   );
 }
 
+
+/** Riesgo → gastos generales y cadena crítica: la contingencia calculada se propone como partida de GG y como colchón. */
+function LlevarContingencia({ ctx }: { ctx: Contexto }) {
+  const { c, mut } = useControl(ctx);
+  const r = ctx.resultados;
+  const k = contingenciaRiesgo(r, c);
+  if (!k) return null;
+  const m = r.proyecto.meta.moneda;
+  const rubro = 'Contingencia por riesgo';
+  const yaEnGG = r.proyecto.gg.find((g) => g.rubro === rubro);
+  const aGG = () => {
+    ctx.actualizar((d) => {
+      const fila = d.gg.find((g) => g.rubro === rubro);
+      const datos = { grupo: 'fijo' as const, rubro, descripcion: `Contingencia del análisis Monte Carlo (P80 de costo − costo directo) al ${k.fecha}`, unidad: 'glb', cantidad: 1, duracion: 1, precio: k.monto, participacion: 100 };
+      if (fila) Object.assign(fila, datos);
+      else d.gg.push({ id: uid('gg'), ...datos });
+    }, `Contingencia de riesgo a gastos generales (${m} ${fmt(k.monto)})`);
+    ctx.avisar(`Contingencia de ${m} ${fmt(k.monto)} llevada a gastos generales (Ctrl+Z para deshacer).`);
+  };
+  const aCcpm = () => {
+    mut((d) => { d.ccpm.colchonDias = k.dias; });
+    ctx.avisar(`Colchón del proyecto de la cadena crítica fijado en ${k.dias} días laborables (P80 − P50).`);
+  };
+  return (
+    <div className="panel" style={{ padding: 14, marginTop: 14 }}>
+      <div className="seccion-titulo" style={{ marginTop: 0 }}>Llevar la contingencia al presupuesto y a la cadena crítica</div>
+      <div className="fila-flex">
+        <span>Costo: P80 − costo directo = <strong>{m} {fmt(k.monto)}</strong></span>
+        <button className="boton chico" disabled={!(k.monto > 0)} onClick={aGG}>{yaEnGG ? 'Actualizar en gastos generales' : 'Agregar a gastos generales'}</button>
+        <span className="separador" />
+        <span>Plazo: P80 − P50 = <strong>{k.dias} días laborables</strong></span>
+        <button className="boton chico" disabled={!(k.dias > 0)} onClick={aCcpm}>{c.ccpm.colchonDias === k.dias ? 'Es el colchón de la cadena crítica' : 'Usar como colchón del proyecto (CCPM)'}</button>
+        {c.ccpm.colchonDias ? <button className="boton chico" onClick={() => mut((d) => { d.ccpm.colchonDias = null; })}>Volver al colchón calculado</button> : null}
+      </div>
+      {k.monto === 0 && <p className="pequeno">Active la simulación de costo (tres valores o ± %) para proponer un monto.</p>}
+    </div>
+  );
+}

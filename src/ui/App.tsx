@@ -14,6 +14,8 @@ import { escritorio, parametrosInicio, publicarApiPagina } from './escritorio';
 import { Marca } from './componentes';
 import { Barrera } from './Barrera';
 import { Copias } from './Copias';
+import { BusquedaGlobal } from './BusquedaGlobal';
+import { FichaPartida } from './FichaPartida';
 import { repararIntegridad } from '../engine/integridad';
 import { MODULOS, NAV } from './modulos/registro';
 
@@ -88,6 +90,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
   const [dialogo, abrirDialogo] = useState<Dialogo>(null);
   const [consultaInsumo, setConsultaInsumo] = useState('');
   const [ocupado, setOcupado] = useState<string | null>(null);
+  const [ficha, setFicha] = useState<string | null>(null);
   const archivo = useRef<ManejadorArchivo | null>(null);
 
   const avisar = useCallback((texto: string, error?: boolean) => {
@@ -229,6 +232,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
     abrirProyectoId,
     nuevoProyecto,
     trasEliminar,
+    abrirFicha: (id) => setFicha(id),
   };
   const ctxRef = useRef(ctx);
   ctxRef.current = ctx;
@@ -269,6 +273,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
       const k = e.key.toLowerCase();
       if ((e.ctrlKey || e.metaKey) && k === 's') { e.preventDefault(); c.guardarArchivo(); return; }
       if ((e.ctrlKey || e.metaKey) && k === 'f') { e.preventDefault(); c.abrirDialogo('buscar'); return; }
+      if ((e.ctrlKey || e.metaKey) && k === 'k') { e.preventDefault(); c.abrirDialogo('global'); return; }
       if (enCampo || c.dialogo || modulo !== 'presupuesto') return;
       if (e.key === 'Insert') { e.preventDefault(); accionesPartida.partida(c); return; }
       if (!c.partidaSel) return;
@@ -324,6 +329,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
           <span className="estado-guardado solo-escritorio" title={escritorio ? 'Los cambios se guardan solos en esta app' : 'Los cambios se guardan solos en este navegador'}>
             {st.guardadoLocal === 'guardado' ? 'Guardado' : st.guardadoLocal === 'pendiente' ? 'Guardando…' : 'Sin guardar'}
           </span>
+          <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('global')} title="Buscar partidas, insumos, módulos y acciones (Ctrl+K)">Buscar… <kbd>Ctrl K</kbd></button>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('atajos')} title="Atajos de teclado" aria-label="Atajos de teclado">⌨</button>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('copias')} title="Versiones guardadas de este proyecto: restaurar o guardar una nueva">Versiones</button>
           <button className="boton chico siempre" onClick={() => void guardarArchivo()} title="Guardar una copia .json (Ctrl+S)">Guardar</button>
@@ -407,6 +413,8 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
 
       <Dialogos ctx={ctx} alNuevo={nuevoProyecto} />
       {dialogo === 'copias' && <Copias ctx={ctx} alCerrar={() => abrirDialogo(null)} />}
+      {dialogo === 'global' && <BusquedaGlobal ctx={ctx} alCerrar={() => abrirDialogo(null)} abrirFicha={setFicha} />}
+      {ficha && <FichaPartida ctx={ctx} id={ficha} alCerrar={() => setFicha(null)} />}
       {importado && (
         <Modal
           titulo="Expediente importado"

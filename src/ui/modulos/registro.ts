@@ -18,6 +18,7 @@ import { ModGG } from './GastosGenerales';
 import { ModInsumos } from './Insumos';
 import { ModLogistica } from './Logistica';
 import { ModLps } from './Lps';
+import { ModPendientes } from './Pendientes';
 import { ModPolinomica } from './Polinomica';
 import { ModPresupuesto } from './Presupuesto';
 import { ModPrograma } from './Programa';
@@ -39,6 +40,7 @@ export const NAV = navegacion as { grupo: string; items: ItemNav[] }[];
 export const MODULOS: Record<ModuloId, ComponentType<{ ctx: Contexto }>> = {
   proyectos: ModProyectos,
   resumen: ModResumen,
+  pendientes: ModPendientes,
   proyecto: ModProyecto,
   tdr: ModTdr,
   banco: ModBanco,

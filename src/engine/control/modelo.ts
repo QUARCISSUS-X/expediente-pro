@@ -60,6 +60,7 @@ export interface Cambio {
   monto: number; // sin IGV
   plazoDias: number; // días calendario
   estado: EstadoCambio;
+  partidas?: { partidaId: string; metrado: number }[]; // mayores (o menores) metrados: mueven el metrado vigente y el requerimiento de materiales
 }
 
 export type RespuestaRiesgo = 'evitar' | 'mitigar' | 'transferir' | 'aceptar';
@@ -90,6 +91,7 @@ export interface RegistroObra {
   respuesta: string;
   fechaRespuesta: string;
   estado: 'abierto' | 'respondido' | 'cerrado';
+  partidaId?: string; // partida a la que se refiere (una consulta abierta restringe su ejecución en Last Planner)
 }
 
 // ---------------------------------------------------------------- Last Planner
@@ -347,6 +349,8 @@ export interface Control {
   kanban: Kanban; // kanban de materiales
   calidad: Calidad; // plan de calidad ISO 9001
   valor: Valor; // ingeniería de valor y Target Value Design
+  /** Calidad → valorización: 'observar' valoriza todo y marca lo no liberado; 'liberado' solo valoriza lo liberado. */
+  valorizarLiberado?: 'observar' | 'liberado';
 }
 
 export function controlVacio(): Control {
@@ -406,5 +410,6 @@ export function normalizarControl(x: unknown): Control {
     kanban: normalizarKanban(c.kanban),
     calidad: normalizarCalidad(c.calidad),
     valor: normalizarValor(c.valor),
+    valorizarLiberado: c.valorizarLiberado === 'liberado' ? 'liberado' : 'observar',
   };
 }

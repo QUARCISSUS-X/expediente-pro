@@ -92,7 +92,10 @@ prueba('versiones: guardar la oferta, cambiar un metrado con fórmula y comparar
   await pg.locator('table[aria-label="Presupuesto"] tbody tr[data-v]:not(.titulo):not(.titulo-2)').nth(2).click();
   await pg.getByRole('tab', { name: 'Metrados' }).click();
   const largo = pg.locator('table[aria-label="Metrados"] input[aria-label="Largo"]').first();
-  await largo.fill('2*(3.5+4.2)');
+  await largo.click();
+  await pg.waitForTimeout(150);
+  await largo.press('Control+a');
+  await largo.pressSequentially('2*(3.5+4.2)');
   await largo.press('Tab');
   await pg.waitForTimeout(300);
   exigir((await largo.getAttribute('class'))?.includes('con-formula'), 'la casilla no quedó con fórmula');
@@ -101,6 +104,21 @@ prueba('versiones: guardar la oferta, cambiar un metrado con fórmula y comparar
   await pg.getByRole('tab', { name: /^Partidas \(\d+\)/ }).click();
   const filas = await pg.locator('table[aria-label="Comparación por partida"] tbody tr[data-v]').count();
   exigir(filas >= 1, 'la comparación no muestra la partida cambiada');
+});
+
+prueba('búsqueda global (Ctrl+K) abre la ficha de una partida y el centro de pendientes', async (pg) => {
+  await ir(pg, 'Presupuesto, APU y metrados');
+  await pg.keyboard.press('Control+k');
+  const caja = pg.getByLabel('Buscar en todo el programa');
+  await caja.waitFor({ timeout: 3000 });
+  await caja.fill('01.02');
+  await caja.press('Enter');
+  await pg.getByRole('dialog', { name: /Ficha de partida 01\.02/ }).waitFor({ timeout: 3000 });
+  await pg.locator('.modal-pie').getByRole('button', { name: 'Cerrar', exact: true }).click();
+  await pg.keyboard.press('Control+k');
+  await pg.getByLabel('Buscar en todo el programa').fill('pendientes');
+  await pg.getByLabel('Buscar en todo el programa').press('Enter');
+  await pg.getByRole('heading', { name: 'Centro de pendientes' }).waitFor({ timeout: 3000 });
 });
 
 prueba('exportar el ZIP no congela la pantalla', async (pg) => {

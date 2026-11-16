@@ -9,6 +9,9 @@ import { tablaRendimientos } from '../../export/control';
 import { Campo, EntradaNumero, EntradaTexto, IconoMas, Insignia, Pestanas, TablaEditable } from '../componentes';
 import { estadoIndice, fc, fechaCortaDM, ind, opciones, opcionesFrentes, opcionesPartidas, pct, useControl } from '../control';
 import type { Contexto } from '../estado';
+import { bancoDesdeProyecto } from '../../engine/banco';
+import type { ResultadoBanco } from '../../io/banco';
+import { Fusion } from '../BancoDialogos';
 import { BarraApilada, COLOR, GraficoBarras, GraficoPareto, Indicador } from '../graficos';
 import { VistaTabla } from '../VistaTabla';
 
@@ -131,6 +134,7 @@ function Rendimientos({ ctx }: { ctx: Contexto }) {
   const [nueva, setNueva] = useState<Medicion>(() => ({ id: '', fecha: hoyIso(), frenteId: c.frentes[0]?.id ?? '', partidaId: '', cantidad: 0, trabajadores: 4, horas: num(r.proyecto.meta.jornadaHoras, 8), nota: '' }));
   const [filtro, setFiltro] = useState('');
   const resumen = useMemo(() => rendimientosPorPartida(r, c), [r, c]);
+  const [alBanco, setAlBanco] = useState<ResultadoBanco | null>(null);
   const set = (x: Medicion, campo: keyof Medicion, v: unknown) => mut((d) => { const y = d.mediciones.find((z) => z.id === x.id); if (y) (y as unknown as Record<string, unknown>)[campo] = v; });
   const filas = c.mediciones.filter((m) => !filtro || m.partidaId === filtro).sort((a, b) => b.fecha.localeCompare(a.fecha));
   const partidasFrente = nueva.frenteId ? c.frentes.find((f) => f.id === nueva.frenteId)?.partidas ?? [] : [];
@@ -183,6 +187,10 @@ function Rendimientos({ ctx }: { ctx: Contexto }) {
             alto={190}
           />
           <VistaTabla t={tablaRendimientos(r, c)} alto="260px" />
+          <div className="fila-flex" style={{ marginTop: 6 }}>
+            <button className="boton chico" disabled={!resumen.some((x) => x.rendimientoReal)} onClick={() => setAlBanco(proponerRendimientos(ctx, resumen))} title="El rendimiento medido en obra se propone como actualización del análisis en el banco de datos (con revisión antes de escribir)">Proponer los rendimientos reales al banco de datos</button>
+          </div>
+          {alBanco && <Fusion ctx={ctx} entrante={alBanco} titulo="Rendimientos reales al banco de datos" alCerrar={() => setAlBanco(null)} />}
           <p className="pequeno">IP mayor que 1: la cuadrilla rinde más que lo presupuestado. La desviación de MO ({m}) es el costo de las horas-hombre reales menos las del APU para lo producido, al costo por HH del análisis.</p>
         </>
       )}
@@ -404,4 +412,15 @@ function Inspecciones({ ctx }: { ctx: Contexto }) {
       )}
     </>
   );
+}
+
+/** Análisis del banco con el rendimiento medido en obra en lugar del presupuestado (solo partidas con mediciones). */
+function proponerRendimientos(ctx: Contexto, resumen: { partidaId: string; rendimientoReal: number | null }[]): ResultadoBanco {
+  const p = ctx.proyecto;
+  const reales = new Map(resumen.filter((x) => x.rendimientoReal && x.rendimientoReal > 0).map((x) => [x.partidaId, x.rendimientoReal!]));
+  const solo = { ...p, partidas: p.partidas.filter((x) => x.titulo || reales.has(x.id)) };
+  const b = bancoDesdeProyecto(solo, { lugar: p.meta.departamento || '', fecha: new Date().toISOString().slice(0, 10), referencia: `Rendimientos medidos en ${p.meta.nombre}` });
+  const porClave = new Map(p.partidas.filter((x) => reales.has(x.id)).map((x) => [b.analisis.find((a) => a.descripcion === x.descripcion && a.unidad === x.unidad)?.codigo, x.id]));
+  b.analisis = b.analisis.map((a) => ({ ...a, rendimiento: Math.round((reales.get(porClave.get(a.codigo) ?? '') ?? a.rendimiento) * 10000) / 10000, actualizado: new Date().toISOString() }));
+  return { banco: { ...b, insumos: [], precios: [] }, avisos: ['Solo se proponen los análisis con mediciones de rendimiento; las cuadrillas y los recursos quedan como en el presupuesto.'], origen: `Rendimientos reales de ${p.meta.nombre}` };
 }

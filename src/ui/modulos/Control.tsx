@@ -8,7 +8,8 @@ import { difDias, fmt, mesAnioLargo, num, sumarDias, uid } from '../../engine/ut
 import { nombreBase } from '../../export/paquete';
 import { generarXlsxControl, tablaAvancePartidas, tablaEvm, tablaRecursos, tablaValorizaciones } from '../../export/control';
 import { Campo, EntradaNumero, EntradaTexto, IconoMas, Pestanas, TablaEditable, type Columna } from '../componentes';
-import { estadoIndice, fc, fechaCortaDM, ind, MIME_XLSX, opciones, pct, useControl } from '../control';
+import { estadoIndice, fc, fechaCortaDM, ind, MIME_XLSX, opciones, opcionesPartidas, pct, useControl } from '../control';
+import { montoDeCambio } from '../../engine/integracion';
 import { descargar, type Contexto } from '../estado';
 import { COLOR, GraficoBarras, GraficoLineas, Indicador, MatrizRiesgos } from '../graficos';
 import { VistaTabla } from '../VistaTabla';
@@ -381,6 +382,16 @@ function Valorizaciones({ ctx }: { ctx: Contexto }) {
           <div className="seccion-titulo">Índices unificados para el reajuste</div>
           <TablaEditable filas={indices} columnas={cols} clave={(x) => x.iu} etiqueta="Índices unificados" />
           {vals.some((v) => v.indicesFaltantes.length) && <div className="aviso advertencia" style={{ marginTop: 10 }}>Faltan índices en {vals.filter((v) => v.indicesFaltantes.length).map((v) => v.mes).join(', ')}: esos meses se muestran sin reajuste (K vacío).</div>}
+          <div className="fila-flex" style={{ marginTop: 12 }}>
+            <label className="campo" style={{ maxWidth: 520 }}>
+              <span>Calidad → valorización</span>
+              <select className="entrada" value={c.valorizarLiberado ?? 'observar'} onChange={(e) => mut((d) => { d.valorizarLiberado = e.target.value as 'observar' | 'liberado'; })}>
+                <option value="observar">Valorizar todo y marcar como observado lo que no tiene protocolo liberado</option>
+                <option value="liberado">Valorizar solo lo liberado por calidad (lo demás se valoriza al liberarse)</option>
+              </select>
+            </label>
+            {vals.some((v) => v.observado || v.retenido) && <span className="pequeno">{c.valorizarLiberado === 'liberado' ? `Retenido sin liberar: ${fmt(vals.reduce((s, v) => s + v.retenido, 0))}` : `Valorizado sin liberar (observado): ${fmt(vals.reduce((s, v) => s + v.observado, 0))}`}. Solo cuentan las partidas con puntos de inspección.</span>}
+          </div>
           <div className="seccion-titulo">Resumen de valorizaciones</div>
           <VistaTabla t={tablaValorizaciones(r, c)} alto="300px" />
           <div className="seccion-titulo">Detalle por partida</div>
@@ -401,6 +412,7 @@ function Valorizaciones({ ctx }: { ctx: Contexto }) {
                 { clave: 'mo', titulo: 'Monto', num: true, ancho: 110, valor: (x) => x.monto },
                 { clave: 'a', titulo: '% acumulado', num: true, ancho: 90, valor: (x) => x.acumuladoPct },
                 { clave: 'mm', titulo: 'Mayor metrado', num: true, ancho: 100, valor: (x) => x.mayorMetrado || null, clase: (x) => (x.mayorMetrado > 0 ? 'mal' : undefined) },
+                { clave: 'ob', titulo: c.valorizarLiberado === 'liberado' ? 'Retenido (sin liberar)' : 'Observado (sin liberar)', num: true, ancho: 120, valor: (x) => (c.valorizarLiberado === 'liberado' ? x.retenido : x.observado) || null, clase: (x) => (x.observado || x.retenido ? 'mal' : undefined) },
               ]}
             />
           )}
@@ -452,6 +464,7 @@ function Cambios({ ctx }: { ctx: Contexto }) {
           { clave: 'e', titulo: 'Estado', ancho: 110, tipo: 'select', opciones: [{ valor: 'propuesto', texto: 'Propuesto' }, { valor: 'aprobado', texto: 'Aprobado' }, { valor: 'rechazado', texto: 'Rechazado' }], valor: (x) => x.estado, cambiar: (x, v) => set(x, 'estado', v) },
         ]}
       />
+      <PartidasDeCambios ctx={ctx} />
       <datalist id="causas-cambio">{['Deficiencia del expediente', 'Condición de terreno', 'Cambio de diseño', 'Pedido del cliente', 'Mayor metrado', 'Caso fortuito o fuerza mayor', 'Atraso en aprobaciones'].map((x) => <option key={x} value={x} />)}</datalist>
     </>
   );
@@ -589,12 +602,60 @@ function Registros({ ctx }: { ctx: Contexto }) {
           { clave: 'de', titulo: 'De', ancho: 110, tipo: 'texto', valor: (x) => x.autor, cambiar: (x, v) => set(x, 'autor', v) },
           { clave: 'pa', titulo: 'Para', ancho: 110, tipo: 'texto', valor: (x) => x.destinatario, cambiar: (x, v) => set(x, 'destinatario', v) },
           { clave: 'pl', titulo: 'Plazo', ancho: 128, tipo: 'fecha', valor: (x) => x.fechaLimite, cambiar: (x, v) => set(x, 'fechaLimite', v) },
+          { clave: 'pt', titulo: 'Partida', ancho: 170, tipo: 'select', opciones: opcionesPartidas(ctx.resultados), valor: (x) => x.partidaId ?? '', cambiar: (x, v) => set(x, 'partidaId', v || undefined) },
           { clave: 'r', titulo: 'Respuesta', tipo: 'texto', valor: (x) => x.respuesta, cambiar: (x, v) => set(x, 'respuesta', v) },
           { clave: 'fr', titulo: 'Respondido', ancho: 128, tipo: 'fecha', valor: (x) => x.fechaRespuesta, cambiar: (x, v) => set(x, 'fechaRespuesta', v) },
           { clave: 'e', titulo: 'Estado', ancho: 110, tipo: 'select', opciones: [{ valor: 'abierto', texto: 'Abierto' }, { valor: 'respondido', texto: 'Respondido' }, { valor: 'cerrado', texto: 'Cerrado' }], valor: (x) => x.estado, cambiar: (x, v) => set(x, 'estado', v) },
         ]}
       />
-      <p className="pequeno">Las filas marcadas en rojo tienen el plazo de respuesta vencido. Las consultas pendientes también aparecen en el tablero.</p>
+      <p className="pequeno">Las filas marcadas en rojo tienen el plazo de respuesta vencido. Una consulta (RFI) abierta con partida crea sola una restricción en Last Planner hasta que se responda. Las pendientes también aparecen en el tablero y en el centro de pendientes.</p>
     </>
   );
+}
+
+// ------------------------------------------------------------------ partidas de un cambio (integración)
+
+/** Mayores o menores metrados de cada cambio: mueven el metrado vigente y el requerimiento de materiales al aprobarse. */
+function PartidasDeCambios({ ctx }: { ctx: Contexto }) {
+  const { c, mut } = useControl(ctx);
+  const r = ctx.resultados;
+  const [sel, setSel] = useState<string>('');
+  const cambio = c.cambios.find((x) => x.id === sel) ?? c.cambios.find((x) => x.tipo === 'adicional' || x.tipo === 'deductivo');
+  if (!cambio) return null;
+  const pu = new Map(r.hojas.map((h) => [h.partida.id, h]));
+  const filas = (cambio.partidas ?? []).map((p, i) => ({ p, i }));
+  const setP = (i: number, f: (x: { partidaId: string; metrado: number }) => void) => mut((d) => { const y = d.cambios.find((z) => z.id === cambio.id); if (y?.partidas?.[i]) f(y.partidas[i]); });
+  return (
+    <div className="panel" style={{ padding: 12, marginTop: 12 }}>
+      <div className="fila-flex" style={{ marginBottom: 8 }}>
+        <strong>Partidas del cambio</strong>
+        <select className="entrada" style={{ width: 260 }} value={cambio.id} aria-label="Cambio" onChange={(e) => setSel(e.target.value)}>
+          {c.cambios.map((x) => <option key={x.id} value={x.id}>{x.numero} · {x.descripcion || x.tipo}</option>)}
+        </select>
+        <span className="separador" />
+        <button className="boton chico" onClick={() => mut((d) => { const y = d.cambios.find((z) => z.id === cambio.id); if (y) (y.partidas ??= []).push({ partidaId: r.hojas[0]?.partida.id ?? '', metrado: 0 }); })}><IconoMas /> Partida</button>
+        <button className="boton chico" disabled={!filas.length} title="Monto = metrado × P.U. más GG y utilidad en la proporción del presupuesto" onClick={() => mut((d) => { const y = d.cambios.find((z) => z.id === cambio.id); if (y) y.monto = montoDeCambio(r, y.partidas ?? []); })}>Calcular el monto</button>
+      </div>
+      <p className="pequeno" style={{ marginTop: 0 }}>Con el cambio aprobado, estos metrados se suman (adicional) o se restan (deductivo) al metrado vigente: cambian el requerimiento semanal de materiales y, con su monto, el presupuesto vigente y el EAC.</p>
+      <TablaEditable
+        filas={filas}
+        clave={(x) => String(x.i)}
+        etiqueta="Partidas del cambio"
+        alEliminar={(x) => mut((d) => { d.cambios.find((z) => z.id === cambio.id)?.partidas?.splice(x.i, 1); })}
+        vacio={<div className="vacio"><p>Sin partidas: el cambio solo mueve el monto y el plazo.</p></div>}
+        columnas={[
+          { clave: 'p', titulo: 'Partida', tipo: 'select', opciones: opcionesPartidas(r).slice(1), valor: (x) => x.p.partidaId, cambiar: (x, v) => setP(x.i, (y) => { y.partidaId = String(v); }) },
+          { clave: 'u', titulo: 'Und.', ancho: 50, valor: (x) => pu.get(x.p.partidaId)?.partida.unidad ?? '' },
+          { clave: 'm', titulo: 'Metrado', tipo: 'numero', ancho: 100, valor: (x) => x.p.metrado, cambiar: (x, v) => setP(x.i, (y) => { y.metrado = num(v); }) },
+          { clave: 'pu', titulo: 'P. U.', num: true, ancho: 90, valor: (x) => pu.get(x.p.partidaId)?.pu ?? 0 },
+          { clave: 'cd', titulo: 'Costo directo', num: true, ancho: 110, valor: (x) => (pu.get(x.p.partidaId)?.pu ?? 0) * Math.abs(num(x.p.metrado)) },
+        ]}
+      />
+    </div>
+  );
+}
+
+/** Tablero de obra para el tablero único (Resumen del proyecto en etapa de ejecución). */
+export function TableroObra({ ctx }: { ctx: Contexto }) {
+  return <Tablero ctx={ctx} ir={() => ctx.ir('control')} />;
 }

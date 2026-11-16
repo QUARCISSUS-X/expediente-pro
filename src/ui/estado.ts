@@ -136,7 +136,7 @@ export function useProyecto(inicial: { id: string; proyecto: Proyecto }) {
   };
 }
 
-export type Dialogo = 'biblioteca' | 'buscar' | 'calculadoraHH' | 'cuadrilla' | 'nuevo' | 'atajos' | 'copias' | null;
+export type Dialogo = 'biblioteca' | 'buscar' | 'calculadoraHH' | 'cuadrilla' | 'nuevo' | 'atajos' | 'copias' | 'global' | null;
 
 export type Contexto = ReturnType<typeof useProyecto> & {
   ir: (modulo: ModuloId, partidaId?: string) => void;
@@ -153,6 +153,8 @@ export type Contexto = ReturnType<typeof useProyecto> & {
   guardarArchivo: () => void;
   abrirProyectoId: (id: string) => Promise<void>;
   nuevoProyecto: (tipo: 'blanco' | 'ejemplo' | 'importar') => void;
+  /** Abre la ficha de una partida (metrado, análisis, actividad, avance, cambios, restricciones, calidad y materiales). */
+  abrirFicha: (partidaId: string) => void;
   /** Llamar después de eliminar el proyecto abierto: abre otro o crea uno en blanco. */
   trasEliminar: (id: string) => Promise<void>;
 };
@@ -160,6 +162,7 @@ export type Contexto = ReturnType<typeof useProyecto> & {
 export type ModuloId =
   | 'proyectos'
   | 'resumen'
+  | 'pendientes'
   | 'proyecto'
   | 'tdr'
   | 'banco'
