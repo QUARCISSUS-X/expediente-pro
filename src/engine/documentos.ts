@@ -3,7 +3,7 @@
 import { AREAS_GEOGRAFICAS } from '../data/iu';
 import { datosCabecera, nombreEntidad, textoProyecto } from './cabecera';
 import { SECCIONES_EETT } from './eett';
-import type { DocKey, Resultados } from './types';
+import type { DocKey, Logo, Resultados } from './types';
 import { fechaLarga, fmt, montoEnLetras } from './util';
 
 export type Bloque =
@@ -14,7 +14,10 @@ export type Bloque =
   | { t: 'kv'; pares: [string, string][] }
   | { t: 'salto' }
   | { t: 'firma'; nombre: string; cargo: string; detalle?: string }
-  | { t: 'firmas'; firmas: { rol: string; nombre: string; cargo: string; detalle?: string; fecha?: string }[] };
+  | { t: 'firmas'; firmas: { rol: string; nombre: string; cargo: string; detalle?: string; fecha?: string }[] }
+  // 2.11: fotos del informe de obra y curva S programada contra real (en Word sale como tabla)
+  | { t: 'imagen'; imagen: Logo; pie?: string; anchoMax?: number }
+  | { t: 'curva'; titulo: string; puntos: { etiqueta: string; plan: number; real: number | null }[] };
 
 export interface Documento {
   titulo: string;

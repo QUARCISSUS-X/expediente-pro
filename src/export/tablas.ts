@@ -28,6 +28,8 @@ export interface Tabla {
   ocultarCeros?: boolean; // en cronogramas, los periodos sin valor se dejan en blanco
   sinCabecera?: boolean; // cada bloque trae su propia fila de encabezado (APU)
   bloques?: number[]; // índices de fila donde empieza cada bloque que no debe partirse
+  /** Excel: fórmula por columna para las filas normales; {f} es la fila de Excel. El valor calculado queda como resultado. */
+  formulas?: (string | null)[];
 }
 
 export const TIPOS_INSUMO: { t: TipoInsumo; n: string }[] = [

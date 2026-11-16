@@ -3,6 +3,7 @@
     {"id": "proyectos", "texto": "Panel de proyectos", "menu": "Panel de proyectos", "atajo": "CmdOrCtrl+1", "reglas": []},
     {"id": "resumen", "texto": "Resumen del proyecto", "menu": "Resumen del proyecto (gráficos e indicadores)", "atajo": "Alt+9", "reglas": []},
     {"id": "pendientes", "texto": "Centro de pendientes", "menu": "Centro de pendientes", "atajo": "CmdOrCtrl+Shift+P", "reglas": []},
+    {"id": "portafolio", "texto": "Portafolio de proyectos", "menu": "Portafolio de proyectos (todos los proyectos)", "atajo": "CmdOrCtrl+Shift+F", "reglas": []},
     {"id": "proyecto", "texto": "Configuración general", "menu": "Configuración general", "atajo": "CmdOrCtrl+2", "reglas": []},
     {"id": "tdr", "texto": "Términos de referencia", "menu": "Términos de referencia", "atajo": "CmdOrCtrl+3", "reglas": [15]},
     {"id": "banco", "texto": "Banco de datos", "menu": "Banco de datos (insumos, precios y análisis)", "atajo": "CmdOrCtrl+B", "reglas": []}
@@ -27,7 +28,8 @@
     {"id": "riesgo", "texto": "Riesgo de plazo y costo", "menu": "Riesgo de plazo y costo (Monte Carlo)", "atajo": "Alt+5", "reglas": []},
     {"id": "ccpm", "texto": "Cadena crítica", "menu": "Cadena crítica (CCPM)", "atajo": "Alt+6", "reglas": []},
     {"id": "logistica", "texto": "Kanban de materiales", "menu": "Kanban de materiales", "atajo": "Alt+7", "reglas": []},
-    {"id": "calidad", "texto": "Plan de calidad ISO 9001", "menu": "Plan de calidad ISO 9001", "atajo": "Alt+8", "reglas": []}
+    {"id": "calidad", "texto": "Plan de calidad ISO 9001", "menu": "Plan de calidad ISO 9001", "atajo": "Alt+8", "reglas": []},
+    {"id": "informes", "texto": "Informes de obra", "menu": "Informes de obra (semanal, mensual, fotos)", "atajo": "CmdOrCtrl+Shift+O", "reglas": []}
   ] },
   { "grupo": "Entrega", "items": [
     {"id": "documentos", "texto": "Documentos", "menu": "Documentos", "atajo": "CmdOrCtrl+D", "reglas": [13]},

@@ -1,5 +1,15 @@
 # Historial de versiones
 
+## Versión 2.11 – reportes de obra y portafolio
+Quinta etapa del plan 3.0.
+- **Informes de obra** (grupo Control de obra, Ctrl+Shift+O en la app): informe **semanal o mensual** del periodo elegido, en **PDF y Word**, con carátula y el marco del expediente: resumen e indicadores, avance físico por partida, curva S programada contra real, valor ganado, valorización del mes, PPC y causas de no cumplimiento, restricciones, calidad (protocolos y no conformidades), cambios, riesgos, cuaderno de obra y consultas, panel fotográfico y firmas. Las cifras son las del tablero al cierre del periodo (los cortes posteriores no cuentan).
+- **Constructor de reportes:** elegir secciones, su orden y los logos (proyectista o cliente) y guardar la combinación como plantilla del proyecto.
+- **Plantillas de Word propias:** «Llenar mi plantilla de Word…» toma un `.docx` del usuario con marcadores como `{{avance_real}}`, `{{spi}}` o `{{partidas_periodo}}` y lo llena conservando su formato, encabezados y pies (aunque Word parta el marcador en varios fragmentos). Avisa los marcadores que no conoce. La lista de marcadores está en la misma pantalla.
+- **Fotos y adjuntos** por partida, protocolo y asiento del cuaderno: se guardan aparte (almacén `adjuntos`, las fotos reducidas a 1 600 px) y el proyecto solo guarda la referencia. Las fotos del periodo salen en el panel fotográfico del informe.
+- **Portafolio** (grupo Expediente, Ctrl+Shift+F en la app): todos los proyectos del equipo con monto, avance programado y real, SPI, CPI, EAC, último corte, alertas y semáforo; resumen ponderado por monto y **reporte consolidado** en Excel y PDF.
+- **Excel de control con fórmulas vinculadas:** en Valor ganado (SV, CV, SPI, CPI, SPI(t), SV(t)), Avance por partida (% de avance, SPI, mayor metrado) y Valorizaciones (valorización, reajuste, subtotal, neto y acumulado) las columnas calculadas son fórmulas sobre las demás, con el resultado del programa guardado.
+- Código: motor en `src/engine/{informe,portafolio}.ts`; Word, PDF y plantillas propias en `src/export/{informeObra,portafolio}.ts` (bloques nuevos `imagen` y `curva` en Word y PDF); almacén de adjuntos `src/ui/adjuntos.ts`; pantallas `ui/modulos/{Informes,Portafolio}.tsx`. Campos nuevos de control: `plantillasInforme` y `adjuntos` (los controles anteriores abren igual). Pruebas en `tests/informes.test.ts` (incluye el criterio de la etapa: el informe mensual de la demostración sale completo y coincide con el tablero).
+
 ## Versión 2.10 – integración de apartados
 Cuarta etapa del plan 3.0: un dato se registra una vez y los demás módulos lo leen.
 - **Cambios aprobados → presupuesto vigente, EAC y materiales:** cada adicional o deductivo puede llevar sus partidas y metrados (Control › Cambios, con «Calcular el monto»: metrado × P.U. más GG y utilidad). Al aprobarlo cambian solos el presupuesto vigente, el EAC y el requerimiento de materiales (metrado vigente); el presupuesto no se toca.

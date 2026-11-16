@@ -351,6 +351,38 @@ export interface Control {
   valor: Valor; // ingeniería de valor y Target Value Design
   /** Calidad → valorización: 'observar' valoriza todo y marca lo no liberado; 'liberado' solo valoriza lo liberado. */
   valorizarLiberado?: 'observar' | 'liberado';
+  // versión 2.11: reportes de obra
+  /** Combinaciones guardadas del constructor de reportes (secciones, orden y logos). */
+  plantillasInforme: PlantillaInforme[];
+  /** Fotos y adjuntos: aquí solo la referencia; el archivo se guarda aparte (almacén `adjuntos`) para no engordar el proyecto. */
+  adjuntos: Adjunto[];
+}
+
+/** Secciones del informe de obra (el constructor elige cuáles y en qué orden). */
+export type SeccionInforme =
+  | 'resumen' | 'avance' | 'curva' | 'evm' | 'valorizacion' | 'ppc' | 'restricciones' | 'calidad' | 'cambios' | 'riesgos' | 'bitacora' | 'fotos' | 'firmas';
+
+export interface PlantillaInforme {
+  id: string;
+  nombre: string;
+  tipo: 'semanal' | 'mensual';
+  secciones: SeccionInforme[];
+  logoProyectista: boolean;
+  logoCliente: boolean;
+}
+
+export interface Adjunto {
+  id: string;
+  nombre: string;
+  tipo: string; // MIME
+  tamano: number; // bytes
+  fecha: string; // fecha de la foto o del documento
+  descripcion: string;
+  partidaId?: string;
+  protocoloId?: string;
+  registroId?: string; // asiento del cuaderno de obra o RFI
+  ancho?: number; // px (imágenes)
+  alto?: number;
 }
 
 export function controlVacio(): Control {
@@ -378,6 +410,8 @@ export function controlVacio(): Control {
     kanban: kanbanVacio(),
     calidad: calidadVacia(),
     valor: valorVacio(),
+    plantillasInforme: [],
+    adjuntos: [],
   };
 }
 
@@ -411,5 +445,7 @@ export function normalizarControl(x: unknown): Control {
     calidad: normalizarCalidad(c.calidad),
     valor: normalizarValor(c.valor),
     valorizarLiberado: c.valorizarLiberado === 'liberado' ? 'liberado' : 'observar',
+    plantillasInforme: arr(c.plantillasInforme).map((x) => ({ ...x, secciones: arr(x.secciones) })),
+    adjuntos: arr(c.adjuntos).filter((x) => x && typeof x.id === 'string'),
   };
 }

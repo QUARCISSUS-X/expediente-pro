@@ -228,6 +228,15 @@ function bloquesPdf(bloques: Bloque[], ancho = W_V): Content[] {
       case 'firmas':
         out.push(firmasPdf(b.firmas, ancho));
         break;
+      case 'imagen': {
+        const w = Math.min(ancho, b.anchoMax ?? 420);
+        const img = imagen(b.imagen, w, w * 0.75, 'center');
+        if (img) out.push({ stack: [img, ...(b.pie ? [{ text: b.pie, italics: true, fontSize: 7.5, color: TENUE, alignment: 'center', margin: [0, 3, 0, 0] }] : [])], unbreakable: true, margin: [0, 4, 0, 10] } as Content);
+        break;
+      }
+      case 'curva':
+        out.push(...curvaPlanReal(b.titulo, b.puntos, ancho));
+        break;
     }
   }
   return out;
@@ -305,6 +314,51 @@ function gantt(r: Resultados): Content[] {
     { text: `Diagrama de Gantt — ${r.programa.diasLaborables} días laborables · ${r.programa.plazoDias} días calendario · azul = actividad, rojo = ruta crítica, gris = título`, fontSize: 8, bold: true, margin: [0, 4, 0, 4] },
     { table: { headerRows: 1, widths: [34, 200, 20, W], body: filas, dontBreakRows: true }, layout: layoutTabla } as Content,
   ];
+}
+
+/** Curva S de dos líneas: programado (gris) y real (azul), en % acumulado. */
+function curvaPlanReal(titulo: string, puntos: { etiqueta: string; plan: number; real: number | null }[], ancho: number): Content[] {
+  if (!puntos.length) return [];
+  const W = ancho - 34, H = 170;
+  const n = puntos.length;
+  const x = (i: number) => (n === 1 ? W / 2 : (i / (n - 1)) * W);
+  const y = (p: number) => H - (Math.max(0, Math.min(100, p)) / 100) * H;
+  const grid = [0, 25, 50, 75, 100].map((g) => ({ type: 'line', x1: 0, y1: y(g), x2: W, y2: y(g), lineWidth: 0.3, lineColor: '#D5DCE4' }));
+  const plan = puntos.map((p, i) => ({ x: x(i), y: y(p.plan) }));
+  const real = puntos.map((p, i) => (p.real === null ? null : { x: x(i), y: y(p.real) })).filter((p): p is { x: number; y: number } => !!p);
+  const paso = Math.max(1, Math.ceil(n / 8));
+  return [
+    { text: titulo, fontSize: 8, bold: true, margin: [0, 6, 0, 4] },
+    {
+      unbreakable: true,
+      stack: [
+        {
+          columns: [
+            { width: 28, stack: [100, 75, 50, 25, 0].map((g, i) => ({ text: `${g}%`, fontSize: 6, alignment: 'right', margin: [0, i === 0 ? 0 : H / 4 - 7.2, 2, 0] })) },
+            { width: W, canvas: [...grid, { type: 'polyline', lineWidth: 1.2, lineColor: '#9AA7B4', dash: { length: 3 }, points: plan }, ...(real.length > 1 ? [{ type: 'polyline', lineWidth: 1.8, lineColor: AZUL, points: real }] : []), ...real.map((p) => ({ type: 'ellipse', x: p.x, y: p.y, r1: 1.8, r2: 1.8, color: AZUL }))] },
+          ],
+        },
+        { columns: [{ width: 28, text: '' }, { width: W, columns: puntos.map((p, i) => ({ width: '*', text: i % paso === 0 ? p.etiqueta : '', fontSize: 5.5, color: TENUE })) }], margin: [0, 2, 0, 0] },
+        { text: [{ text: '– – Programado   ', color: '#7A8794' }, { text: '—— Real', color: AZUL, bold: true }], fontSize: 7, alignment: 'center', margin: [0, 4, 0, 8] },
+      ],
+    } as Content,
+  ];
+}
+
+/** PDF de un documento de bloques (informe de obra): el mismo marco del expediente (carátula, encabezado y pie), sin índice. */
+export function definicionPdfDocumento(r: Resultados, doc: Documento): TDocumentDefinitions {
+  const d = definicionPdf(r, { secciones: [] });
+  const c = datosCabecera(r.proyecto);
+  const contenido: Content[] = [];
+  if (doc.portada) contenido.push(...caratula(r, c, doc.titulo));
+  contenido.push({ text: doc.titulo.toUpperCase(), style: 'seccion', ...(doc.portada ? { pageBreak: 'before' } : {}) } as Content);
+  contenido.push(cajetin(c, W_V));
+  contenido.push(...bloquesPdf(doc.bloques));
+  d.content = contenido;
+  if (!doc.portada) d.background = undefined;
+  d.images = Object.fromEntries([...IMAGENES.entries()].map(([url, k]) => [k, url]));
+  d.info = { ...d.info, subject: doc.titulo };
+  return d;
 }
 
 export function curvaS(r: Resultados): Content[] {

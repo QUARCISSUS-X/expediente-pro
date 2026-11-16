@@ -12,7 +12,8 @@ import type { Resultados } from '../engine/types';
 import { fechaCorta, fmt, num } from '../engine/util';
 import type { Fila, Tabla } from './tablas';
 
-const T = (clave: string, titulo: string, cabecera: string[], filas: Fila[], alinear: ('l' | 'r' | 'c')[], decimales: (number | null)[], anchos?: number[]): Tabla => ({
+const T = (clave: string, titulo: string, cabecera: string[], filas: Fila[], alinear: ('l' | 'r' | 'c')[], decimales: (number | null)[], anchos?: number[], formulas?: (string | null)[]): Tabla => ({
+  formulas,
   clave,
   titulo,
   cabecera,
@@ -99,6 +100,9 @@ export function tablaEvm(r: Resultados, c: Control): Tabla {
     ['l', 'c', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'c', 'r', 'r', 'r', 'r', 'c'],
     [null, null, 2, 2, 2, 2, 2, 2, 2, 3, 3, 2, 2, 3, null, 1, 0, 3, 1, null],
     [14, 12, 14, 14, 14, 9, 9, 13, 13, 8, 8, 14, 13, 8, 12, 8, 7, 8, 9, 12],
+    // columnas: C PV · D EV · E AC · H SV · I CV · J SPI · K CPI · R SPI(t) · S SV(t) · P ES · Q AT
+    [null, null, null, null, null, null, null, 'ROUND(D{f}-C{f},2)', 'IF(E{f}="","",ROUND(D{f}-E{f},2))', 'IF(C{f}>0,D{f}/C{f},IF(D{f}>0,1,0))', 'IF(OR(E{f}="",E{f}=0),"",D{f}/E{f})',
+      null, null, null, null, null, null, 'IF(Q{f}>0,P{f}/Q{f},"")', 'P{f}-Q{f}', null],
   );
 }
 
@@ -112,6 +116,9 @@ export function tablaAvancePartidas(r: Resultados, c: Control): Tabla {
     filas,
     ['l', 'l', 'c', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r'],
     [null, null, null, 2, 2, 2, 2, 2, 2, 3, 2],
+    undefined,
+    // D metrado base · E ejecutado · F % · H PV · I EV · J SPI · K mayor metrado
+    [null, null, null, null, null, 'IF(D{f}>0,MIN(100,E{f}/D{f}*100),0)', null, null, null, 'IF(H{f}>0,I{f}/H{f},"")', 'IF(E{f}>D{f},E{f}-D{f},"")'],
   );
 }
 
@@ -127,6 +134,9 @@ export function tablaValorizaciones(r: Resultados, c: Control): Tabla {
     filas,
     ['c', 'c', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'r'],
     [0, null, 2, 2, 2, 2, 3, 2, 2, 2, 2, 2, 2, 2, 2],
+    undefined,
+    // C CD · D GG · E utilidad · F valorización · G K · H reajuste · I, J amortizaciones · K subtotal · L IGV · M neto · N acumulado
+    [null, null, null, null, null, 'ROUND(C{f}+D{f}+E{f},2)', null, 'IF(G{f}="",0,ROUND(F{f}*(G{f}-1),2))', null, null, 'ROUND(F{f}+H{f}-I{f}-J{f},2)', null, 'ROUND(K{f}+L{f},2)', 'SUM(F$6:F{f})', null],
   );
 }
 
@@ -256,9 +266,10 @@ export async function generarXlsxControl(r: Resultados, c: Control): Promise<Uin
 }
 
 /** Libro de Excel con una hoja por tabla (informe de control, dossier de calidad). */
-export async function generarXlsxTablas(r: Resultados, titulo: string, lista: { hoja: string; tabla: Tabla }[]): Promise<Uint8Array> {
+export async function generarXlsxTablas(r: Resultados | null, titulo: string, lista: { hoja: string; tabla: Tabla }[]): Promise<Uint8Array> {
   const wb = new ExcelJS.Workbook();
-  const cab = datosCabecera(r.proyecto);
+  // sin proyecto (portafolio): la cabecera lleva el título del libro
+  const cab = r ? datosCabecera(r.proyecto) : { codigoProyecto: '', proyecto: titulo, cliente: '', monedaNombre: 'según cada proyecto', proyectista: '' };
   wb.creator = cab.proyectista || 'Expediente Pro';
   wb.title = titulo;
   wb.created = new Date();
@@ -287,7 +298,9 @@ export async function generarXlsxTablas(r: Resultados, titulo: string, lista: { 
       for (let i = 0; i < n; i++) {
         const v = fl.celdas[i];
         const cel = row.getCell(i + 1);
-        cel.value = v === undefined ? null : v;
+        const fx = tabla.formulas?.[i];
+        // fórmula vinculada a las otras columnas; el resultado del programa queda guardado por si el lector no recalcula
+        cel.value = fx && (!fl.estilo || fl.estilo === 'normal') ? { formula: fx.replace(/\{f\}/g, String(row.number)), result: (v ?? '') as number | string } : v === undefined ? null : v;
         if (typeof v === 'number') {
           const d = tabla.decimales[i] ?? 2;
           cel.numFmt = d === 0 ? '#,##0' : `#,##0.${'0'.repeat(d)}`;

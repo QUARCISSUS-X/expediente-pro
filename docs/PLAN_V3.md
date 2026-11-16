@@ -179,7 +179,7 @@ Al unir el PR a `main`, el release con el instalador, el portable, el ZIP y las 
 | 2 · Banco de datos | 2.8 | hecha | #9 |
 | 3 · Presupuesto avanzado | 2.9 | hecha | #10 |
 | 4 · Integración de apartados | 2.10 | hecha | etapa-4 |
-| 5 · Reportes de obra y portafolio | 2.11 | pendiente | — |
+| 5 · Reportes de obra y portafolio | 2.11 | hecha | etapa-5 |
 | 6 · Plataformas | 2.12 | pendiente | — |
 | 7 · Cierre | 3.0 | pendiente | — |
 | 8 · VDC/BIM | 3.1 | después de la 3.0 | — |
