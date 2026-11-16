@@ -148,6 +148,26 @@ function bloquesAWord(bloques: Bloque[]): (Paragraph | Table)[] {
         out.push(firmasWord(b.firmas));
         out.push(vacio(120));
         break;
+      case 'imagen': {
+        const img = imagenRun(b.imagen, b.anchoMax ?? 420, Math.round((b.anchoMax ?? 420) * 0.75));
+        if (img) out.push(new Paragraph({ alignment: AlignmentType.CENTER, keepNext: true, spacing: { before: 120, after: 40 }, children: [img] }));
+        if (b.pie) out.push(new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [run(b.pie, { tam: 16, cursiva: true, color: TENUE })] }));
+        break;
+      }
+      case 'curva':
+        out.push(new Paragraph({ spacing: { after: 60 }, keepNext: true, children: [run(b.titulo, { negrita: true, tam: 17 })] }));
+        out.push(
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            borders: BORDES,
+            rows: [
+              new TableRow({ tableHeader: true, children: ['Fecha', 'Programado acumulado', 'Real acumulado'].map((h) => celda(h, { negrita: true, fondo: AZUL, blanco: true, alinear: 'c', tam: 16 })) }),
+              ...b.puntos.map((x) => new TableRow({ cantSplit: true, children: [celda(x.etiqueta, { alinear: 'c', tam: 16 }), celda(`${x.plan.toFixed(2)} %`, { alinear: 'r', tam: 16 }), celda(x.real === null ? '' : `${x.real.toFixed(2)} %`, { alinear: 'r', tam: 16 })] })),
+            ],
+          }),
+        );
+        out.push(vacio(120));
+        break;
     }
   }
   return out;

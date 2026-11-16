@@ -15,11 +15,13 @@ import { ModDocumentos } from './Documentos';
 import { ModEjecucion } from './Ejecucion';
 import { ModExportar } from './Exportar';
 import { ModGG } from './GastosGenerales';
+import { ModInformes } from './Informes';
 import { ModInsumos } from './Insumos';
 import { ModLogistica } from './Logistica';
 import { ModLps } from './Lps';
 import { ModPendientes } from './Pendientes';
 import { ModPolinomica } from './Polinomica';
+import { ModPortafolio } from './Portafolio';
 import { ModPresupuesto } from './Presupuesto';
 import { ModPrograma } from './Programa';
 import { ModProyecto } from './Proyecto';
@@ -41,6 +43,7 @@ export const MODULOS: Record<ModuloId, ComponentType<{ ctx: Contexto }>> = {
   proyectos: ModProyectos,
   resumen: ModResumen,
   pendientes: ModPendientes,
+  portafolio: ModPortafolio,
   proyecto: ModProyecto,
   tdr: ModTdr,
   banco: ModBanco,
@@ -60,6 +63,7 @@ export const MODULOS: Record<ModuloId, ComponentType<{ ctx: Contexto }>> = {
   ccpm: ModCcpm,
   logistica: ModLogistica,
   calidad: ModCalidad,
+  informes: ModInformes,
   documentos: ModDocumentos,
   validacion: ModValidacion,
   exportar: ModExportar,

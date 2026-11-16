@@ -35,9 +35,9 @@ CAMPOS_METRADO:10 · parcialMetrado:14 · metradosPorPartida:20 · tipoCambio:28
 ### `src/engine/control.ts` · 17 líneas
 Control de proyectos durante la ejecución. Cada fase vive en su archivo de src/engine/control/;
 
-### `src/engine/documentos.ts` · 360 líneas
+### `src/engine/documentos.ts` · 363 líneas
 Documentos de texto (sin IA): memoria descriptiva, carta, EETT, matriz de cumplimiento y reporte de consistencia.
-Bloqueᵗ:9 · Documentoᵗ:19 · NOMBRE_DOC:27 · parrafos:51 · firmasProyecto:66 · filasPie:80 · memoriaDescriptiva:93 · cartaPresentacion:163 · especificacionesTecnicas:215 · matrizCumplimiento:253 · reporteConsistencia:269 · informeObservaciones:289
+Bloqueᵗ:9 · Documentoᵗ:22 · NOMBRE_DOC:30 · parrafos:54 · firmasProyecto:69 · filasPie:83 · memoriaDescriptiva:96 · cartaPresentacion:166 · especificacionesTecnicas:218 · matrizCumplimiento:256 · reporteConsistencia:272 · informeObservaciones:292
 
 ### `src/engine/eett.ts` · 102 líneas
 Especificaciones técnicas por plantilla (sin IA): detección por palabras clave y relleno con datos del APU.
@@ -55,6 +55,10 @@ ErrorExpresion:4 · evaluarExpresion:28 · esFormula:82 · formulaExcel:88
 Punto de entrada del motor: calcula todos los entregables a partir del Proyecto.
 calcularFlete:12 · piesSubpresupuestos:73 · mismoCalculo:111 · recalcular:120 · calcularTodo:125
 
+### `src/engine/informe.ts` · 420 líneas
+Informe semanal y mensual de obra: arma del periodo elegido el avance, la curva S, el valor ganado, el PPC, las restricciones,
+TipoInformeᵗ:13 · SECCIONES_INFORME:15 · NOMBRE_SECCION:31 · plantillaInicial:34 · Periodoᵗ:47 · periodoDe:64 · periodosConAvance:78 · controlAlCierre:94 · FilaAvanceInformeᵗ:98 · DatosInformeᵗ:110 · datosInforme:139 · OpcionesInformeᵗ:224 · documentoInforme:230 · MARCADORES_INFORME:372 · variablesInforme:382
+
 ### `src/engine/integracion.ts` · 187 líneas
 Integración de apartados: un dato se registra una vez y los demás módulos lo leen. Metrado vigente (con los cambios
 metradosVigentes:14 · montoDeCambio:26 · RequerimientoMaterialᵗ:35 · requerimientoMateriales:47 · RestriccionAutoᵗ:81 · restriccionesAutomaticas:88 · todasLasRestricciones:120 · metradoLiberado:130 · contingenciaRiesgo:145 · Pendienteᵗ:154 · centroPendientes:164
@@ -70,6 +74,10 @@ EstadoKanbanᵗ:8 · ESTADOS_KANBAN:10 · recibido:18 · TarjetaKanbanᵗ:20 · 
 ### `src/engine/polinomica.ts` · 89 líneas
 Fórmula polinómica según D.S. 011-79-VC:
 calcularPolinomica:15
+
+### `src/engine/portafolio.ts` · 101 líneas
+Portafolio: todos los proyectos en una tabla (monto, vigente, avance, CPI, SPI, alertas) y su resumen consolidado.
+Semaforoᵗ:6 · FilaPortafolioᵗ:8 · filaPortafolio:28 · ResumenPortafolioᵗ:64 · resumenPortafolio:75
 
 ### `src/engine/riesgo.ts` · 411 líneas
 Riesgo de plazo y costo: simulación Monte Carlo sobre la red CPM del cronograma (PERT-Beta o triangular).
@@ -129,9 +137,9 @@ crearLineaBase:10
 Last Planner System: plan maestro, fases, lookahead, restricciones, plan semanal, PPC.
 FilaLookaheadᵗ:11 · lookahead:26 · compromisosSugeridos:62 · PpcSemanaᵗ:79 · calcularPpc:88 · ItemParetoᵗ:102 · pareto:109 · causasNoCumplimiento:121 · resumenRestricciones:127 · programarFase:139 · hitosDesdeCronograma:156
 
-### `src/engine/control/modelo.ts` · 416 líneas
+### `src/engine/control/modelo.ts` · 452 líneas
 Modelo de datos de Proyecto.control (línea base, cortes, cambios, riesgos, cuaderno, Last Planner, Lean, Six Sigma y v2.5), controlVacio y normalizarControl.
-PartidaBaseᵗ:12 · LineaBaseᵗ:27 · Corteᵗ:42 · TipoCambioᵗ:51 · EstadoCambioᵗ:52 · Cambioᵗ:53 · RespuestaRiesgoᵗ:66 · Riesgoᵗ:67 · TipoRegistroᵗ:80 · RegistroObraᵗ:81 · Hitoᵗ:99 · CompromisoFaseᵗ:109 · TIPOS_RESTRICCION:119 · Restriccionᵗ:120 · CAUSAS_NO_CUMPLIMIENTO:131 · Compromisoᵗ:146 · SemanaLpsᵗ:158 · Frenteᵗ:166 · Medicionᵗ:177 · GrupoTrabajoᵗ:188 · CATEGORIAS_CARTA:189 · CartaBalanceᵗ:205 · TIPOS_PERDIDA:216 · Perdidaᵗ:217 · ItemInspeccionᵗ:228 · Inspeccionᵗ:233 · PLANTILLAS_INSPECCION:243 · CATEGORIAS_6M:278 · Ishikawaᵗ:279 · FaseDmaicᵗ:286 · AccionDmaicᵗ:287 · ProyectoDmaicᵗ:294 · SerieCalidadᵗ:316 · Controlᵗ:326 · controlVacio:356 · normalizarControl:385
+PartidaBaseᵗ:12 · LineaBaseᵗ:27 · Corteᵗ:42 · TipoCambioᵗ:51 · EstadoCambioᵗ:52 · Cambioᵗ:53 · RespuestaRiesgoᵗ:66 · Riesgoᵗ:67 · TipoRegistroᵗ:80 · RegistroObraᵗ:81 · Hitoᵗ:99 · CompromisoFaseᵗ:109 · TIPOS_RESTRICCION:119 · Restriccionᵗ:120 · CAUSAS_NO_CUMPLIMIENTO:131 · Compromisoᵗ:146 · SemanaLpsᵗ:158 · Frenteᵗ:166 · Medicionᵗ:177 · GrupoTrabajoᵗ:188 · CATEGORIAS_CARTA:189 · CartaBalanceᵗ:205 · TIPOS_PERDIDA:216 · Perdidaᵗ:217 · ItemInspeccionᵗ:228 · Inspeccionᵗ:233 · PLANTILLAS_INSPECCION:243 · CATEGORIAS_6M:278 · Ishikawaᵗ:279 · FaseDmaicᵗ:286 · AccionDmaicᵗ:287 · ProyectoDmaicᵗ:294 · SerieCalidadᵗ:316 · Controlᵗ:326 · SeccionInformeᵗ:362 · PlantillaInformeᵗ:365 · Adjuntoᵗ:374 · controlVacio:388 · normalizarControl:419
 
 ### `src/engine/control/recursos.ts` · 63 líneas
 Histograma semanal de horas-hombre y horas-máquina, plan vs. real.
@@ -151,17 +159,21 @@ Valorizacionᵗ:11 · coeficienteK:34 · calcularValorizaciones:52
 
 ## Exportadores — `src/export/`
 
-### `src/export/control.ts` · 307 líneas
+### `src/export/control.ts` · 320 líneas
 Informe de control de obra: las mismas tablas se ven en pantalla y se exportan a Excel (una hoja por tabla).
-tablaTablero:32 · tablaEvm:89 · tablaAvancePartidas:105 · tablaValorizaciones:118 · tablaCambios:133 · tablaRiesgos:140 · tablaRegistros:147 · tablaRecursos:153 · tablaRestricciones:158 · tablaPlanSemanal:165 · tablaPpc:174 · tablaRendimientos:183 · tablaCartas:188 · tablaPerdidas:196 · tablaInspecciones:204 · tablaCalidad:209 · tablaDmaic:217 · tablaCartaBalanceDetalle:223 · tablasControl:228 · generarXlsxControl:254 · generarXlsxTablas:259
+tablaTablero:33 · tablaEvm:90 · tablaAvancePartidas:109 · tablaValorizaciones:125 · tablaCambios:143 · tablaRiesgos:150 · tablaRegistros:157 · tablaRecursos:163 · tablaRestricciones:168 · tablaPlanSemanal:175 · tablaPpc:184 · tablaRendimientos:193 · tablaCartas:198 · tablaPerdidas:206 · tablaInspecciones:214 · tablaCalidad:219 · tablaDmaic:227 · tablaCartaBalanceDetalle:233 · tablasControl:238 · generarXlsxControl:264 · generarXlsxTablas:269
 
-### `src/export/docx.ts` · 417 líneas
+### `src/export/docx.ts` · 437 líneas
 Exportación a Word (.docx) de los documentos de texto: memoria, EETT, carta, matriz y reporte.
-OpcionesWordᵗ:365 · documentoWord:369 · generarDocx:412
+OpcionesWordᵗ:385 · documentoWord:389 · generarDocx:432
 
 ### `src/export/gerencial.ts` · 175 líneas
 Reportes gerenciales: informe ejecutivo en PDF (con gráficos) y reporte gerencial en Excel.
 tablaResumenEjecutivo:17 · tablaCostoPorTitulo:49 · tablaComposicion:56 · tablaAbcPartidas:75 · tablaAbcInsumos:76 · tablaCurva:78 · tablaConfiabilidad:88 · tablasGerenciales:99 · generarXlsxGerencial:114 · definicionPdfEjecutivo:162
+
+### `src/export/informeObra.ts` · 69 líneas
+Informe semanal y mensual de obra en Word y PDF (con los logos que elija el constructor) y llenado de plantillas de Word propias.
+nombreInforme:19 · informeWord:24 · informePdf:29 · llenarPlantillaWord:57
 
 ### `src/export/metodologias.ts` · 195 líneas
 Hojas de la versión 2.5 para el informe de control (y su vista en pantalla): riesgo Monte Carlo, cadena crítica,
@@ -175,9 +187,13 @@ generarMsProject:7
 Funciones que generan cada archivo del expediente y el ZIP. El render del PDF se inyecta (navegador o Node).
 RenderPdfᵗ:13 · Archivoᵗ:15 · MIME:21 · nombreBase:32 · archivoExcel:36 · archivoEett:39 · archivoMemoria:43 · archivoCarta:47 · archivoMatriz:51 · archivoConsistencia:55 · archivoObservaciones:59 · archivoMsProject:65 · archivoPdf:68 · archivoEjecutivo:71 · archivoGerencial:74 · archivoProyecto:77 · empaquetarZip:82
 
-### `src/export/pdfdoc.ts` · 610 líneas
+### `src/export/pdfdoc.ts` · 664 líneas
 Definición del PDF consolidado (pdfmake): carátula, control del documento, aviso, índice,
-SECCIONES_PDF:24 · curvaS:310 · OpcionesPdfᵗ:475 · definicionPdf:479 · definicionPdfTablas:594
+SECCIONES_PDF:24 · definicionPdfDocumento:349 · curvaS:364 · OpcionesPdfᵗ:529 · definicionPdf:533 · definicionPdfTablas:648
+
+### `src/export/portafolio.ts` · 81 líneas
+Reporte consolidado del portafolio: Excel (una hoja con todos los proyectos y otra con sus alertas) y PDF horizontal.
+tablaPortafolio:10 · tablaAlertasPortafolio:23 · xlsxPortafolio:35 · pdfPortafolio:44
 
 ### `src/export/registro.ts` · 138 líneas
 Registro único de entregables: cada archivo de salida se declara una sola vez aquí y de esta lista salen el ZIP,
@@ -191,9 +207,9 @@ renderPdfBrowser:8
 Render del PDF en Node (línea de comandos).
 renderPdfNode:21
 
-### `src/export/tablas.ts` · 507 líneas
+### `src/export/tablas.ts` · 509 líneas
 Tablas de reportes con el formato estándar de expediente técnico (S10 / PowerCost).
-Celdaᵗ:8 · EstiloFilaᵗ:9 · Filaᵗ:10 · Tablaᵗ:17 · TIPOS_INSUMO:33 · subtituloProyecto:40 · lineaSon:44 · tablaResumen:78 · tablaDetallado:107 · tablaApu:128 · tablaInsumos:181 · tablaGG:210 · tablaMetrados:273 · tablaPolinomica:319 · tablaFlete:351 · textoPredecesoras:369 · tablaPrograma:374 · tablaValorizado:400 · tablaAdquisiciones:454 · tablaEquipos:460 · tablaPersonal:467 · tablaDesembolsos:475 · todasLasTablas:489
+Celdaᵗ:8 · EstiloFilaᵗ:9 · Filaᵗ:10 · Tablaᵗ:17 · TIPOS_INSUMO:35 · subtituloProyecto:42 · lineaSon:46 · tablaResumen:80 · tablaDetallado:109 · tablaApu:130 · tablaInsumos:183 · tablaGG:212 · tablaMetrados:275 · tablaPolinomica:321 · tablaFlete:353 · textoPredecesoras:371 · tablaPrograma:376 · tablaValorizado:402 · tablaAdquisiciones:456 · tablaEquipos:462 · tablaPersonal:469 · tablaDesembolsos:477 · todasLasTablas:491
 
 ### `src/export/trabajador.ts` · 47 líneas
 Trabajo en segundo plano (web worker): genera entregables y corre la simulación Monte Carlo sin congelar la pantalla.
@@ -350,9 +366,13 @@ VistaTabla:6 · VistaDocumento:43 · BloqueVista:51
 Acciones compartidas por la barra de herramientas, los menús y los módulos.
 generarArchivo:16 · accionesPartida:26
 
-### `src/ui/almacen.ts` · 371 líneas
+### `src/ui/adjuntos.ts` · 79 líneas
+Fotos y adjuntos de obra (por partida, protocolo o asiento del cuaderno): el archivo va al almacén `adjuntos` de IndexedDB
+nuevoIdAdjunto:15 · guardarAdjunto:43 · leerAdjunto:53 · eliminarAdjunto:59 · imagenesDe:67
+
+### `src/ui/almacen.ts` · 373 líneas
 Almacén local de proyectos (IndexedDB del navegador, con respaldo en localStorage).
-ResumenProyectoᵗ:6 · RegistroProyectoᵗ:21 · DIAS_PAPELERA:31 · Respaldoᵗ:33 · nuevoId:48 · resumir:50 · abrirDb:71 · tx:99 · modoAlmacen:127 · listarProyectos:137 · leerProyecto:142 · guardarRegistro:148 · guardarProyecto:157 · crearProyecto:189 · duplicarProyecto:193 · archivarProyecto:204 · eliminarProyecto:211 · listarPapelera:218 · diasEnPapelera:228 · restaurarDePapelera:230 · eliminarDefinitivo:238 · ultimoAbierto:246 · recordarUltimo:254 · proyectoV1:264 · olvidarV1:273 · respaldoCompleto:281 · restaurarRespaldo:287 · todasLasCopias:305 · CopiaProyectoᵗ:313 · listarCopias:328 · crearCopia:335 · eliminarCopia:347 · avisarGuardado:359 · alGuardarEnOtraPestana:364
+ResumenProyectoᵗ:6 · RegistroProyectoᵗ:21 · DIAS_PAPELERA:31 · Respaldoᵗ:33 · nuevoId:48 · resumir:50 · abrirDb:71 · tx:101 · modoAlmacen:129 · listarProyectos:139 · leerProyecto:144 · guardarRegistro:150 · guardarProyecto:159 · crearProyecto:191 · duplicarProyecto:195 · archivarProyecto:206 · eliminarProyecto:213 · listarPapelera:220 · diasEnPapelera:230 · restaurarDePapelera:232 · eliminarDefinitivo:240 · ultimoAbierto:248 · recordarUltimo:256 · proyectoV1:266 · olvidarV1:275 · respaldoCompleto:283 · restaurarRespaldo:289 · todasLasCopias:307 · CopiaProyectoᵗ:315 · listarCopias:330 · crearCopia:337 · eliminarCopia:349 · avisarGuardado:361 · alGuardarEnOtraPestana:366
 
 ### `src/ui/arbol.ts` · 165 líneas
 Operaciones sobre el árbol de partidas (títulos y partidas) con códigos jerárquicos.
@@ -373,9 +393,9 @@ useControl:8 · opcionesPartidas:18 · opcionesFrentes:22 · opciones:26 · pct:
 Puente con la app de escritorio (Electron, carpeta electron/). En el navegador no existe y nada cambia.
 ComandoEscritorioᵗ:5 · InfoPestanaᵗ:15 · escritorio:33 · parametrosInicio:37 · ApiPaginaᵗ:48 · publicarApiPagina:55
 
-### `src/ui/estado.ts` · 251 líneas
+### `src/ui/estado.ts` · 253 líneas
 Estado del proyecto abierto: edición inmutable (immer), deshacer/rehacer y autoguardado en el almacén local.
-Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:162 · descargar:189 · elegirArchivos:201 · elegirArchivo:212 · leerLogo:223
+Actualizarᵗ:18 · useProyecto:20 · Dialogoᵗ:139 · Contextoᵗ:141 · ModuloIdᵗ:162 · descargar:191 · elegirArchivos:203 · elegirArchivo:214 · leerLogo:225
 
 ### `src/ui/graficos.tsx` · 467 líneas
 Gráficos SVG livianos para los módulos de control (sin librerías externas).
@@ -423,6 +443,10 @@ ModExportar:9
 ### `src/ui/modulos/GastosGenerales.tsx` · 103 líneas
 ModGG:7
 
+### `src/ui/modulos/Informes.tsx` · 247 líneas
+Informes de obra: informe semanal o mensual del periodo elegido (PDF y Word), constructor de reportes con plantillas
+ModInformes:17 · Informe:34 · Adjuntos:188
+
 ### `src/ui/modulos/Insumos.tsx` · 263 líneas
 celda:19 · leerListaPrecios:31 · ModInsumos:49 · TiposCambio:234
 
@@ -440,6 +464,10 @@ ModPendientes:10
 
 ### `src/ui/modulos/Polinomica.tsx` · 67 líneas
 ModPolinomica:5
+
+### `src/ui/modulos/Portafolio.tsx` · 111 líneas
+Portafolio: todos los proyectos del almacén en una pantalla (monto, avance, CPI, SPI, alertas) y su reporte consolidado.
+ModPortafolio:17
 
 ### `src/ui/modulos/Presupuesto.tsx` · 498 líneas
 ModPresupuesto:21 · PieResumen:134 · DetalleTitulo:160 · DetallePartida:185 · EditorApu:235 · EditorMetrados:361 · EditorPrograma:410 · EditorEett:455
@@ -485,9 +513,9 @@ ModValor:28 · Metas:65 · opcionesAmbito:156 · Alternativas:160 · Matriz:299
 Versiones del presupuesto (oferta, negociado, contractual…): guardar, restaurar, comparar lado a lado por partida, insumo y
 ModVersiones:17
 
-### `src/ui/modulos/registro.ts` · 67 líneas
+### `src/ui/modulos/registro.ts` · 71 líneas
 Registro único de módulos. Para agregar uno:
-ItemNavᵗ:35 · NAV:38 · MODULOS:40
+ItemNavᵗ:37 · NAV:40 · MODULOS:42
 
 ## Línea de comandos — `cli/`
 
@@ -533,6 +561,9 @@ Versión 2.8 (etapa 2 del plan 3.0): banco de datos, sus formatos de intercambio
 Versión 2.7 (etapa 1 del plan 3.0): esquema y migraciones, estructura del archivo, bitácora, cronograma incremental y registro de exportadores.
 
 ### `tests/control.test.ts` · 191 líneas
+
+### `tests/informes.test.ts` · 146 líneas
+Versión 2.11 (etapa 5 del plan 3.0): informes de obra, constructor de reportes, plantillas de Word propias,
 
 ### `tests/integracion.test.ts` · 131 líneas
 Versión 2.10 (etapa 4 del plan 3.0): integración de apartados — un dato se registra una vez y los demás módulos lo leen.
