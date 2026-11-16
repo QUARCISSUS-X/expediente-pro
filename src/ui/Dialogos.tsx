@@ -10,7 +10,7 @@ import { Campo, EntradaNumero, Modal } from './componentes';
 import { escritorio } from './escritorio';
 import type { Contexto } from './estado';
 
-export function Dialogos({ ctx, alNuevo }: { ctx: Contexto; alNuevo: (tipo: 'blanco' | 'ejemplo' | 'importar') => void }) {
+export function Dialogos({ ctx, alNuevo }: { ctx: Contexto; alNuevo: (tipo: 'blanco' | 'ejemplo' | 'demostracion' | 'importar') => void }) {
   const cerrar = () => ctx.abrirDialogo(null);
   switch (ctx.dialogo) {
     case 'biblioteca': return <Biblioteca ctx={ctx} alCerrar={cerrar} />;
@@ -253,7 +253,7 @@ function CalculadoraCuadrilla({ ctx, alCerrar }: { ctx: Contexto; alCerrar: () =
 
 // ------------------------------------------------------------ nuevo proyecto y atajos
 
-function NuevoProyecto({ alCerrar, alElegir }: { alCerrar: () => void; alElegir: (t: 'blanco' | 'ejemplo' | 'importar') => void }) {
+function NuevoProyecto({ alCerrar, alElegir }: { alCerrar: () => void; alElegir: (t: 'blanco' | 'ejemplo' | 'demostracion' | 'importar') => void }) {
   return (
     <Modal titulo="Nuevo proyecto" alCerrar={alCerrar}>
       <p style={{ marginTop: 0 }}>Se crea un proyecto nuevo e independiente en el panel de proyectos. El proyecto actual queda guardado tal como está.</p>
@@ -269,6 +269,11 @@ function NuevoProyecto({ alCerrar, alElegir }: { alCerrar: () => void; alElegir:
           <button className="boton" onClick={() => alElegir('ejemplo')}>Crear desde el ejemplo</button>
         </div>
         <div className="salida">
+          <h3>Proyecto de demostración</h3>
+          <p>El ejemplo con todo el control de obra, versiones, cambios, restricciones, calidad, logística e informes: para recorrer cómo se enlazan los apartados.</p>
+          <button className="boton" onClick={() => alElegir('demostracion')}>Crear la demostración</button>
+        </div>
+        <div className="salida">
           <h3>Importar un expediente existente</h3>
           <p>Elija juntos los archivos del expediente: presupuesto con APU e insumos de S10 o Excel (.xlsx), planilla de metrados (.xlsx), cronograma de MS Project guardado como XML y especificaciones técnicas (.docx). También abre un proyecto .json o una plantilla de carga.</p>
           <button className="boton" onClick={() => alElegir('importar')}>Elegir archivos</button>
@@ -280,7 +285,9 @@ function NuevoProyecto({ alCerrar, alElegir }: { alCerrar: () => void; alElegir:
 
 function Atajos({ alCerrar }: { alCerrar: () => void }) {
   const filas: [string, string][] = [
-    ['Ctrl + S', 'Guardar una copia del proyecto (.json)'],
+    ['Ctrl + S', 'Guardar en un archivo de una carpeta (desde entonces se guarda solo allí)'],
+    ['Ctrl + K', 'Búsqueda global: partidas, insumos, módulos y acciones'],
+    ['Ctrl + P', 'Imprimir el módulo abierto (sin barras ni botones)'],
     ['Ctrl + Z / Ctrl + Y', 'Deshacer / rehacer'],
     ['Ctrl + F', 'Buscar partidas e insumos'],
     ['Insert', 'Agregar partida (en el presupuesto)'],

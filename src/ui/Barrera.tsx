@@ -22,7 +22,7 @@ export class Barrera extends Component<Props, { error: Error | null }> {
           <button className="boton primario" onClick={reintentar}>Reintentar</button>
           <button className="boton" onClick={() => { this.props.alDeshacer(); reintentar(); }}>Deshacer el último cambio</button>
           <button className="boton" onClick={() => { this.props.alIrAValidacion(); reintentar(); }}>Revisar la integridad de los datos</button>
-          <button className="boton" onClick={this.props.alDescargar}>Descargar una copia .json</button>
+          <button className="boton" onClick={this.props.alDescargar}>Guardar el proyecto en un archivo</button>
         </div>
       </div>
     );

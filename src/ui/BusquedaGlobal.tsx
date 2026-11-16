@@ -20,7 +20,7 @@ export function BusquedaGlobal({ ctx, alCerrar, abrirFicha }: { ctx: Contexto; a
   const todos = useMemo<Resultado[]>(() => {
     const acciones: Resultado[] = [
       { clave: 'a-zip', grupo: 'Acción', texto: 'Exportar todos los entregables (ZIP)', hacer: () => { alCerrar(); ctx.exportar('zip'); } },
-      { clave: 'a-guardar', grupo: 'Acción', texto: 'Guardar una copia del proyecto (.json)', hacer: () => { alCerrar(); ctx.guardarArchivo(); } },
+      { clave: 'a-guardar', grupo: 'Acción', texto: 'Guardar el proyecto en un archivo de una carpeta (Ctrl+S)', hacer: () => { alCerrar(); ctx.guardarArchivo(); } },
       { clave: 'a-importar', grupo: 'Acción', texto: 'Importar un expediente o proyecto', hacer: () => { alCerrar(); ctx.abrirArchivo(); } },
       { clave: 'a-nuevo', grupo: 'Acción', texto: 'Nuevo proyecto', hacer: () => { alCerrar(); ctx.abrirDialogo('nuevo'); } },
       { clave: 'a-version', grupo: 'Acción', texto: 'Guardar una versión del presupuesto', hacer: ir('versiones') },

@@ -25,62 +25,79 @@
 </head>
 <body>
 <h1>Expediente Pro</h1>
-<p class="sub">Guía de uso · versión 2.0 · octubre de 2026</p>
+<p class="sub">Guía de uso por flujo de trabajo · versión 3.0 · noviembre de 2026</p>
 
-<p>Expediente Pro es un programa de costos, presupuestos y programación de obra, del tipo de S10 o PowerCost, que genera todos los entregables de una cotización privada o de un expediente técnico de obra pública a partir de una sola base de datos. No usa inteligencia artificial ni internet: corre completo en su navegador y sus datos no salen de su computadora.</p>
+<p>Expediente Pro es un programa de costos, presupuestos, programación y control de obra, del tipo de S10 o PowerCost. Con una sola base de datos arma la cotización privada o el expediente técnico de obra pública, y después controla la obra con valor ganado, Last Planner, calidad, logística e informes semanales y mensuales. No usa inteligencia artificial: corre completo en su computadora y sus datos no salen de ella. La única conexión a internet es la búsqueda de actualizaciones de la app de escritorio, y se puede apagar.</p>
 
-<h2>1. Cómo abrirlo</h2>
+<h2>1. Dónde se usa</h2>
+<table>
+  <tr><th style="width:22%">Forma</th><th>Cómo se instala y dónde quedan los datos</th></tr>
+  <tr><td>App de escritorio (Windows)</td><td>Instalador o portable desde los releases. Proyectos en pestañas, menú con atajos, doble clic en un <code>.expediente</code> o <code>.epdb</code> abre el programa y avisa cuando hay una versión nueva (menú Ayuda › «Buscar actualizaciones al iniciar»).</td></tr>
+  <tr><td>Navegador</td><td>El archivo <code>index.html</code> en Chrome o Edge. Servido por http(s) se puede <b>instalar como aplicación</b> (PWA) y abre sin conexión.</td></tr>
+  <tr><td>Extensión de Firefox, Chrome o Edge</td><td>El mismo programa en el navegador. Sus datos se borran al desinstalarla: el programa le recuerda descargar un respaldo cada 14 días.</td></tr>
+</table>
+<div class="ok">Cada proyecto se guarda solo en el <b>panel de proyectos</b> de ese equipo. Con <b>Guardar</b> (Ctrl+S) elige una vez un archivo en una carpeta (OneDrive, Dropbox, red) y desde entonces <b>cada cambio se guarda también allí</b>. Si el archivo cambió en otra computadora, al abrir el proyecto se le ofrece cargar esa versión.</div>
+<p>La primera vez que crea un proyecto en blanco aparece un <b>recorrido</b> por los pasos del flujo; se vuelve a abrir con el botón <b>?</b> de la barra. El botón <b>◐</b> cambia entre tema automático, oscuro y claro, y <b>Ctrl+P</b> imprime el módulo abierto sin barras ni botones. Para ver todos los apartados enlazados, cree el <b>proyecto de demostración</b> (Nuevo › «Crear la demostración»).</p>
+
+<h2 class="salto">2. Flujo A · Cotizar una obra privada</h2>
 <ol>
-  <li>Descomprima la carpeta <b>ExpedientePro</b> donde prefiera (por ejemplo, en Documentos).</li>
-  <li>Haga doble clic en <b>ExpedientePro.html</b>. Se abre en su navegador; se recomienda Google Chrome o Microsoft Edge actualizados.</li>
-  <li>La primera vez se carga un <b>proyecto de ejemplo</b> completo (cierre de bocaminas y rehabilitación de un depósito de desmonte) para que vea todo funcionando.</li>
+  <li><b>Nuevo proyecto en blanco</b> y <b>Configuración general</b>: cliente, ubicación, moneda, fecha de precios, modo privado, gastos generales y utilidad, logos.</li>
+  <li><b>Presupuesto, APU y metrados</b>: títulos y partidas; traiga partidas completas desde la <b>biblioteca</b> (lee el banco de datos). Los metrados aceptan fórmulas como <code>2*(3.5+4.2)</code>. Las <b>subpartidas</b> (mortero, concreto) se reutilizan dentro de otros análisis.</li>
+  <li><b>Relación de insumos</b>: «Actualizar precios desde el banco» muestra la diferencia por insumo y su efecto en el total antes de aplicarla.</li>
+  <li><b>Gastos generales</b> y <b>Cronograma</b>: el plazo sale de la ruta crítica; los gastos variables «todo el plazo» lo toman solos.</li>
+  <li><b>Versiones del presupuesto</b>: guarde la «Oferta»; si negocia, guarde otra versión y compárelas por partida e insumo.</li>
+  <li><b>Validación</b> y <b>Exportar</b>: carta de presentación, presupuesto, APU y cronograma en Excel con fórmulas y PDF.</li>
 </ol>
-<div class="ok">Cada proyecto se guarda solo, por separado, en el <b>panel de proyectos</b> del navegador. Para llevarlo a otra computadora use <b>Guardar</b> (Ctrl+S), que crea un archivo <code>.expediente.json</code>, o descargue un <b>Respaldo</b> de todos los proyectos desde el panel.</div>
 
-<h2>1.1 Barra de herramientas</h2>
-<p>Arriba está la barra de herramientas, agrupada como en S10, PowerCost o Delphin Express:</p>
-<table>
-  <tr><th style="width:18%">Grupo</th><th>Herramientas</th></tr>
-  <tr><td>Archivo</td><td>Proyectos (panel), Nuevo, Importar (expediente de S10/Excel, cronograma de MS Project en XML, EETT en Word, proyecto .json o plantilla de carga), Guardar copia .json y Datos (configuración general).</td></tr>
-  <tr><td>Edición</td><td>Deshacer, Rehacer y Buscar partidas o insumos (Ctrl+F).</td></tr>
-  <tr><td>Partidas</td><td>Título, Subtítulo, Partida, Biblioteca, Duplicar, Eliminar, Subir, Bajar, Nivel + (entrar al título anterior), Nivel − (salir del título) y Renumerar.</td></tr>
-  <tr><td>Herramientas</td><td>Validar, calculadora del costo de hora-hombre y calculadora de rendimiento, cuadrilla y duración.</td></tr>
-  <tr><td>Reportes</td><td>Excel con fórmulas, documentos Word (EETT, memoria, carta, matriz, reporte, informe de revisión), PDF consolidado, MS Project y Todo en ZIP.</td></tr>
-</table>
+<h2>3. Flujo B · Armar un expediente técnico</h2>
+<ol>
+  <li><b>Términos de referencia</b>: cargue los entregables que pide el TdR; la matriz de cumplimiento muestra qué documento cubre cada uno.</li>
+  <li>Si ya existe un presupuesto en S10, Delphin o PowerCost, <b>impórtelo</b> exportado a Excel junto con los metrados, el cronograma de MS Project en XML y las EETT en Word (sección 9).</li>
+  <li>Use <b>subpresupuestos</b> (estructuras, arquitectura, instalaciones) si el expediente los pide: el Excel lleva una hoja por subpresupuesto y el consolidado.</li>
+  <li><b>Fórmula polinómica</b>, <b>valorizado y calendarios</b> (adquisiciones, equipos, personal, desembolsos) se calculan solos.</li>
+  <li><b>Documentos</b>: especificaciones técnicas por partida desde plantillas, memoria descriptiva y carta.</li>
+  <li><b>Validación</b>: las 15 reglas (sección 10) y la revisión de integridad deben quedar sin errores. <b>Exportar</b> › «Todos los entregables» arma el ZIP.</li>
+  <li>Marque la versión firmada como <b>contractual</b> en Versiones: es la base del presupuesto vigente durante la obra.</li>
+</ol>
 
-<h2>1.2 Panel de proyectos</h2>
-<p>En <b>Panel de proyectos</b> se crean proyectos nuevos (en blanco, desde el ejemplo o importando archivos), se abren, se duplican, se archivan y restauran, se exportan como .json y se eliminan (con confirmación). Cada proyecto conserva sus propios datos generales, análisis de costos, metrados, presupuestos, cronogramas y documentos. <b>Respaldo</b> descarga todos los proyectos en un archivo y <b>Restaurar respaldo</b> los vuelve a cargar.</p>
+<h2 class="salto">4. Flujo C · Controlar la obra</h2>
+<ol>
+  <li><b>Control y valor ganado</b>: congele la <b>línea base</b> y registre cada semana un <b>corte</b> con el metrado ejecutado por partida y el costo real. Salen PV, EV, AC, SPI, CPI, EAC y Earned Schedule.</li>
+  <li><b>Cambios</b>: cada adicional o deductivo lleva sus partidas y metrados; al aprobarlo cambian solos el presupuesto vigente, el EAC y el requerimiento de materiales.</li>
+  <li><b>Last Planner</b>: plan maestro, lookahead con restricciones (las de materiales, calidad y consultas aparecen solas), plan semanal y PPC con sus causas.</li>
+  <li><b>Kanban de materiales</b>, <b>Plan de calidad ISO 9001</b> (protocolos que liberan lo ejecutado para valorizar), <b>Ejecución lean</b>, <b>Six Sigma</b>, <b>Riesgo</b> y <b>Cadena crítica</b> según lo que exija la obra.</li>
+  <li><b>Centro de pendientes</b> (Ctrl+Shift+P) y la <b>ficha de partida</b> reúnen lo que requiere atención; <b>Ctrl+K</b> busca cualquier partida, insumo o módulo.</li>
+  <li><b>Informes de obra</b> (Ctrl+Shift+O): elija semanal o mensual y el periodo; las cifras son las del tablero al cierre del periodo. Elija secciones, orden y logos y guárdelos como plantilla; descargue PDF o Word, o llene <b>su propio formato de Word</b> con marcadores como <code>{{avance_real}}</code> o <code>{{spi}}</code> (la lista está en la pantalla).</li>
+  <li><b>Fotos y adjuntos</b> (en Informes de obra): por partida, protocolo o asiento del cuaderno. Se guardan aparte del proyecto y las del periodo salen en el panel fotográfico.</li>
+  <li><b>Portafolio</b> (Ctrl+Shift+F): todos los proyectos con su semáforo, SPI, CPI y alertas, y el reporte consolidado en Excel o PDF. El informe de control en Excel lleva fórmulas vinculadas en valor ganado, avance y valorizaciones.</li>
+</ol>
 
-<h2>1.3 Configuración general</h2>
-<p>Antes de exportar, complete <b>Configuración general</b>: proyecto (nombre, código, descripción, ubicación y fecha), proyectista, cliente y propietario (con sus <b>logos</b> en PNG, JPG o SVG), responsables de elaboración, revisión y aprobación, control del documento (código, revisión, estado, tipo, autores, aviso de uso e imagen de carátula), moneda y nombre de la moneda para el monto en letras, sistema de unidades, IGV incluido o no, y los demás parámetros. A la derecha se ve cómo quedarán la carátula y el encabezado. Estos datos se copian solos a las carátulas, el control del documento, los encabezados y pies de página de Word y PDF y el membrete de cada hoja de Excel.</p>
+<h2>5. Flujo D · Mantener el banco de datos</h2>
+<ol>
+  <li><b>Banco de datos</b> (Ctrl+B): insumos, precios con fecha, lugar y fuente, análisis, cuadrillas, plantillas y proveedores, fuera de los proyectos.</li>
+  <li><b>Importar…</b>: listas de precios (Revista Costos, proveedores), expedientes de otros programas en Excel, CSV o un <code>.epdb</code>. Siempre pasa por la <b>pantalla de fusión</b>: nuevo, igual y en conflicto, con la decisión por registro; el banco anterior queda como punto de restauración.</li>
+  <li>«Enviar este proyecto al banco» devuelve los precios y rendimientos afinados en obra; desde Ejecución lean se proponen los rendimientos reales.</li>
+  <li><b>Compartir con otros equipos sin servidor</b>: «Crear el .epdb compartido…» en una carpeta común; en los demás equipos, «Usar un .epdb compartido…». Cada cambio se publica en el archivo y, si otro equipo lo cambió antes, primero se fusiona.</li>
+</ol>
 
-<h2>2. Flujo de trabajo</h2>
-<p>Los módulos están en la columna izquierda, en el orden en que conviene trabajar. Un punto rojo u ocre junto a un módulo indica que tiene observaciones de consistencia.</p>
-<table>
-  <tr><th style="width:24%">Módulo</th><th>Qué se hace</th></tr>
-  <tr><td>Panel de proyectos</td><td>Todos los proyectos guardados (ver 1.2).</td></tr>
-  <tr><td>Configuración general</td><td>Datos que van a carátulas, encabezados y pies (ver 1.3), calendario de obra y textos de la memoria y de las especificaciones generales.</td></tr>
-  <tr><td>Términos de referencia</td><td>Lista de entregables que pide el TdR y el documento del expediente que cubre cada uno. Genera la matriz de cumplimiento.</td></tr>
-  <tr><td>Presupuesto</td><td>Árbol de títulos y partidas. Al seleccionar una partida se edita su análisis de precio unitario (rendimiento, cuadrillas, cantidades), sus metrados con sustento, su programación y su especificación técnica. La biblioteca trae partidas con APU de referencia.</td></tr>
-  <tr><td>Insumos</td><td>Catálogo único de precios sin IGV con índice unificado, peso (para flete) y días de anticipación de compra. Aquí se importan los precios de la Revista Costos o de sus cotizaciones.</td></tr>
-  <tr><td>Gastos generales</td><td>Desagregado de gastos fijos y variables. Los variables marcados “Todo el plazo” toman el plazo del programa automáticamente.</td></tr>
-  <tr><td>Fórmula polinómica</td><td>Se calcula sola con los índices unificados INEI (base diciembre 2025) y las reglas del D.S. 011-79-VC.</td></tr>
-  <tr><td>Programación</td><td>Duración por partida, predecesoras (FC, CC, FF con desfase), ruta crítica, Gantt y plazo. Exporta a MS Project.</td></tr>
-  <tr><td>Cronogramas</td><td>Valorizado y curva S, adquisición de materiales, equipos, histograma de personal y desembolsos. Se calculan solos.</td></tr>
-  <tr><td>Documentos</td><td>Especificaciones técnicas por plantilla, memoria descriptiva y carta. Las plantillas de EETT se pueden editar.</td></tr>
-  <tr><td>Validación</td><td>Las 15 reglas de consistencia (ver sección 6).</td></tr>
-  <tr><td>Exportar</td><td>Descarga de cada entregable o de todos juntos en un ZIP.</td></tr>
-</table>
-
-<h3>Atajos útiles</h3>
+<h2>6. Archivos, equipos y respaldos</h2>
 <ul>
-  <li><b>Enter</b> o flechas ↑ ↓ en una tabla: confirma y pasa a la fila siguiente o anterior. <b>Esc</b>: descarta lo escrito.</li>
-  <li><b>Ctrl+Z / Ctrl+Y</b>: deshacer y rehacer (fuera de una celda). <b>Ctrl+S</b>: guardar archivo. <b>Ctrl+F</b>: buscar.</li>
-  <li>En el presupuesto: <b>Insert</b> agrega partida, <b>Supr</b> elimina, <b>↑ ↓</b> recorren las filas, <b>Alt+↑ ↓</b> suben o bajan y <b>Alt+→ ←</b> cambian de nivel.</li>
+  <li><b>Proyecto en una carpeta</b>: Ctrl+S la primera vez elige el archivo <code>.expediente</code>; luego se guarda solo. La cabecera muestra «→ archivo»; la × deja de guardar allí. En Firefox se descarga un <code>.expediente.json</code>.</li>
+  <li><b>Respaldo</b> (panel de proyectos): un <code>.epdb</code> con todos los proyectos, sus versiones y el banco. «Restaurar respaldo» los agrega en otro equipo o en la app.</li>
+  <li><b>Versiones del proyecto</b>: puntos de restauración automáticos y manuales (botón Versiones); los eliminados quedan 30 días en la papelera.</li>
+  <li>Un proyecto guardado por una versión anterior siempre abre; uno de una versión más nueva se abre solo para leer.</li>
+</ul>
+
+<h2>7. Atajos útiles</h2>
+<ul>
+  <li><b>Enter</b> o flechas ↑ ↓ en una tabla: confirma y pasa de fila. <b>Esc</b>: descarta lo escrito o cierra una ventana.</li>
+  <li><b>Ctrl+Z / Ctrl+Y</b>: deshacer y rehacer. <b>Ctrl+S</b>: guardar en el archivo. <b>Ctrl+F</b>: buscar. <b>Ctrl+K</b>: búsqueda global. <b>Ctrl+P</b>: imprimir el módulo.</li>
+  <li>En el presupuesto: <b>Insert</b> agrega partida, <b>Supr</b> elimina, <b>Alt+↑ ↓</b> mueve y <b>Alt+→ ←</b> cambia de nivel.</li>
+  <li>Con teclado: <b>Tab</b> recorre los controles; el primer Tab ofrece «Saltar al contenido».</li>
   <li>Los números aceptan <code>1,234.56</code> o <code>1234,56</code>.</li>
 </ul>
 
-<h2>3. Cómo se calcula</h2>
+<h2 class="salto">8. Cómo se calcula</h2>
 <ul>
   <li><b>Metrado</b> = producto de las casillas llenas de la planilla: N.º veces × cantidad × factor × largo × ancho × alto × área × volumen (las vacías no cuentan). El total de cada partida se redondea a dos decimales.</li>
   <li><b>Mano de obra y equipos</b>: cantidad por unidad = cuadrilla × jornada ÷ rendimiento, al cuarto decimal. Cada APU puede tener su propia jornada (por ejemplo, 10 h en mina). Herramientas manuales: % de la mano de obra del APU.</li>
@@ -90,7 +107,7 @@
   <li><b>Cronogramas</b>: cada partida se reparte en partes iguales en sus días de trabajo; las compras de materiales se adelantan según su anticipación.</li>
 </ul>
 
-<h2 class="salto">4. Importar un expediente existente (S10, Excel, Word, MS Project)</h2>
+<h2 class="salto">9. Importar un expediente existente (S10, Excel, Word, MS Project)</h2>
 <p>Con <b>Importar</b> (o <b>Nuevo → Importar un expediente existente</b>) elija juntos los archivos del expediente:</p>
 <ul>
   <li>Libro de presupuesto de S10 o Excel con las hojas de presupuesto (Item, Descripción, Unid., Cant., Precio, Total), precios unitarios por bloques (Partida, Rendimiento, Costo unitario, Código, Descripción, Unidad, Cuadrilla, Cantidad, Precio, Parcial), lista de insumos y gastos generales variables, fijos y financieros.</li>
@@ -100,7 +117,7 @@
 </ul>
 <p>El programa recalcula todo, compara el costo directo, los gastos generales, la utilidad, el subtotal y el plazo con los del original, y anota cada inconsistencia de formato y de cálculo (unidades o descripciones distintas entre documentos, jornadas mezcladas, códigos con dos precios, vínculos a otros libros, hojas ocultas, referencias rotas, espesores distintos entre EETT y presupuesto, partidas sin actividad en el cronograma, etc.). Las observaciones se revisan en <b>Validación</b> y se descargan como <b>Informe de revisión del expediente</b> (Word).</p>
 
-<h2>4.1 Cargar un expediente desde la plantilla de carga</h2>
+<h2>9.1 Cargar un expediente desde la plantilla de carga</h2>
 <p>La plantilla es la forma más rápida de cargar un TdR completo. Use <b>Plantilla_de_carga_en_blanco.xlsx</b> (o expórtela desde Exportar → Plantilla de carga) y luego <b>Abrir</b> → elija el .xlsx.</p>
 <table>
   <tr><th style="width:18%">Hoja</th><th>Contenido</th></tr>
@@ -113,18 +130,14 @@
   <tr><td>GG</td><td>Grupo variable, fijo o financiero, rubro, descripción, unidad (mes, glb, und o %CD), cantidad, duración, precio, % de participación, ligado al plazo Sí/No.</td></tr>
 </table>
 
-<h2>4.2 Formato compacto (archivo de texto)</h2>
+<h2>9.2 Formato compacto (archivo de texto)</h2>
 <p>Alternativa liviana a la plantilla Excel: todo el proyecto en un archivo <code>.exp.txt</code> que se escribe con cualquier editor (Bloc de notas, VS Code). Cada partida ocupa una línea con su unidad, rendimiento, recursos del APU, metrado y predecesoras; los detalles de metrado van debajo con un guion. Parte del catálogo base de insumos y de la plantilla de GG, así que solo se escribe lo que cambia, y puede tomar APU de la biblioteca (<code>apu=@trazo</code>) o copiar el de otra partida (<code>apu=02.01</code>).</p>
 <span class="cmd">01.02 Trazo, nivelación y replanteo | m2 | apu=@trazo | m=1250
 02.01 Excavación manual de zanja | m3 | r=3.5 | MO01 0.1, MO04 1, EQ01 3%
   - Canal tramo A | l=320 a=0.6 h=0.5 | ref=Plano H-01</span>
 <p>Se abre con <b>Importar</b> como proyecto nuevo, y cualquier proyecto se guarda en este formato con <b>Exportar › Formato compacto</b>. La referencia completa está en <code>Plantillas/Formato_compacto.txt</code> y hay un ejemplo en <code>Plantillas/Ejemplo_compacto.exp.txt</code>.</p>
 
-<h2>5. Actualizar precios (Revista Costos, cotizaciones)</h2>
-<p>En <b>Insumos → Importar precios</b> elija un Excel o CSV con una fila de encabezados que contenga al menos <b>Código</b> y <b>Precio</b> (opcionales: Descripción, Unidad, Tipo, IU). Los códigos existentes actualizan su precio y su fuente; los nuevos se agregan al catálogo.</p>
-<div class="nota">Los precios del catálogo base y del ejemplo son <b>referenciales de demostración</b>. Los jornales de mano de obra usan los básicos 2026 del convenio de construcción civil (operario S/ 89.30, oficial S/ 69.75, peón S/ 62.80); BUC, leyes sociales y movilidad son parámetros que debe contrastar con la Revista Costos o la tabla CAPECO vigente antes de ofertar.</div>
-
-<h2>6. Las 15 reglas de consistencia</h2>
+<h2>10. Las 15 reglas de consistencia</h2>
 <table>
   <tr><th style="width:5%">N°</th><th style="width:30%">Control</th><th>Qué verifica</th></tr>
   <tr><td>1</td><td>Detallado vs resumen</td><td>Suma de partidas = costo directo; jerarquía de códigos correcta.</td></tr>
@@ -144,14 +157,7 @@
   <tr><td>15</td><td>Cumplimiento del TdR</td><td>Cada entregable exigido está cubierto por un documento.</td></tr>
 </table>
 
-<h2>6.1 Integridad de datos y versiones</h2>
-<p>En <b>Validación</b>, la sección «Integridad de los datos» revisa que el proyecto no tenga datos sueltos o dañados: metrados, análisis o actividades de partidas que ya no existen, predecesoras rotas, identificadores repetidos y números no válidos. El botón <b>Reparar automáticamente</b> los corrige sin tocar el presupuesto válido (se deshace con Ctrl+Z). Al abrir un archivo .json la reparación se hace sola y se avisa.</p>
-<p>El botón <b>Versiones</b> (arriba, junto a Guardar) muestra los puntos de restauración del proyecto: el programa guarda uno con el primer cambio de cada día (conserva los últimos 12) y usted puede guardar versiones con nombre antes de un cambio grande. «Restaurar» reemplaza el contenido actual y también se puede deshacer.</p>
-<h2>6.2 Resumen del proyecto e informes gerenciales</h2>
-<p><b>Resumen del proyecto</b> (grupo Expediente; Alt+9 en la app) reúne los indicadores principales, el costo por título, la composición del costo (mano de obra, materiales, equipos, subcontratos), la estructura del precio, la curva S y la <b>clasificación ABC</b> de partidas e insumos: la clase A es lo que suma el 80 % del costo y merece la mayor revisión. Desde ahí se descargan el <b>Informe ejecutivo</b> (PDF con gráficos) y el <b>Reporte gerencial</b> (Excel). Por línea de comandos: <code>expediente informe proyecto.json --salida carpeta</code> y <code>expediente integridad proyecto.json --reparar</code>.</p>
-<h2>6.3 Extensión para Firefox y Chrome</h2>
-<p>El programa también se instala como extensión del navegador: aparece un botón en la barra que lo abre en una pestaña, sin conexión. En Firefox se instala el archivo <b>.xpi</b> firmado (arrastrándolo a la ventana) o desde addons.mozilla.org; en Chrome o Edge, desde la tienda o en modo desarrollador con «Cargar descomprimida». Los proyectos de la extensión se guardan solo en ese navegador y se borran si se desinstala: respáldelos con «Guardar» (.json).</p>
-<h2 class="salto">7. Entregables que genera</h2>
+<h2 class="salto">11. Entregables que genera</h2>
 <table>
   <tr><th style="width:40%">Archivo</th><th>Contenido</th></tr>
   <tr><td>…_Presupuesto_y_cronogramas.xlsx</td><td><b>Libro con fórmulas vinculadas</b>: Datos (parámetros con nombre: JORNADA, UTILIDAD, IGV, PLAZO_MESES…), resumen y resumen de costos por tipo de insumo, presupuesto, APU en formato estándar, relación y cotización de insumos, planilla y resumen de metrados, gastos generales variables, fijos y financieros, fórmula polinómica, flete, cronograma con Gantt, valorizado, calendarios de adquisiciones, equipos y personal, desembolsos, distribución por periodos y controles. Al cambiar un metrado, un rendimiento, una cuadrilla, un precio, un porcentaje, la fecha de inicio, los días no laborables o los feriados se recalcula todo, incluido el cronograma: duraciones, fechas de inicio y fin por predecesoras (FC, CC, FF con desfase), ruta crítica, plazo, gastos generales ligados al plazo, distribución por periodos, valorizado, calendarios y desembolsos; texto azul = dato editable, negro = fórmula, verde = vínculo a otra hoja.</td></tr>
@@ -166,33 +172,26 @@
   <tr><td>….expediente.json</td><td>El proyecto, para volver a abrirlo.</td></tr>
 </table>
 
-<h2>8. Línea de comandos (opcional)</h2>
-<p>Con Node.js 18 o superior instalado, la carpeta <b>Linea_de_comandos</b> permite generar todo sin abrir el navegador:</p>
+<h2>12. Línea de comandos (opcional)</h2>
+<p>Con Node.js 18 o superior, la carpeta <b>Linea_de_comandos</b> genera todo sin abrir el programa:</p>
 <span class="cmd">node expediente.cjs generar mi_proyecto.expediente.json --salida entregables --zip
-node expediente.cjs generar Plantilla_llena.xlsx --salida entregables
 node expediente.cjs validar mi_proyecto.expediente.json
-node expediente.cjs plantilla --salida Plantilla.xlsx
-node expediente.cjs importar Ppto.xlsx Metrados.xlsx cronograma.xml EETT.docx --config datos.json --salida proyecto.json --generar entregables
-node expediente.cjs cargar proyecto.exp.txt --generar entregables --zip
-node expediente.cjs compacto proyecto.expediente.json
-node expediente.cjs catalogo</span>
-<p>El archivo <code>--config</code> es un .json opcional con los datos de la configuración general (meta, entidades con logos como ruta de imagen, responsables y documento); vea el de la carpeta del expediente Tincocancha.</p>
+node expediente.cjs importar Ppto.xlsx Metrados.xlsx cronograma.xml EETT.docx --salida proyecto.json --generar entregables
+node expediente.cjs comparar oferta.expediente.json contrato.expediente.json --excel comparacion.xlsx
+node expediente.cjs informe-obra obra.expediente.json --mensual --word --salida informes
+node expediente.cjs informe-obra obra.expediente.json --semanal --fecha 2026-12-07
+node expediente.cjs banco resumen banco.epdb
+node expediente.cjs ejemplo --control --salida demostracion.json</span>
+<p>Escriba <code>node expediente.cjs</code> sin argumentos para ver todos los comandos (plantilla, compacto, cargar, catálogo, integridad y los del banco).</p>
 
-<h2>9. Paso final: de un TdR a los entregables</h2>
-<ol>
-  <li>Comparta el TdR (y, si los tiene, planos, metrados y cotizaciones).</li>
-  <li>Se escribe el proyecto en formato compacto (partidas, metrados, APU, insumos, gastos generales, programa y entregables del TdR); es la vía más corta y la que menos recursos consume.</li>
-  <li>Se ejecuta el programa: valida las 15 reglas y genera el ZIP de entregables.</li>
-  <li>Usted abre el archivo <code>.expediente.json</code> o la plantilla en Expediente Pro, revisa y ajusta precios, rendimientos y metrados, y vuelve a exportar.</li>
-</ol>
-
-<h2>10. Límites conocidos</h2>
+<h2>13. Límites conocidos</h2>
 <ul>
   <li>Una fórmula polinómica por obra (el reglamento permite hasta cuatro); para más, divida la obra en proyectos.</li>
   <li>No lee archivos nativos de S10 (.S2K) ni de PowerCost (.prs) ni el .mpp de MS Project: exporte el presupuesto a Excel y el cronograma a XML, e impórtelos.</li>
   <li>En el Excel, las predecesoras y la cantidad de periodos se fijan al exportar. Si al editar el libro el plazo crece, lo que excede el último periodo se acumula en él y el Gantt tiene un margen de 25 %; para agregar periodos o cambiar predecesoras, hágalo en el programa y vuelva a exportar.</li>
   <li>El expediente lo firma un ingeniero colegiado; el programa no reemplaza la revisión profesional de metrados, precios y especificaciones.</li>
-  <li>Los datos guardados en el navegador se pierden si se borran los datos del sitio: guarde siempre su archivo .json.</li>
+  <li>Los datos guardados en el navegador o en la extensión se pierden si se borran los datos del sitio o se desinstala: guarde el proyecto en una carpeta (Ctrl+S) y descargue respaldos.</li>
+  <li>La sincronización entre equipos es por archivo: si dos equipos cambian el mismo registro a la vez, la pantalla de fusión pide elegir.</li>
 </ul>
 </body>
 </html>

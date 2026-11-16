@@ -39,6 +39,7 @@ archivos grandes completos:
 | **Resumen del proyecto** (indicadores, ABC, Pareto, curva S, alertas) | `engine/analisis.ts` | `ui/modulos/Resumen.tsx` | Informe ejecutivo PDF y Reporte gerencial Excel: `export/gerencial.ts` | `"análisis gerencial"` |
 | **Informes de obra y portafolio** (semanal/mensual, constructor, plantillas de Word propias, fotos y adjuntos) | `engine/informe.ts`, `engine/portafolio.ts` | `ui/modulos/{Informes,Portafolio}.tsx`, adjuntos en `ui/adjuntos.ts` | Word/PDF en `export/informeObra.ts`; consolidado en `export/portafolio.ts`; fórmulas del Excel de control en `export/control.ts` (`formulas` de `Tabla`) | `informes.test.ts` |
 | **Plataformas** (archivo vinculado con autoguardado, doble clic, actualización automática, PWA, aviso de respaldo, banco compartido por archivo) | — | `ui/{vinculo,useVinculo,respaldo,pwa}.ts`, `ui/{AvisoRespaldo,BancoSincronizacion}.tsx`; `electron/main.cjs` y `preload-app.cjs`; `public/` | — (consola: `cli/obra.ts`) | `plataformas.test.ts` |
+| **Experiencia de uso 3.0** (tema oscuro, impresión, recorrido inicial, demostración) | `data/demostracion.ts` | `ui/{tema.ts,Recorrido.tsx}`, `ui/estilos.css` (variables `--blanco`, `--fila-*`; `data-tema` en `<html>`), botones en `ui/App.tsx` | — | `cierre.test.ts` |
 | **Integridad de datos** (referencias rotas, repetidos, números no válidos) | `engine/integridad.ts` (`recorrer`) | `ui/modulos/Validacion.tsx` (sección Integridad) | Hoja Consistencia del reporte gerencial | `"integridad de datos"` |
 | Extensión de navegador (Firefox, Chrome/Edge) | — | misma interfaz; `extension/` (manifiesto base, fondo, íconos) y `scripts/extension.mjs` | — | `web-ext lint --source-dir dist-ext-firefox` |
 | **Banco de datos** (insumos, precios, análisis, cuadrillas, plantillas, proveedores; fusión e intercambio) | `engine/banco.ts` | `ui/modulos/Banco.tsx`, `ui/BancoDialogos.tsx` (fusión, actualizar precios, agregar del banco), almacén `ui/bancoAlmacen.ts`; formatos `io/banco.ts` (.epdb, Excel, CSV, listas externas); consola `cli/banco.ts` | — | `banco.test.ts` |
@@ -102,5 +103,5 @@ en una máquina Windows; en cada PR deja el instalador como artefacto y, al unir
 - Al unir el PR a `main`, GitHub crea la etiqueta `vX.Y.Z` y el release con el instalador, el portable y el ZIP (unos 10 minutos).
 
 ## Próximas etapas (no hacer sin pedido)
-Plan de la versión 3.0 por etapas en `docs/PLAN_V3.md` (banco de datos, integración de apartados, reportes de obra, plataformas; BIM en 3.1).
-Leer solo la etapa que se pida.
+El plan 3.0 (`docs/PLAN_V3.md`, etapas 1 a 7) está hecho. Queda la etapa 8, VDC/BIM (3.1): visor IFC, 5D y 4D, que necesita un lector IFC
+en WebAssembly (dependencia nueva: pedir confirmación antes). Leer solo la etapa que se pida.

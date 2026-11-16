@@ -173,18 +173,22 @@ prueba('un proyecto de un esquema más nuevo se abre solo para leer', async (pg)
   await pg.getByText(/Solo lectura: este proyecto lo guardó una versión más nueva/).waitFor({ timeout: 8000 });
 });
 
-prueba('un presupuesto de 1 500 partidas dibuja solo las filas visibles', async (pg) => {
+prueba('un presupuesto de 2 000 partidas dibuja solo las filas visibles', async (pg) => {
   const ruta = join(tmp, 'grande.expediente.json');
-  writeFileSync(ruta, JSON.stringify(proyectoGrande(1500)));
+  writeFileSync(ruta, JSON.stringify(proyectoGrande(2000)));
   await importar(pg, ruta);
   await pg.waitForTimeout(1500);
   await ir(pg, 'Presupuesto, APU y metrados');
   const tabla = pg.locator('table[aria-label="Presupuesto"]');
   const dibujadas = await tabla.locator('tbody tr[data-v]').count();
   exigir(dibujadas > 20 && dibujadas < 250, `se dibujaron ${dibujadas} filas`);
-  await pg.locator('.tabla-marco').first().evaluate((el) => { el.scrollTop = el.scrollHeight; });
-  await pg.waitForTimeout(300);
-  await tabla.locator('td.arbol-codigo', { hasText: '01.1500' }).waitFor({ timeout: 5000 }).catch(() => { throw new Error('la última partida no aparece al bajar'); });
+  // la lista virtual estima el alto de las filas: al llegar al final puede crecer, así que se baja hasta que no cambie
+  for (let i = 0; i < 6; i++) {
+    const fin = await pg.locator('.tabla-marco').first().evaluate((el) => { el.scrollTop = el.scrollHeight; return el.scrollHeight; });
+    await pg.waitForTimeout(300);
+    if ((await pg.locator('.tabla-marco').first().evaluate((el) => el.scrollHeight)) === fin) break;
+  }
+  await tabla.locator('td.arbol-codigo', { hasText: '01.2000' }).waitFor({ timeout: 5000 }).catch(() => { throw new Error('la última partida no aparece al bajar'); });
 });
 
 (async () => {

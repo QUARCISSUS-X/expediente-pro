@@ -1,5 +1,17 @@
 # Historial de versiones
 
+## Versión 3.0 – cierre del plan 3.0
+Séptima etapa: experiencia de uso, guía, pruebas de cierre y limpieza. Con ella el programa pasa a ser una plataforma: banco de datos propio (2.8), presupuesto avanzado (2.9), apartados integrados (2.10), informes de obra y portafolio (2.11) y plataformas (2.12).
+- **Recorrido inicial:** en un proyecto nuevo en blanco aparece una guía paso a paso (datos del proyecto, banco, presupuesto, cronograma, validación, entregables y control de obra) con el botón para ir a cada módulo; se vuelve a abrir con **?** en la barra.
+- **Proyecto de demostración** (Nuevo › «Crear la demostración»): el ejemplo con todo el control de obra, versiones oferta y contractual (vigente), un cambio con partidas por aprobar, una consulta que restringe una partida en Last Planner y una plantilla de informe mensual guardada.
+- **Tema oscuro:** automático según el sistema o elegido con **◐** en la barra (se recuerda). Todas las superficies usan variables de color.
+- **Impresión limpia:** Ctrl+P imprime solo el módulo abierto, sin barras, menús ni botones, con las tablas completas.
+- **Accesibilidad y teclado:** enlace «Saltar al contenido», área de trabajo enfocable, nombres accesibles en los botones de ícono y atajos nuevos en la lista (Ctrl+K, Ctrl+P).
+- **Guía de uso reescrita por flujo de trabajo:** cotizar, armar un expediente, controlar la obra y mantener el banco, más archivos y respaldos; la referencia (cálculo, importación, reglas, entregables y línea de comandos) al final.
+- **Pruebas de cierre:** proyectos guardados como en 1.x, 2.0–2.6, 2.7–2.8 y 2.9–2.10 abren con el mismo total y el control completo; un presupuesto de 2 000 partidas se calcula y recalcula en tiempos de uso normal (y en la prueba de extremo a extremo dibuja solo las filas visibles).
+- **Limpieza:** los textos de «Guardar una copia .json» pasan a «Guardar en un archivo» (el vínculo con la carpeta de la 2.12); se quitó código que había quedado sin uso.
+- Código: `src/data/demostracion.ts`, `src/ui/{tema.ts,Recorrido.tsx}`, `estilos.css` (variables, tema oscuro, impresión), `docs/guia.html`. Pruebas en `tests/cierre.test.ts`.
+
 ## Versión 2.12 – plataformas
 Sexta etapa del plan 3.0 (sin publicar en GitHub Pages ni en las tiendas, según la decisión 4 del plan).
 - **Guardar en una carpeta con autoguardado:** «Guardar» (Ctrl+S) elige una vez un archivo `.expediente` en cualquier carpeta (OneDrive, Dropbox, red) y desde entonces cada cambio se escribe también allí; la cabecera muestra el archivo y se puede desvincular. Al abrir el proyecto, si el archivo cambió en otra computadora, ofrece cargar esa versión. En la app de escritorio usa la ruta (escritura segura con temporal); en Chrome y Edge, la API de archivos del navegador (tras reiniciar pide de nuevo el permiso con un botón). En Firefox se sigue descargando el `.expediente.json`.
