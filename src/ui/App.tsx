@@ -21,6 +21,9 @@ import { MODULOS, NAV } from './modulos/registro';
 import { abrirProyectoVinculado, proyectoDeArchivo, useVinculo } from './useVinculo';
 import { ponerBancoPendiente, proyectoDeRuta, reasignar, vincularManejador, vincularRuta } from './vinculo';
 import { AvisoRespaldo } from './AvisoRespaldo';
+import { Recorrido, recorridoVisto } from './Recorrido';
+import { cambiarTema, leerTema, NOMBRE_TEMA, siguienteTema, type Tema } from './tema';
+import { proyectoDemostracion } from '../data/demostracion';
 
 async function esPlantillaDeCarga(f: File): Promise<boolean> {
   try {
@@ -38,7 +41,6 @@ import ExcelJS from 'exceljs';
 import { Modal } from './componentes';
 
 
-type ManejadorArchivo = { name: string; createWritable: () => Promise<{ write: (d: Blob) => Promise<void>; close: () => Promise<void> }> };
 
 /** Carga el último proyecto abierto (o migra el de la versión 1, o crea el ejemplo) antes de mostrar la aplicación. */
 export function App() {
@@ -120,6 +122,9 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
   const [consultaInsumo, setConsultaInsumo] = useState('');
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [ficha, setFicha] = useState<string | null>(null);
+  const [tema, setTema] = useState<Tema>(leerTema);
+  // recorrido inicial: en proyectos nuevos sin partidas, una sola vez (luego con el botón «?»)
+  const [recorrido, setRecorrido] = useState(() => !recorridoVisto() && !inicial.proyecto.partidas.length);
 
   const avisar = useCallback((texto: string, error?: boolean) => {
     setToast({ texto, error });
@@ -192,9 +197,10 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
     }
   }, [crearYAbrir, avisar]);
 
-  const nuevoProyecto = useCallback((tipo: 'blanco' | 'ejemplo' | 'importar') => {
+  const nuevoProyecto = useCallback((tipo: 'blanco' | 'ejemplo' | 'demostracion' | 'importar') => {
     if (tipo === 'importar') return void importar();
-    if (tipo === 'blanco') void crearYAbrir(proyectoEnBlanco(), 'Proyecto nuevo en blanco. Complete primero la configuración general.');
+    if (tipo === 'demostracion') return void crearYAbrir(proyectoDemostracion(), 'Proyecto de demostración creado: recorra Resumen, Centro de pendientes, Control e Informes de obra.', 'resumen');
+    if (tipo === 'blanco') { void crearYAbrir(proyectoEnBlanco(), 'Proyecto nuevo en blanco. Complete primero la configuración general.'); if (!recorridoVisto()) setRecorrido(true); }
     else void crearYAbrir(proyectoEjemplo(), 'Proyecto creado desde el ejemplo.', 'presupuesto');
   }, [crearYAbrir, importar]);
 
@@ -382,6 +388,8 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
           </span>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('global')} title="Buscar partidas, insumos, módulos y acciones (Ctrl+K)">Buscar… <kbd>Ctrl K</kbd></button>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('atajos')} title="Atajos de teclado" aria-label="Atajos de teclado">⌨</button>
+          <button className="boton chico solo-escritorio tema-boton" onClick={() => { const t = siguienteTema(tema); cambiarTema(t); setTema(t); }} title={`${NOMBRE_TEMA[tema]} — clic para cambiar`} aria-label={NOMBRE_TEMA[tema]}>{tema === 'oscuro' ? '☾' : tema === 'claro' ? '☀' : '◐'}</button>
+          <button className="boton chico solo-escritorio" onClick={() => setRecorrido(true)} title="Recorrido por el flujo de trabajo" aria-label="Recorrido por el flujo de trabajo">?</button>
           <button className="boton chico solo-escritorio" onClick={() => abrirDialogo('copias')} title="Versiones guardadas de este proyecto: restaurar o guardar una nueva">Versiones</button>
           {vin.vinculo && (
             <span className="estado-guardado solo-escritorio" title={`Cada cambio se guarda también en ${vin.vinculo.ruta ?? vin.vinculo.nombre}`}>
@@ -396,7 +404,9 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
         </div>
       </header>
 
+      <a className="saltar" href="#contenido">Saltar al contenido</a>
       <AvisoRespaldo ctx={ctx} />
+      {recorrido && <Recorrido ctx={ctx} alCerrar={() => setRecorrido(false)} />}
       <Cinta ctx={ctx} />
 
       <nav className="nav" aria-label="Módulos">
@@ -419,7 +429,7 @@ function Aplicacion({ inicial }: { inicial: { id: string; proyecto: Proyecto; mo
         </div>
       </nav>
 
-      <main className="trabajo">
+      <main className="trabajo" id="contenido" tabIndex={-1}>
         {st.soloLectura && (
           <div className="aviso advertencia" role="alert" style={{ margin: '12px 18px 0' }}>
             Solo lectura: este proyecto lo guardó una versión más nueva de Expediente Pro (esquema {proyecto.esquema}). Puede verlo y exportar sus entregables, pero los cambios no se guardan. Actualice el programa para editarlo.

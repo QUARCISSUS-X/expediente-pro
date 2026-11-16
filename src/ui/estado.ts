@@ -152,7 +152,7 @@ export type Contexto = ReturnType<typeof useProyecto> & {
   abrirArchivo: () => void;
   guardarArchivo: () => void;
   abrirProyectoId: (id: string) => Promise<void>;
-  nuevoProyecto: (tipo: 'blanco' | 'ejemplo' | 'importar') => void;
+  nuevoProyecto: (tipo: 'blanco' | 'ejemplo' | 'demostracion' | 'importar') => void;
   /** Abre la ficha de una partida (metrado, análisis, actividad, avance, cambios, restricciones, calidad y materiales). */
   abrirFicha: (partidaId: string) => void;
   /** Llamar después de eliminar el proyecto abierto: abre otro o crea uno en blanco. */

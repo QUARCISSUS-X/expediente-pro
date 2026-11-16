@@ -88,7 +88,7 @@ export function Cinta({ ctx }: { ctx: Contexto }) {
         <B b={{ n: 'proyectos', t: 'Proyectos', ayuda: 'Panel de proyectos: crear, abrir, duplicar, archivar y eliminar', accion: () => ctx.ir('proyectos'), grande: true }} />
         <B b={{ n: 'nuevo', t: 'Nuevo', ayuda: 'Nuevo proyecto (en blanco, ejemplo o plantilla)', accion: () => ctx.abrirDialogo('nuevo') }} />
         <B b={{ n: 'abrir', t: 'Importar', ayuda: 'Importar como proyecto nuevo: expediente de S10/Excel (presupuesto, APU, insumos, GG, metrados), cronograma XML de MS Project, EETT en Word, proyecto .json o plantilla de carga', accion: ctx.abrirArchivo }} />
-        <B b={{ n: 'guardar', t: 'Guardar', ayuda: 'Guardar una copia del proyecto en un archivo .json (Ctrl+S). Los cambios se guardan solos en este navegador.', accion: ctx.guardarArchivo }} />
+        <B b={{ n: 'guardar', t: 'Guardar', ayuda: 'Guardar el proyecto en un archivo de una carpeta (Ctrl+S); desde entonces cada cambio se guarda también allí. Además se guarda solo en este equipo.', accion: ctx.guardarArchivo }} />
         <B b={{ n: 'configuracion', t: 'Datos', ayuda: 'Configuración general del proyecto: proyectista, cliente, logos, responsables y parámetros', accion: () => ctx.ir('proyecto') }} />
       </Grupo>
       <Grupo titulo="Edición">

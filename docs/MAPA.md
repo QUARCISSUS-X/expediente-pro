@@ -312,6 +312,10 @@ Biblioteca de partidas con APU de referencia (rendimientos usuales; verificar y 
 ### `src/data/catalogo.ts` · 85 líneas
 Catálogo semilla de insumos. PRECIOS REFERENCIALES DE DEMOSTRACIÓN (sin IGV, Lima, oct-2026):
 
+### `src/data/demostracion.ts` · 33 líneas
+Proyecto de demostración de la 3.0: el ejemplo con control de obra completo y los enlaces entre apartados a la vista
+proyectoDemostracion:12
+
 ### `src/data/iu.ts` · 171 líneas
 Índices Unificados de Precios de la Construcción (INEI), base diciembre 2025 = 100.
 INDICES_UNIFICADOS:5 · AREAS_GEOGRAFICAS:86 · SIMBOLO_IU:103 · nombreIU:131 · sugerirIU:136
@@ -331,8 +335,8 @@ metaPorDefecto:10 · entidadVacia:47 · responsableVacio:51 · AVISO_DEFECTO:55 
 
 ## Interfaz — `src/ui/`
 
-### `src/ui/App.tsx` · 510 líneas
-esPlantillaDeCarga:25 · App:44 · Aplicacion:113
+### `src/ui/App.tsx` · 520 líneas
+esPlantillaDeCarga:28 · App:46 · Aplicacion:115
 
 ### `src/ui/AvisoRespaldo.tsx` · 21 líneas
 Aviso de respaldo periódico en la extensión del navegador: sus proyectos y el banco se borran al desinstalarla.
@@ -362,13 +366,17 @@ Grupo:17 · B:26 · Menu:36 · Cinta:80
 Versiones del proyecto abierto: puntos de restauración automáticos (uno por día de trabajo) y manuales, y bitácora de cambios.
 Copias:11
 
-### `src/ui/Dialogos.tsx` · 313 líneas
+### `src/ui/Dialogos.tsx` · 320 líneas
 Ventanas de la barra de herramientas: biblioteca, búsqueda, calculadoras, nuevo proyecto y atajos.
-Dialogos:13 · Biblioteca:29 · Buscar:69 · CalculadoraHH:122 · CalculadoraCuadrilla:182 · NuevoProyecto:256 · Atajos:281
+Dialogos:13 · Biblioteca:29 · Buscar:69 · CalculadoraHH:122 · CalculadoraCuadrilla:182 · NuevoProyecto:256 · Atajos:286
 
 ### `src/ui/FichaPartida.tsx` · 72 líneas
 Ficha de partida: reúne en un panel todo lo de una partida (metrado, análisis, especificación, actividad, avance,
 FichaPartida:12
+
+### `src/ui/Recorrido.tsx` · 42 líneas
+Recorrido inicial: guía paso a paso por el flujo de trabajo (configurar, presupuestar, programar, validar, exportar y
+PASOS_RECORRIDO:8 · recorridoVisto:18 · Recorrido:23
 
 ### `src/ui/VistaTabla.tsx` · 99 líneas
 Muestra en pantalla las mismas tablas que van a Excel y PDF.
@@ -424,6 +432,10 @@ registrarPwa:3
 ### `src/ui/respaldo.ts` · 39 líneas
 Respaldo completo (.epdb con los proyectos, sus versiones y el banco) y recordatorio periódico para la extensión
 DIAS_RECORDATORIO:11 · descargarRespaldo:17 · esExtension:25 · tocaRecordarRespaldo:30 · posponerRespaldo:37 · ultimoRespaldo:38
+
+### `src/ui/tema.ts` · 28 líneas
+Tema de la interfaz: automático (según el sistema), claro u oscuro. Se guarda en este navegador o en la app y se
+Temaᵗ:3 · leerTema:6 · aplicarTema:15 · cambiarTema:21 · siguienteTema:26 · NOMBRE_TEMA:27
 
 ### `src/ui/trabajo.ts` · 57 líneas
 Lanza trabajos pesados (exportar, Monte Carlo) en un web worker para que la pantalla no se congele.
@@ -588,6 +600,9 @@ Prueba en el navegador UN solo módulo (o varios) sin recorrer todo el programa.
 
 ### `tests/banco.test.ts` · 144 líneas
 Versión 2.8 (etapa 2 del plan 3.0): banco de datos, sus formatos de intercambio, la fusión y el uso desde el proyecto.
+
+### `tests/cierre.test.ts` · 133 líneas
+Versión 3.0 (etapa 7 del plan): migración de proyectos 2.x, carga con 2 000 partidas, proyecto de demostración con todos
 
 ### `tests/cimientos.test.ts` · 147 líneas
 Versión 2.7 (etapa 1 del plan 3.0): esquema y migraciones, estructura del archivo, bitácora, cronograma incremental y registro de exportadores.

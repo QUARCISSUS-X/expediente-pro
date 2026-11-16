@@ -464,7 +464,7 @@ function construirMenu() {
         { label: 'Importar archivos de un expediente…', accelerator: 'CmdOrCtrl+O', click: () => comando({ tipo: 'importar' }) },
         { label: 'Abrir un proyecto de una carpeta (y guardar allí)…', click: () => comando({ tipo: 'abrir-vinculado' }) },
         { type: 'separator' },
-        { label: 'Guardar una copia (.json)', accelerator: 'CmdOrCtrl+S', registerAccelerator: false, click: () => comando({ tipo: 'guardar' }) },
+        { label: 'Guardar en un archivo (se guarda solo allí)', accelerator: 'CmdOrCtrl+S', registerAccelerator: false, click: () => comando({ tipo: 'guardar' }) },
         { label: 'Exportar entregables', click: () => comando({ tipo: 'ir', modulo: 'exportar' }) },
         { type: 'separator' },
         { label: 'Cerrar pestaña', accelerator: 'CmdOrCtrl+W', click: () => void cerrarPestana(activa) },
