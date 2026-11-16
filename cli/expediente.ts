@@ -10,6 +10,7 @@
 //   expediente compacto <proyecto.json | .xlsx> [--salida proyecto.exp.txt]
 //   expediente catalogo [--desde proyecto]
 //   expediente banco resumen|inicial|importar|exportar|enviar|actualizar-precios   (ver cli/banco.ts)
+//   expediente comparar <a> <b> · expediente informe-obra <proyecto>   (ver cli/obra.ts)
 // expediente importar <ppto.xlsx> [metrados.xlsx] [cronograma.xml] [eett.docx] [--config datos.json] [--salida proyecto.json] [--generar carpeta]
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -26,6 +27,8 @@ import { exportarPlantilla, importarPlantilla } from '../src/io/plantilla';
 import { conEsquema, esSoloLectura, migrarProyecto } from '../src/io/migrar';
 import { leerJson } from '../src/io/estructura';
 import { AYUDA_BANCO, comandoBanco } from './banco';
+import { AYUDA_OBRA, comandoComparar, comandoInformeObra } from './obra';
+import { controlDemostracion } from '../src/engine/control';
 import { importarExpediente } from '../src/io/importarExpediente';
 import { catalogoCompacto, escribirCompacto, leerCompacto } from '../src/io/compacto';
 import type { Logo } from '../src/engine/types';
@@ -134,6 +137,10 @@ async function main() {
   switch (cmd) {
     case 'banco':
       return comandoBanco(args, opt, flag, cargar);
+    case 'comparar':
+      return comandoComparar(args, opt, cargar);
+    case 'informe-obra':
+      return comandoInformeObra(args, opt, flag, cargar);
     case 'generar': {
       if (!args[1]) throw new Error('Indique el archivo del proyecto (.json o .xlsx).');
       const p = await cargar(args[1]);
@@ -262,7 +269,9 @@ async function main() {
       break;
     case 'ejemplo': {
       const ruta = resolve(opt('--salida') ?? 'Proyecto_ejemplo.expediente.json');
-      writeFileSync(ruta, JSON.stringify(conEsquema(proyectoEjemplo()), null, 2));
+      const p = proyectoEjemplo();
+      if (flag('--control')) p.control = controlDemostracion(calcularTodo(p)); // con control de obra de demostración
+      writeFileSync(ruta, JSON.stringify(conEsquema(p), null, 2));
       console.log(`Proyecto de ejemplo: ${ruta}`);
       break;
     }
@@ -276,12 +285,13 @@ Uso:
   expediente informe <archivo> [--salida carpeta]            (informe ejecutivo PDF y reporte gerencial Excel)
   expediente integridad <archivo> [--reparar] [--salida proyecto.json]
   expediente plantilla [--salida archivo.xlsx] [--desde proyecto.json]
-  expediente ejemplo [--salida archivo.json]
+  expediente ejemplo [--salida archivo.json] [--control]
   expediente cargar <proyecto.exp.txt> [--config datos.json] [--salida proyecto.json] [--generar carpeta] [--zip] [--forzar]
   expediente compacto <proyecto.json | plantilla.xlsx> [--salida proyecto.exp.txt]
   expediente catalogo [--desde proyecto]
   expediente importar <ppto.xlsx> [metrados.xlsx] [cronograma.xml] [eett.docx] [--config datos.json] [--salida proyecto.json] [--generar carpeta] [--zip]
-${AYUDA_BANCO}`);
+${AYUDA_BANCO}
+${AYUDA_OBRA}`);
       void basename;
   }
 }

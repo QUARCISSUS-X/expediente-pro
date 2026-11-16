@@ -15,6 +15,7 @@ import { Insignia, Modal, Pestanas } from '../componentes';
 import { escritorio } from '../escritorio';
 import { descargar, elegirArchivo, type Contexto } from '../estado';
 import { Icono } from '../iconos';
+import { descargarRespaldo } from '../respaldo';
 
 type Filtro = 'activos' | 'archivados' | 'todos' | 'papelera';
 
@@ -51,10 +52,8 @@ export function ModProyectos({ ctx }: { ctx: Contexto }) {
   };
   // respaldo completo: un .epdb con los proyectos, sus versiones y el banco de datos
   const respaldo = async () => {
-    const r = await respaldoCompleto();
-    const copias = (await todasLasCopias()).filter((c) => r.proyectos.some((x) => x.id === c.proyectoId));
-    descargar(`Respaldo_Expediente_Pro_${new Date().toISOString().slice(0, 10)}.epdb`, await escribirEpdb({ banco: await leerBanco(), proyectos: r.proyectos, copias }), 'application/zip');
-    ctx.avisar(`Respaldo descargado: ${r.proyectos.length} proyecto(s), ${copias.length} versión(es) y el banco de datos.`);
+    const n = await descargarRespaldo();
+    ctx.avisar(`Respaldo descargado: ${n.proyectos} proyecto(s), ${n.copias} versión(es) y el banco de datos.`);
   };
   const [bancoRespaldo, setBancoRespaldo] = useState<ResultadoBanco | null>(null);
   const restaurar = async () => {

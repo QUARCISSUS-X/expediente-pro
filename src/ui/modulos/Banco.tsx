@@ -11,6 +11,7 @@ import type { GGItem, PlantillaEett, TipoInsumo } from '../../engine/types';
 import { fmt, isoAFecha } from '../../engine/util';
 import { escribirEpdb, exportarBancoCsv, exportarBancoXlsx, textoRenglones } from '../../io/banco';
 import { agregarAnalisis, Fusion, ImportarAlBanco } from '../BancoDialogos';
+import { SincronizacionBanco } from '../BancoSincronizacion';
 import { alCambiarBanco, guardarBanco, leerBanco, listarPuntos, type PuntoBanco, restaurarPunto } from '../bancoAlmacen';
 import { Campo, Insignia, Modal, Pestanas, TablaEditable } from '../componentes';
 import { descargar, type Contexto } from '../estado';
@@ -74,6 +75,7 @@ export function ModBanco({ ctx }: { ctx: Contexto }) {
           <button className="boton" onClick={() => setDialogo('enviar')} title="Los insumos, precios y análisis afinados del proyecto abierto vuelven al banco">Enviar este proyecto al banco</button>
         </div>
       </div>
+      <SincronizacionBanco ctx={ctx} />
       <div className="fila-flex" style={{ marginBottom: 12 }}>
         <Pestanas valor={tabla} alCambiar={(t) => { setTabla(t); setQ(''); }} opciones={TABLAS.map((t) => ({ id: t.id, texto: `${t.nombre} (${conteo[t.id]})` }))} />
         <span className="separador" />

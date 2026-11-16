@@ -1,5 +1,17 @@
 # Historial de versiones
 
+## Versión 2.12 – plataformas
+Sexta etapa del plan 3.0 (sin publicar en GitHub Pages ni en las tiendas, según la decisión 4 del plan).
+- **Guardar en una carpeta con autoguardado:** «Guardar» (Ctrl+S) elige una vez un archivo `.expediente` en cualquier carpeta (OneDrive, Dropbox, red) y desde entonces cada cambio se escribe también allí; la cabecera muestra el archivo y se puede desvincular. Al abrir el proyecto, si el archivo cambió en otra computadora, ofrece cargar esa versión. En la app de escritorio usa la ruta (escritura segura con temporal); en Chrome y Edge, la API de archivos del navegador (tras reiniciar pide de nuevo el permiso con un botón). En Firefox se sigue descargando el `.expediente.json`.
+- **Doble clic:** el instalador asocia `.expediente` y `.epdb` con la app; un proyecto abierto así queda vinculado a su archivo (abrir el mismo archivo otra vez no lo duplica) y un `.epdb` abre la pantalla de fusión del banco. Menú Archivo › «Abrir un proyecto de una carpeta (y guardar allí)…». La web instalada también recibe esos archivos.
+- **Actualización automática (app de escritorio):** al iniciar consulta el último release de GitHub y, si hay una versión nueva, ofrece descargar e instalar (el portable abre la página del release); «Omitir esta versión», «Buscar actualizaciones…» y una casilla para apagarlo en el menú Ayuda. Es la única conexión a internet del programa.
+- **Web instalable (PWA):** manifiesto, íconos y service worker; servida por http(s) se instala y abre sin conexión. No se publica en GitHub Pages.
+- **Extensión:** aviso de respaldo cada 14 días sin respaldo («Respaldar ahora» o «En una semana»), porque sus datos se borran al desinstalarla.
+- **Banco sincronizado por archivo, sin servidor:** en Banco de datos, «Crear el .epdb compartido…» o «Usar un .epdb compartido…»; cada cambio local se publica en el archivo y, si otro equipo lo cambió antes, se fusiona primero con la pantalla de fusión.
+- **Línea de comandos:** `expediente comparar <a> <b> [--excel]`, `expediente informe-obra <proyecto> [--semanal|--mensual] [--fecha] [--word]` y `expediente ejemplo --control` (ejemplo con control de obra).
+- Pendiente: instalador firmado (requiere comprar un certificado) y actualizar la skill expediente-pro de claude.ai con los comandos nuevos (vive fuera del repositorio).
+- Código: `src/ui/{vinculo,useVinculo,respaldo,pwa}.ts`, `ui/{AvisoRespaldo,BancoSincronizacion}.tsx`, `public/` (manifiesto, `sw.js`, íconos), `electron/main.cjs` (archivos, doble clic, actualizaciones), `cli/obra.ts`, `export/comparacion.ts`. Pruebas en `tests/plataformas.test.ts`.
+
 ## Versión 2.11 – reportes de obra y portafolio
 Quinta etapa del plan 3.0.
 - **Informes de obra** (grupo Control de obra, Ctrl+Shift+O en la app): informe **semanal o mensual** del periodo elegido, en **PDF y Word**, con carátula y el marco del expediente: resumen e indicadores, avance físico por partida, curva S programada contra real, valor ganado, valorización del mes, PPC y causas de no cumplimiento, restricciones, calidad (protocolos y no conformidades), cambios, riesgos, cuaderno de obra y consultas, panel fotográfico y firmas. Las cifras son las del tablero al cierre del periodo (los cortes posteriores no cuentan).

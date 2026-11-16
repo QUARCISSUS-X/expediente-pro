@@ -73,7 +73,7 @@ export function abrirDb(): Promise<IDBDatabase | null> {
   dbPromesa = new Promise((resolve) => {
     try {
       if (typeof indexedDB === 'undefined') return resolve(null);
-      const req = indexedDB.open(DB, 4);
+      const req = indexedDB.open(DB, 5);
       req.onupgradeneeded = () => {
         const db = req.result;
         if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
@@ -82,6 +82,8 @@ export function abrirDb(): Promise<IDBDatabase | null> {
         for (const a of ['banco', 'banco-puntos']) if (!db.objectStoreNames.contains(a)) db.createObjectStore(a, { keyPath: 'id' });
         // 2.11: fotos y adjuntos de obra, aparte de los proyectos para no engordarlos
         if (!db.objectStoreNames.contains('adjuntos')) db.createObjectStore('adjuntos', { keyPath: 'id' }).createIndex('proyectoId', 'proyectoId');
+        // 2.12: archivos vinculados (proyecto o banco → archivo en una carpeta del usuario)
+        if (!db.objectStoreNames.contains('vinculos')) db.createObjectStore('vinculos', { keyPath: 'id' });
       };
       req.onsuccess = () => {
         // si otra pestaña abre una versión más nueva del programa, esta suelta la base para que pueda actualizarse

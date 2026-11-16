@@ -159,6 +159,10 @@ Valorizacionᵗ:11 · coeficienteK:34 · calcularValorizaciones:52
 
 ## Exportadores — `src/export/`
 
+### `src/export/comparacion.ts` · 16 líneas
+Comparación de dos presupuestos en Excel (totales, partidas e insumos): la usan Versiones y el comando «comparar».
+tablasComparacion:5
+
 ### `src/export/control.ts` · 320 líneas
 Informe de control de obra: las mismas tablas se ven en pantalla y se exportan a Excel (una hoja por tabla).
 tablaTablero:33 · tablaEvm:90 · tablaAvancePartidas:109 · tablaValorizaciones:125 · tablaCambios:143 · tablaRiesgos:150 · tablaRegistros:157 · tablaRecursos:163 · tablaRestricciones:168 · tablaPlanSemanal:175 · tablaPpc:184 · tablaRendimientos:193 · tablaCartas:198 · tablaPerdidas:206 · tablaInspecciones:214 · tablaCalidad:219 · tablaDmaic:227 · tablaCartaBalanceDetalle:233 · tablasControl:238 · generarXlsxControl:264 · generarXlsxTablas:269
@@ -327,12 +331,20 @@ metaPorDefecto:10 · entidadVacia:47 · responsableVacio:51 · AVISO_DEFECTO:55 
 
 ## Interfaz — `src/ui/`
 
-### `src/ui/App.tsx` · 450 líneas
-esPlantillaDeCarga:22 · App:41 · Aplicacion:84
+### `src/ui/App.tsx` · 510 líneas
+esPlantillaDeCarga:25 · App:44 · Aplicacion:113
+
+### `src/ui/AvisoRespaldo.tsx` · 21 líneas
+Aviso de respaldo periódico en la extensión del navegador: sus proyectos y el banco se borran al desinstalarla.
+AvisoRespaldo:7
 
 ### `src/ui/BancoDialogos.tsx` · 268 líneas
 Ventanas del banco de datos: importar con revisión de fusión, actualizar precios del proyecto, agregar insumos y partidas del banco.
 resumenFila:20 · Fusion:31 · ImportarAlBanco:111 · ActualizarPrecios:156 · AgregarInsumosBanco:215 · agregarAnalisis:257
+
+### `src/ui/BancoSincronizacion.tsx` · 136 líneas
+Sincronización del banco entre equipos por archivo, sin servidor: un .epdb en una carpeta compartida (OneDrive, Dropbox,
+SincronizacionBanco:20
 
 ### `src/ui/Barrera.tsx` · 31 líneas
 Barrera de errores: si un módulo falla, el resto del programa sigue y el trabajo no se pierde.
@@ -370,9 +382,9 @@ generarArchivo:16 · accionesPartida:26
 Fotos y adjuntos de obra (por partida, protocolo o asiento del cuaderno): el archivo va al almacén `adjuntos` de IndexedDB
 nuevoIdAdjunto:15 · guardarAdjunto:43 · leerAdjunto:53 · eliminarAdjunto:59 · imagenesDe:67
 
-### `src/ui/almacen.ts` · 373 líneas
+### `src/ui/almacen.ts` · 375 líneas
 Almacén local de proyectos (IndexedDB del navegador, con respaldo en localStorage).
-ResumenProyectoᵗ:6 · RegistroProyectoᵗ:21 · DIAS_PAPELERA:31 · Respaldoᵗ:33 · nuevoId:48 · resumir:50 · abrirDb:71 · tx:101 · modoAlmacen:129 · listarProyectos:139 · leerProyecto:144 · guardarRegistro:150 · guardarProyecto:159 · crearProyecto:191 · duplicarProyecto:195 · archivarProyecto:206 · eliminarProyecto:213 · listarPapelera:220 · diasEnPapelera:230 · restaurarDePapelera:232 · eliminarDefinitivo:240 · ultimoAbierto:248 · recordarUltimo:256 · proyectoV1:266 · olvidarV1:275 · respaldoCompleto:283 · restaurarRespaldo:289 · todasLasCopias:307 · CopiaProyectoᵗ:315 · listarCopias:330 · crearCopia:337 · eliminarCopia:349 · avisarGuardado:361 · alGuardarEnOtraPestana:366
+ResumenProyectoᵗ:6 · RegistroProyectoᵗ:21 · DIAS_PAPELERA:31 · Respaldoᵗ:33 · nuevoId:48 · resumir:50 · abrirDb:71 · tx:103 · modoAlmacen:131 · listarProyectos:141 · leerProyecto:146 · guardarRegistro:152 · guardarProyecto:161 · crearProyecto:193 · duplicarProyecto:197 · archivarProyecto:208 · eliminarProyecto:215 · listarPapelera:222 · diasEnPapelera:232 · restaurarDePapelera:234 · eliminarDefinitivo:242 · ultimoAbierto:250 · recordarUltimo:258 · proyectoV1:268 · olvidarV1:277 · respaldoCompleto:285 · restaurarRespaldo:291 · todasLasCopias:309 · CopiaProyectoᵗ:317 · listarCopias:332 · crearCopia:339 · eliminarCopia:351 · avisarGuardado:363 · alGuardarEnOtraPestana:368
 
 ### `src/ui/arbol.ts` · 165 líneas
 Operaciones sobre el árbol de partidas (títulos y partidas) con códigos jerárquicos.
@@ -389,9 +401,9 @@ parsearNumero:7 · EntradaNumero:33 · EntradaTexto:104 · AreaTexto:136 · Camp
 Ayudas comunes de los módulos de control de ejecución.
 useControl:8 · opcionesPartidas:18 · opcionesFrentes:22 · opciones:26 · pct:28 · ind:29 · fc:30 · fechaCortaDM:31 · estadoIndice:33 · MIME_XLSX:36
 
-### `src/ui/escritorio.ts` · 58 líneas
+### `src/ui/escritorio.ts` · 70 líneas
 Puente con la app de escritorio (Electron, carpeta electron/). En el navegador no existe y nada cambia.
-ComandoEscritorioᵗ:5 · InfoPestanaᵗ:15 · escritorio:33 · parametrosInicio:37 · ApiPaginaᵗ:48 · publicarApiPagina:55
+ComandoEscritorioᵗ:5 · InfoPestanaᵗ:16 · ArchivosEscritorioᵗ:36 · escritorio:44 · parametrosInicio:48 · ApiPaginaᵗ:60 · publicarApiPagina:67
 
 ### `src/ui/estado.ts` · 253 líneas
 Estado del proyecto abierto: edición inmutable (immer), deshacer/rehacer y autoguardado en el almacén local.
@@ -405,15 +417,31 @@ COLOR:5 · Serieᵗ:17 · GraficoLineas:27 · GraficoBarras:82 · GraficoPareto:
 Iconos de la barra de herramientas (trazo propio, 20 × 20).
 Icono:42
 
+### `src/ui/pwa.ts` · 10 líneas
+Web instalable (PWA): registra el service worker (public/sw.js) solo cuando la página se sirve por http(s).
+registrarPwa:3
+
+### `src/ui/respaldo.ts` · 39 líneas
+Respaldo completo (.epdb con los proyectos, sus versiones y el banco) y recordatorio periódico para la extensión
+DIAS_RECORDATORIO:11 · descargarRespaldo:17 · esExtension:25 · tocaRecordarRespaldo:30 · posponerRespaldo:37 · ultimoRespaldo:38
+
 ### `src/ui/trabajo.ts` · 57 líneas
 Lanza trabajos pesados (exportar, Monte Carlo) en un web worker para que la pantalla no se congele.
 Trabajoᵗ:15 · enSegundoPlano:21
 
+### `src/ui/useVinculo.ts` · 122 líneas
+Proyecto abierto unido a un archivo en una carpeta del usuario: «Guardar» elige el archivo una vez y desde entonces
+FILTRO_PROYECTO:11 · textoProyecto:13 · proyectoDeArchivo:14 · EstadoVinculoᵗ:16 · useVinculo:26 · abrirProyectoVinculado:116
+
+### `src/ui/vinculo.ts` · 200 líneas
+Archivos vinculados: un proyecto (o el banco) queda unido a un archivo en una carpeta del usuario (OneDrive, Dropbox,
+Vinculoᵗ:7 · FiltroArchivoᵗ:16 · puedeVincular:34 · SinPermiso:36 · leerVinculo:45 · desvincular:57 · vincularNuevo:67 · vincularExistente:85 · vincularRuta:107 · modificado:122 · leerArchivoVinculado:135 · escribirVinculo:148 · cambioAfuera:166 · marcarLeido:171 · reasignar:174 · proyectoDeRuta:177 · ponerBancoPendiente:187 · tomarBancoPendiente:188 · vincularManejador:195
+
 ## Interfaz: módulos (una pantalla por archivo) — `src/ui/modulos/`
 
-### `src/ui/modulos/Banco.tsx` · 341 líneas
+### `src/ui/modulos/Banco.tsx` · 343 líneas
 Banco de datos (fuera de los proyectos): insumos, precios con fecha y fuente, análisis, cuadrillas, plantillas y proveedores;
-useBanco:24 · ModBanco:39 · Insumos:104 · Historial:132 · Precios:155 · Analisis:196 · Cuadrillas:217 · Plantillas:235 · Proveedores:272 · Puntos:304
+useBanco:25 · ModBanco:40 · Insumos:106 · Historial:134 · Precios:157 · Analisis:198 · Cuadrillas:219 · Plantillas:237 · Proveedores:274 · Puntos:306
 
 ### `src/ui/modulos/Calidad.tsx` · 363 líneas
 Plan de calidad ISO 9001: puntos de inspección por partida, protocolos con firma de liberación, productos no conformes
@@ -483,9 +511,9 @@ Gantt:9 · ModPrograma:70
 Configuración general del proyecto: datos que se copian solos a carátulas, encabezados, pies y formatos.
 ModProyecto:14 · SelectorLogo:209 · FichaEntidad:241 · FichaResponsable:269 · FichaDocumento:285 · FichaTextos:321 · VistaPrevia:349
 
-### `src/ui/modulos/Proyectos.tsx` · 245 líneas
+### `src/ui/modulos/Proyectos.tsx` · 244 líneas
 Panel de proyectos: crear, abrir, duplicar, archivar, restaurar, eliminar, exportar y respaldar.
-ModProyectos:21 · Papelera:204
+ModProyectos:22 · Papelera:203
 
 ### `src/ui/modulos/Resumen.tsx` · 148 líneas
 Resumen del proyecto: indicadores, gráficos y puntos de atención calculados con engine/analisis.ts.
@@ -509,7 +537,7 @@ ModValidacion:30 · ObservacionesOrigen:90 · Integridad:146
 Ingeniería de valor y Target Value Design: costo meta por título, alternativas con índice de valor, matriz de
 ModValor:28 · Metas:65 · opcionesAmbito:156 · Alternativas:160 · Matriz:299
 
-### `src/ui/modulos/Versiones.tsx` · 172 líneas
+### `src/ui/modulos/Versiones.tsx` · 164 líneas
 Versiones del presupuesto (oferta, negociado, contractual…): guardar, restaurar, comparar lado a lado por partida, insumo y
 ModVersiones:17
 
@@ -523,16 +551,20 @@ ItemNavᵗ:37 · NAV:40 · MODULOS:42
 Comandos de consola del banco de datos: expediente banco resumen|inicial|importar|exportar|enviar|actualizar-precios.
 AYUDA_BANCO:17 · comandoBanco:58
 
-### `cli/expediente.ts` · 293 líneas
+### `cli/expediente.ts` · 303 líneas
 Línea de comandos de Expediente Pro.
+
+### `cli/obra.ts` · 64 líneas
+Comandos de consola de la versión 2.12: comparar dos presupuestos e informe de obra (semanal o mensual).
+AYUDA_OBRA:16 · comandoComparar:23 · comandoInformeObra:41
 
 ## App de escritorio — `electron/`
 
-### `electron/main.cjs` · 501 líneas
+### `electron/main.cjs` · 672 líneas
 Expediente Pro – app de escritorio (Electron).
-leerSesion:45 · guardarSesion:53 · crearPestana:78 · activarPestana:112 · guardarPestana:123 · cerrarPestana:131 · moverPestana:150 · saltar:159 · abrirProyectoEnPestana:165 · reabrirCerrada:171 · ubicar:178 · enviarEstado:184 · actualizarTitulo:197 · comando:203 · listarProyectos:211 · menuNuevaPestana:224 · construirMenu:285 · abrirGuia:383 · acercaDe:400 · crearVentana:416
+leerSesion:46 · guardarSesion:54 · crearPestana:79 · activarPestana:113 · guardarPestana:124 · cerrarPestana:132 · moverPestana:151 · saltar:160 · abrirProyectoEnPestana:166 · reabrirCerrada:172 · ubicar:179 · enviarEstado:185 · actualizarTitulo:198 · comando:204 · listarProyectos:212 · menuNuevaPestana:225 · permitidas:292 · permitir:302 · archivosDeArgumentos:358 · abrirArchivos:361 · leerPreferencias:371 · guardarPreferencia:378 · compararVersiones:389 · buscarActualizacion:397 · construirMenu:442 · abrirGuia:544 · acercaDe:561 · crearVentana:577
 
-### `electron/preload-app.cjs` · 11 líneas
+### `electron/preload-app.cjs` · 19 líneas
 Puente entre cada pestaña (la interfaz web) y la ventana de escritorio. Ver src/ui/escritorio.ts.
 
 ### `electron/preload-barra.cjs` · 13 líneas
@@ -575,6 +607,9 @@ Versión 2.6: cálculo incremental, calendario, análisis gerencial, integridad 
 Pruebas de la versión 2.5: Earned Schedule, Monte Carlo / PERT, cadena crítica, kanban de materiales,
 
 ### `tests/motor.test.ts` · 315 líneas
+
+### `tests/plataformas.test.ts` · 121 líneas
+Versión 2.12 (etapa 6 del plan 3.0): archivos vinculados, doble clic, actualización automática, web instalable (PWA),
 
 ### `tests/presupuesto.test.ts` · 209 líneas
 Versión 2.9 (etapa 3 del plan 3.0): subpresupuestos, versiones del presupuesto, vigente, monedas, fórmulas en metrados y subpartidas.

@@ -1,0 +1,19 @@
+{
+  "name": "Expediente Pro",
+  "short_name": "Expediente Pro",
+  "description": "Costos, presupuestos, cronogramas, documentos y control de obra. Funciona sin conexión.",
+  "lang": "es-PE",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#20262a",
+  "theme_color": "#20262a",
+  "icons": [
+    { "src": "iconos/icono-96.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "iconos/icono-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "iconos/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ],
+  "file_handlers": [
+    { "action": "./index.html", "accept": { "application/json": [".expediente", ".json"], "application/zip": [".epdb"] } }
+  ]
+}
